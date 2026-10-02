@@ -1,0 +1,30 @@
+# Agent Harness & Workspace Rules
+.agents/
+
+# Dependencies
+node_modules/
+
+# Production & Build outputs
+out/
+dist/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE settings
+.vscode/*
+!.vscode/extensions.json
+.idea/

@@ -1,0 +1,126 @@
+######################################################
+############## INTERACTION NOTIFICATION ##############
+######################################################
+window = {
+	name = "character_interaction_notification_window"
+	parentanchor = center
+	position = { 0 40 }
+	layer = middle
+
+	using = Window_Background
+	using = Window_Decoration_Spike
+
+	state = {
+		name = _show
+		using = Animation_FadeIn_Quick
+		using = Sound_WindowShow_Standard
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		using = Sound_WindowHide_Standard
+		on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+	}
+
+	button = {
+		name = "tts_replay_shortcut_notification"
+		size = { 0 0 }
+		visible = yes
+		shortcut = "army_split_half"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+	}
+
+	vbox = {
+		using = Window_Margins
+		set_parent_size_to_minimum = yes
+
+		header_pattern_interaction = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "[CharacterInteractionNotificationWindow.GetContextName]"
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[CharacterInteractionNotificationWindow.Close]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+			}
+
+			button_round = {
+				name = "tts_replay_button"
+				position = { 10 10 }
+				parentanchor = top|left
+				size = { 30 30 }
+				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+
+				button_icon = {
+					alwaystransparent = yes
+					parentanchor = center
+					size = { 20 20 }
+					texture = "gfx/interface/icons/icon_sound.dds"
+				}
+			}
+		}
+
+		vbox_sender_portrait_message = {
+			layoutpolicy_horizontal = expanding
+		}
+
+		vbox_character_interaction_effects = {
+			visible = "[CharacterInteractionNotificationWindow.GetCharacterInteraction.ShowEffectsInNotification]"
+			datacontext = "[CharacterInteractionNotificationWindow.GetEffectsDescription]"
+			layoutpolicy_horizontal = expanding
+		}
+
+		vbox = {
+			spacing = 20
+			margin_bottom = 15
+
+			hbox = {
+				spacing = 15
+				visible = "[Not( CharacterInteractionNotificationWindow.IsAutoAcceptNotification )]"
+
+				button_standard = {
+					name = "reject_button"
+					text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
+					onclick = "[CharacterInteractionNotificationWindow.Reject]"
+					onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+					enabled = "[CharacterInteractionNotificationWindow.CanReject]"
+					using = tooltip_ws
+					default_format = "#medium"
+				}
+
+				button_primary = {
+					name = "accept_button"
+					text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
+					onclick = "[CharacterInteractionNotificationWindow.Accept]"
+					onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+					enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
+				}
+			}
+
+			button_primary = {
+				visible = "[CharacterInteractionNotificationWindow.IsAutoAcceptNotification]"
+				name = "acknowledge_button"
+				text = "[CharacterInteractionNotificationWindow.GetAnswerAcknowledgeText]"
+				onclick = "[CharacterInteractionNotificationWindow.Acknowledge]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+			}
+
+			button_standard = {
+				name = "block_button"
+				text = "[CharacterInteractionNotificationWindow.GetAnswerBlockText]"
+				onclick = "[CharacterInteractionNotificationWindow.Block]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				visible = "[CharacterInteractionNotificationWindow.CanPotentiallyBeBlocked]"
+				enabled = "[CharacterInteractionNotificationWindow.CanBeBlocked]"
+				tooltip = "[CharacterInteractionNotificationWindow.GetCanBeBlockedTooltip]"
+			}
+		}
+	}
+}

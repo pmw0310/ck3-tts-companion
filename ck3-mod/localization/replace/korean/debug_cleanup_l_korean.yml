@@ -1,0 +1,8 @@
+﻿l_korean:
+ DEBUG_TITLE_ID:0 ""
+ DEBUG_TITLE_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
+ DEBUG_REGION_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
+ CHARACTER_DEBUG_TOOLTIP:0 ""
+ CHARACTER_AI_VALUES_DEBUG_TOOLTIP:0 ""
+ PROVINCE_DEBUG:0 ""
+ DEBUG_CONSTRUCTION_MAP_TOOLTIP:0 ""

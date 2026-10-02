@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' data: blob:;"
+    />
+    <title>CK3 TTS Companion</title>
+    <!-- 구글 폰트: 중세 고딕 헤딩용 Cinzel & 본문 가독성용 Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <div id="app" class="app-layout">
+      <!-- 상단 네비게이션 헤더 -->
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-crest">⚔️</div>
+          <div class="brand-text">
+            <h1 class="brand-title">CK3 TTS COMPANION</h1>
+            <span class="brand-subtitle">실시간 인게임 나레이션 보이스 엔진</span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <!-- 감시 상태 뱃지 -->
+          <div id="log-status-badge" class="status-badge status-waiting" title="로그 감시 경로 탐색 중">
+            <span class="status-dot"></span>
+            <span id="log-status-text">게임 연결 대기 중</span>
+          </div>
+
+          <!-- 설정 모달 토글 버튼 -->
+          <button id="btn-open-settings" class="btn-icon" aria-label="설정 열기" title="음성 및 연동 설정">
+            ⚙️
+          </button>
+        </div>
+      </header>
+
+      <!-- 메인 콘텐츠 영역 -->
+      <main class="app-content">
+        <!-- 현재 나레이션 카드 -->
+        <section class="narration-card glass-panel">
+          <div class="card-header">
+            <div class="card-tag">
+              <span class="tag-badge">현재 낭독 중인 사건</span>
+              <span id="provider-badge" class="provider-pill">Edge-TTS</span>
+            </div>
+            <!-- 오디오 파형 시각화 애니메이션 -->
+            <div id="audio-visualizer" class="visualizer visualizer-idle">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </div>
+          </div>
+
+          <div class="event-body">
+            <h2 id="current-event-title" class="event-title">이벤트 대기 중...</h2>
+            <div id="current-event-content" class="event-content placeholder-text">
+              크루세이더 킹즈 3를 실행하고 이벤트를 발생시키면 이곳에 실시간으로 지문이 표시되고 음성으로 낭독됩니다.
+            </div>
+          </div>
+
+          <!-- 오디오 재생 컨트롤러 -->
+          <div class="audio-controls">
+            <button id="btn-replay" class="btn btn-secondary" disabled>
+              🔄 다시 낭독
+            </button>
+            <button id="btn-stop-audio" class="btn btn-danger" disabled>
+              ⏹️ 중지
+            </button>
+
+            <div class="control-group">
+              <label class="toggle-label" for="chk-auto-play">
+                <input type="checkbox" id="chk-auto-play" checked />
+                <span>이벤트 자동 낭독</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- 최근 사건 히스토리 섹션 -->
+        <section class="history-section glass-panel">
+          <div class="section-header">
+            <h3 class="section-title">최근 사건 기록 (History)</h3>
+            <button id="btn-clear-history" class="btn-text">기록 지우기</button>
+          </div>
+          <div id="history-list" class="history-list">
+            <div class="empty-history">아직 감지된 이벤트가 없습니다.</div>
+          </div>
+        </section>
+      </main>
+
+      <!-- 푸터 상태 바 -->
+      <footer class="app-footer">
+        <div class="footer-info">
+          <span class="info-label">감시 경로:</span>
+          <span id="log-path-display" class="info-path" title="경로 확인 중">경로 탐색 중...</span>
+        </div>
+        <div class="shortcut-tip">
+          단축키: <kbd>Ctrl/Cmd + Shift + S</kbd> (낭독 일시중지/재개)
+        </div>
+      </footer>
+
+      <!-- 설정 모달 창 -->
+      <div id="settings-modal" class="modal-backdrop modal-hidden">
+        <div class="modal-dialog glass-panel">
+          <div class="modal-header">
+            <h3 class="modal-title">⚔️ 나레이션 및 음성 엔진 설정</h3>
+            <button id="btn-close-settings" class="btn-close" aria-label="닫기">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- TTS 엔진 선택 -->
+            <div class="setting-item">
+              <label class="setting-label">TTS 엔진 선택</label>
+              <div class="engine-tabs">
+                <button type="button" class="tab-btn active" data-engine="edge">
+                  무료 Edge-TTS (초고속)
+                </button>
+                <button type="button" class="tab-btn" data-engine="gemini">
+                  ✨ Gemini 3.8 Flash TTS (AI 나레이터)
+                </button>
+              </div>
+            </div>
+
+            <!-- Edge-TTS 옵션 -->
+            <div id="edge-options" class="engine-options-group">
+              <div class="form-row">
+                <label for="select-edge-voice" class="setting-label">한국어 목소리</label>
+                <select id="select-edge-voice" class="form-select">
+                  <option value="ko-KR-SunHiNeural">선희 (여성 - 차분하고 명료함)</option>
+                  <option value="ko-KR-InJoonNeural">인준 (남성 - 중후하고 신뢰감)</option>
+                  <option value="ko-KR-HyunsuNeural">현수 (남성 - 자연스러움)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="range-speech-rate" class="setting-label">낭독 속도</label>
+                <div class="range-wrapper">
+                  <input type="range" id="range-speech-rate" min="-30" max="30" step="5" value="0" />
+                  <span id="speech-rate-display" class="range-value">+0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gemini 옵션 -->
+            <div id="gemini-options" class="engine-options-group option-hidden">
+              <div class="form-row">
+                <label for="select-gemini-model" class="setting-label">Gemini 3.8 모델 버전</label>
+                <select id="select-gemini-model" class="form-select">
+                  <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS (스튜디오급 캐릭터 나레이션 - 권장)</option>
+                  <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS (초고속 / 대량 생성 특화)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="input-gemini-key" class="setting-label">
+                  Google AI Studio API 키
+                  <a href="https://aistudio.google.com/apikey" target="_blank" class="link-external">
+                    [키 발급받기]
+                  </a>
+                </label>
+                <input
+                  type="password"
+                  id="input-gemini-key"
+                  class="form-input"
+                  placeholder="AIzaSy... API 키를 입력하세요"
+                />
+              </div>
+
+              <div class="form-row">
+                <label for="select-gemini-voice" class="setting-label">Gemini 보이스</label>
+                <select id="select-gemini-voice" class="form-select">
+                  <option value="Aoede">Aoede (장엄하고 신비로운 나레이션)</option>
+                  <option value="Charon">Charon (깊고 중후한 군주/노학자)</option>
+                  <option value="Fenrir">Fenrir (거칠고 박력 있는 전사/기사)</option>
+                  <option value="Puck">Puck (영민하고 빠른 모략가/가신)</option>
+                  <option value="Kore">Kore (기품 있는 귀족/왕비)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <label for="select-gemini-tone" class="setting-label">나레이터 어조 프리셋</label>
+                <select id="select-gemini-tone" class="form-select">
+                  <option value="narrator">장엄한 역사 대하드라마 궁정 나레이터</option>
+                  <option value="warrior">비장하고 거친 전장의 성전 기사</option>
+                  <option value="schemer">낮고 은밀한 음흉한 궁정 모략가</option>
+                  <option value="custom">직접 프롬프트 작성...</option>
+                </select>
+              </div>
+
+              <div id="custom-prompt-wrapper" class="form-row option-hidden">
+                <label for="textarea-gemini-prompt" class="setting-label">커스텀 시스템 프롬프트</label>
+                <textarea
+                  id="textarea-gemini-prompt"
+                  class="form-textarea"
+                  rows="3"
+                  placeholder="Gemini 모델에게 지시할 나레이션 말투 및 억양 지침을 적어주세요."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- CK3 로그 경로 수동 설정 -->
+            <div class="form-row log-path-row">
+              <label class="setting-label">CK3 debug.log 경로</label>
+              <div class="path-input-group">
+                <input
+                  type="text"
+                  id="input-custom-log-path"
+                  class="form-input"
+                  readonly
+                  placeholder="자동 감지됨 (변경을 원하시면 우측 버튼 클릭)"
+                />
+                <button type="button" id="btn-browse-log" class="btn btn-secondary">
+                  찾아보기...
+                </button>
+              </div>
+            </div>
+
+            <!-- 테스트 낭독 섹션 -->
+            <div class="test-speech-bar">
+              <button type="button" id="btn-test-speech" class="btn btn-gold">
+                🎙️ 현재 설정으로 목소리 테스트
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button id="btn-save-settings" class="btn btn-primary">
+              설정 저장 및 적용
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 숨겨진 오디오 재생 엘리먼트 -->
+    <audio id="tts-audio-player" preload="auto"></audio>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

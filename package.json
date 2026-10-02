@@ -1,0 +1,26 @@
+{
+  "name": "ck3-tts-companion",
+  "version": "1.0.0",
+  "description": "Crusader Kings 3 실시간 음성(TTS) 나레이션 컴패니언 데스크톱 애플리케이션",
+  "main": "./out/main/index.js",
+  "author": "BlackOlf",
+  "license": "CC-BY-NC-SA-4.0",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^2.26.0",
+    "chokidar": "^4.0.3",
+    "es-hangul": "^2.4.0",
+    "msedge-tts": "^2.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "electron": "^34.2.0",
+    "electron-vite": "^3.1.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}
