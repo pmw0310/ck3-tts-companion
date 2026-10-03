@@ -250,17 +250,18 @@ window = {
 						# CK3 TTS Companion: 서신 낭독 버튼 및 F 단축키
 						button_round = {
 							name = "tts_speak_button"
-							size = { 30 30 }
+							size = { 36 36 }
 							raw_tooltip = "TTS 서신 낭독 (단축키: F)"
 							shortcut = "army_split_half"
 
 							button_icon = {
 								texture = "gfx/interface/icons/flat_icons/play_sound.dds"
-								size = { 18 18 }
+								size = { 24 24 }
 								parentanchor = center
+								alwaystransparent = yes
 							}
 
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
 						}
 					}
 

@@ -1,0 +1,232 @@
+######################################################
+############## INTERACTION NOTIFICATION ##############
+######################################################
+
+window = {
+	name = "call_ally_interaction_notification_window"
+	parentanchor = top|hcenter
+	position = { 0 90 }
+	layer = middle
+
+	using = Window_Background
+	using = Window_Decoration_Warfare
+
+	state = {
+		name = _show
+		trigger_on_create = yes
+		using = Animation_FadeIn_Quick
+		using = Sound_WindowShow_Standard
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+	}
+
+	state = {
+		name = _hide
+		using = Animation_FadeOut_Quick
+		using = Sound_WindowHide_Standard
+		on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+	}
+
+	# CK3 TTS Companion: F 단축키로 다시 낭독
+	button = {
+		name = "tts_replay_shortcut_call_ally"
+		size = { 0 0 }
+		visible = yes
+		shortcut = "army_split_half"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+	}
+
+	vbox = {
+		using = Window_Margins
+		set_parent_size_to_minimum = yes
+
+		header_pattern_interaction = {
+			layoutpolicy_horizontal = expanding
+
+			blockoverride "header_text"
+			{
+				text = "[CharacterInteractionNotificationWindow.GetContextName]"
+			}
+
+			blockoverride "button_close"
+			{
+				onclick = "[CallAllyInteractionNotificationWindow.Close]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+			}
+
+			# CK3 TTS Companion: 전쟁 소집 서신 낭독 버튼
+			button_round = {
+				name = "tts_speak_button"
+				position = { 10 10 }
+				parentanchor = top|left
+				size = { 36 36 }
+				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
+				shortcut = "army_split_half"
+
+				button_icon = {
+					alwaystransparent = yes
+					parentanchor = center
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+				}
+
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+			}
+		}
+
+		vbox_sender_portrait_message = {
+			layoutpolicy_horizontal = expanding
+		}
+
+		hbox = {
+			name = "allies"
+			datacontext = [CallAllyInteractionNotificationWindow.GetPrimaryAlly]
+			visible = [Character.IsValid]
+			layoutpolicy_horizontal = expanding
+			margin = { 0 5 }
+			margin_left = 15
+			spacing = 10
+
+			background = {
+				using = Background_Area
+			}
+
+			widget = {
+				size = { 80 0 }
+				layoutpolicy_vertical = expanding
+
+				vbox = {
+					text_single = {
+						name = "allies_label"
+						layoutpolicy_horizontal = expanding
+						text = "WAR_ALLIES"
+
+						max_width = 90
+						using = Font_Size_Medium
+					}
+				}
+			}
+
+			hbox = {
+				datacontext = "[CallAllyInteractionNotificationWindow.GetPrimaryAlly]"
+				portrait_head_small = { }
+			}
+
+			scrollarea = {
+				layoutpolicy_horizontal = expanding
+				minimumsize = { 0 80 }
+				scrollbarpolicy_vertical = always_off
+				scrollbarpolicy_horizontal = as_needed
+
+				scrollbar_horizontal = {
+					using = Scrollbar_Horizontal
+				}
+
+				scrollwidget = {
+					dynamicgridbox = {
+						name = "secondary_allies_grid"
+						datamodel = "[CallAllyInteractionNotificationWindow.GetSecondaryAllies]"
+
+						item = {
+							portrait_head_small = {
+								name = "character_button"
+							}
+						}
+					}
+				}
+
+			}
+
+			expand = {}
+		}
+
+		hbox = {
+			name = "enemies"
+			datacontext = [CallAllyInteractionNotificationWindow.GetPrimaryEnemy]
+			visible = [Character.IsValid]
+			layoutpolicy_horizontal = expanding
+			margin = { 15 5 }
+			spacing = 10
+
+			background = {
+				using = Background_Area
+			}
+
+			widget = {
+				size = { 80 0 }
+				layoutpolicy_vertical = expanding
+
+				vbox = {
+					text_single = {
+						name = "enemies_label"
+						layoutpolicy_horizontal = expanding
+						text = "WAR_ENEMIES"
+
+						max_width = 90
+						using = Font_Size_Medium
+					}
+				}
+			}
+
+			hbox = {
+				datacontext = "[CallAllyInteractionNotificationWindow.GetPrimaryEnemy]"
+				portrait_head_small = { }
+			}
+
+			scrollarea = {
+				layoutpolicy_horizontal = expanding
+				minimumsize = { 0 80 }
+				scrollbarpolicy_vertical = always_off
+				scrollbarpolicy_horizontal = as_needed
+
+				scrollbar_horizontal = {
+					using = Scrollbar_Horizontal
+				}
+
+				scrollwidget = {
+					dynamicgridbox = {
+						name = "secondary_allies_grid"
+						datamodel = "[CallAllyInteractionNotificationWindow.GetSecondaryEnemies]"
+
+						item = {
+							portrait_head_small = {
+								name = "character_button"
+							}
+						}
+					}
+				}
+
+			}
+
+			expand = {}
+		}
+
+		vbox_character_interaction_effects = {
+			visible = "[CharacterInteractionNotificationWindow.GetCharacterInteraction.ShowEffectsInNotification]"
+			datacontext = "[CharacterInteractionNotificationWindow.GetEffectsDescription]"
+		}
+
+		hbox = {
+			margin = { 0 10 }
+			spacing = 15
+
+			button_standard = {
+				name = "reject_button"
+				text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
+				onclick = "[CharacterInteractionNotificationWindow.Reject]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				enabled = "[CharacterInteractionNotificationWindow.CanReject]"
+				using = tooltip_ws
+				default_format = "#medium"
+			}
+
+			button_primary = {
+				name = "accept_button"
+				text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
+				onclick = "[CharacterInteractionNotificationWindow.Accept]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
+			}
+		}
+	}
+
+}

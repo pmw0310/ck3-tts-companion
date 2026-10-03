@@ -8,9 +8,11 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s!]+/gi,  // ONCLICK:CHARACTER,12345 등 비대괄호 태그
   /\bEMP\b/gi,                                               // EMP 강조 서식
-  /\bL;?\s*/g,                                               // L 및 L; 링크/영지 마커
+  /\b[LEIP];\s*/gi,                                          // L;, E;, I;, P; 링크/개념/아이콘 마커
+  /(?:^|\s)[IEPL];?\s+(?=[가-힣a-zA-Z0-9])/g,                // 단독 I, E, L 마커 (예: "I 승전")
+  /\b(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
-  /#(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #color_gray, #! 등 서식 태그
+  /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
   /@[a-zA-Z0-9_!]+!/g,                                      // @skill_martial_icon! 등 아이콘
   /\b(?:indent_newline:\d|positive_value|negative_value)\b/g, // 들여쓰기 및 수치 변수
   /\b(?:COLOR_[A-Z0-9_]+)\b/g,                              // 컬러 상수
@@ -198,7 +200,10 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 5. 한국어 조사 태그 자동 보정
   cleaned = resolveKoreanParticles(cleaned);
 
-  // 6. 문장 부호 앞 공백 및 연속 공백 정리
+  // 6. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|이|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지)(?=[^\w가-힣]|$)/g, '$1$2');
+
+  // 7. 문장 부호 앞 공백 및 연속 공백 정리
   return cleaned
     .replace(/\s+([,.?!])/g, '$1')
     .replace(/\s{2,}/g, ' ')
@@ -213,27 +218,40 @@ export const sanitizeCk3Text = (rawText: string): string => {
  */
 export const extractCk3EventsFromChunk = (
   chunk: string
-): Array<{ title: string; content: string }> => {
-  const events: Array<{ title: string; content: string }> = [];
-  const candidateEvents: Array<{ title: string; content: string }> = [];
-  const triggerPrefix = '[CK3_TTS]';
+): Array<{ title: string; content: string; isForceReplay?: boolean }> => {
+  const events: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
+  const candidateEvents: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
   const endTag = '[CK3_TTS_END]';
 
   let searchIndex = 0;
   while (searchIndex < chunk.length) {
-    const startIndex = chunk.indexOf(triggerPrefix, searchIndex);
-    if (startIndex === -1) {
+    const forceIndex = chunk.indexOf('[CK3_TTS_FORCE]', searchIndex);
+    const standardIndex = chunk.indexOf('[CK3_TTS]', searchIndex);
+
+    let startIndex = -1;
+    let isForceReplay = false;
+    let prefixLength = 0;
+
+    if (forceIndex !== -1 && (standardIndex === -1 || forceIndex <= standardIndex)) {
+      startIndex = forceIndex;
+      isForceReplay = true;
+      prefixLength = '[CK3_TTS_FORCE]'.length;
+    } else if (standardIndex !== -1) {
+      startIndex = standardIndex;
+      isForceReplay = false;
+      prefixLength = '[CK3_TTS]'.length;
+    } else {
       break;
     }
 
     // 1. 앞선 로그가 ERROR: 로 시작하는 경우 패러독스 파서가 따옴표 등으로 잘라버린 불완전 에러 라인이므로 스킵
     const prefixContext = chunk.slice(Math.max(0, startIndex - 15), startIndex);
     if (prefixContext.includes('ERROR:')) {
-      searchIndex = startIndex + triggerPrefix.length;
+      searchIndex = startIndex + prefixLength;
       continue;
     }
 
-    const contentStart = startIndex + triggerPrefix.length;
+    const contentStart = startIndex + prefixLength;
 
     // 2. 반드시 [CK3_TTS_END] 닫는 태그가 온전히 존재하는 블록만 유효한 이벤트로 채택
     const endTagIndex = chunk.indexOf(endTag, contentStart);
@@ -262,7 +280,7 @@ export const extractCk3EventsFromChunk = (
       }
 
       if (content.length > 0) {
-        candidateEvents.push({ title, content });
+        candidateEvents.push({ title, content, isForceReplay });
       }
     }
   }

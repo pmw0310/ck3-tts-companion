@@ -11,6 +11,40 @@ export type LogWatcherHandle = {
   readonly getPath: () => string;
 };
 
+/** 중복 감시 캐시 최대 저장 개수 (메모리 팽창 방지) */
+const MAX_CACHE_SIZE = 100;
+/** 중복 감시 캐시 유효 시간 (30초) */
+const CACHE_TTL_MS = 30000;
+
+/**
+ * 최근 이벤트 캐시에 항목을 기록하고 만료되었거나 상한을 초과한 항목을 안전하게 정리합니다.
+ * @param cache - 최근 이벤트 캐시 Map
+ * @param content - 이벤트 본문
+ * @param timestamp - 현재 시각 (ms)
+ */
+const updateRecentEventCache = (
+  cache: Map<string, number>,
+  content: string,
+  timestamp: number
+): void => {
+  cache.set(content, timestamp);
+
+  // 1. 만료 항목 정리
+  for (const [cachedContent, time] of cache.entries()) {
+    if (timestamp - time > CACHE_TTL_MS) {
+      cache.delete(cachedContent);
+    }
+  }
+
+  // 2. 최대 개수 초과 시 가장 오래된 항목(FIFO) 삭제
+  if (cache.size > MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) {
+      cache.delete(oldestKey);
+    }
+  }
+};
+
 /**
  * 지정된 CK3 debug.log 및 동일 디렉터리의 error.log를 실시간 동시 감시하며, 이벤트 텍스트가 추가되면 콜백을 실행합니다.
  * @param logFilePath - 기본 감시할 debug.log의 절대 경로
@@ -116,18 +150,19 @@ export const startWatchingLogFile = (
 
           for (const event of newEvents) {
             const lastSeenTime = recentEventCache.get(event.content);
-            if (lastSeenTime && now - lastSeenTime < 3000) {
+            if (!event.isForceReplay && lastSeenTime && now - lastSeenTime < 3000) {
               continue;
             }
 
-            recentEventCache.set(event.content, now);
+            updateRecentEventCache(recentEventCache, event.content, now);
 
             const eventMessage: Ck3EventMessage = {
               id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
               timestamp: now,
               title: event.title,
               content: event.content,
-              rawText: textAfterStop
+              rawText: textAfterStop,
+              isForceReplay: event.isForceReplay
             };
             onEvent(eventMessage);
           }
@@ -139,27 +174,21 @@ export const startWatchingLogFile = (
         const now = Date.now();
 
         for (const event of parsedEvents) {
-          // 콘솔 echo 및 다중 로그(debug.log/error.log 동시 기록) 중복 낭독 방지 (2초 쿨다운)
+          // 콘솔 echo 및 다중 로그(debug.log/error.log 동시 기록) 중복 낭독 방지 (수동 강제 재낭독 제외)
           const lastSeenTime = recentEventCache.get(event.content);
-          if (lastSeenTime && now - lastSeenTime < 2000) {
+          if (!event.isForceReplay && lastSeenTime && now - lastSeenTime < 2000) {
             continue;
           }
 
-          recentEventCache.set(event.content, now);
-
-          // 만료된 캐시 정리 (30초 경과 항목)
-          for (const [cachedContent, timestamp] of recentEventCache.entries()) {
-            if (now - timestamp > 30000) {
-              recentEventCache.delete(cachedContent);
-            }
-          }
+          updateRecentEventCache(recentEventCache, event.content, now);
 
           const eventMessage: Ck3EventMessage = {
             id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
             timestamp: now,
             title: event.title,
             content: event.content,
-            rawText: bufferText
+            rawText: bufferText,
+            isForceReplay: event.isForceReplay
           };
           onEvent(eventMessage);
         }

@@ -255,13 +255,11 @@ template TooltipLockedFrame
 container = {
 	name = "ProvinceTooltipWidget"
 	visible = no
-	size = { 0 0 }
 	filter_mouse = none
 	alwaystransparent = yes
 
 	flowcontainer = {
 		visible = no
-		size = { 0 0 }
 
 		widget = {
 			name = "background"

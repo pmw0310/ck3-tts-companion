@@ -4,18 +4,24 @@ import type {
   EdgeVoiceName,
   GeminiModelName,
   GeminiVoiceName,
+  SynthesizeResult,
   TtsProviderType
 } from '@/shared/types';
 import { splitIntoSentences } from '@/shared/sentenceSplitter';
+import { shouldPlayEvent } from '@/shared/eventDeduplicator';
 
 /** Gemini 어조 프리셋 레코드 */
 const GEMINI_TONE_PRESETS: Record<string, string> = {
   narrator:
-    '너는 크루세이더 킹즈 3의 장엄하고 비장한 중세 궁정 나레이터다. 주어진 중세 역사 사건 텍스트를 감정을 듬뿍 실어 진중하고 몰입감 넘치게 읽어라.',
+    'A solemn, deep, and majestic medieval court chronicler reciting the annals of history. Speak in a grave, resonant, and measured cadence with deep historical gravitas. Do not sound modern or cheerful; deliver every word with historical weight and quiet reverence. 진중하고 장엄한 중세 사관의 목소리로 낭독하라.',
   warrior:
-    '너는 수많은 전장을 누빈 백전노장의 성전 기사다. 거칠고 단호하며 묵직한 군인의 목소리로 사건을 전하라.',
+    'A battle-hardened crusader knight commander and veteran warrior. Heavy, firm, commanding, and resolute delivery with deep authority forged in iron and blood. 거칠고 단호하며 묵직한 백전노장의 목소리로 읽어라.',
   schemer:
-    '너는 왕의 귀에 비밀을 속삭이는 음흉하고 냉철한 궁정 모략가다. 낮고 은밀하며 긴장감 넘치는 목소리로 낭독하라.'
+    'A sinister, cunning, and low-voiced royal spymaster whispering in candlelit chambers. Low, secretive, chilling, and conspiratorial tone with tense pauses. 낮고 은밀하며 서늘한 궁정 모략가의 어조로 읽어라.',
+  clergy:
+    'A devout and venerable medieval archbishop reciting holy scripture and Latin blessings. Reverent, transcendent, peaceful, and deeply devout. 성스럽고 경건한 대주교의 기도문 낭독 어조로 읽어라.',
+  emperor:
+    'An awe-inspiring sovereign monarch proclaiming a royal edict from the high throne. Regal, commanding, grand, and commanding absolute respect. 위엄 있고 당당한 제왕의 칙령 낭독 어조로 읽어라.'
 };
 
 /** 테스트용 샘플 중세 나레이션 문장 */
@@ -36,7 +42,7 @@ const state: RendererState = {
     edgeVoice: 'ko-KR-SunHiNeural',
     geminiApiKey: '',
     geminiModel: 'gemini-3.8-flash-tts',
-    geminiVoice: 'Aoede',
+    geminiVoice: 'Charon',
     geminiSystemPrompt: GEMINI_TONE_PRESETS.narrator ?? '',
     speechRate: '+0%',
     speechVolume: '+0%',
@@ -105,11 +111,28 @@ const setAudioPlayingState = (isPlaying: boolean): void => {
 };
 
 /**
+ * 사용자 설정의 speechRate(예: '+20%', '-10%')를 HTML Audio 엘리먼트의 playbackRate로 실시간 동기화합니다.
+ */
+const syncAudioPlaybackRate = (): void => {
+  const rateStr = state.settings.speechRate ?? '+0%';
+  const parsedPercent = parseInt(rateStr.replace('%', ''), 10);
+  if (!Number.isNaN(parsedPercent)) {
+    const factor = Math.max(0.5, Math.min(2.0, 1 + parsedPercent / 100));
+    audioPlayer.playbackRate = factor;
+  } else {
+    audioPlayer.playbackRate = 1.0;
+  }
+};
+
+/**
  * 사용자에게 일관된 테마의 인앱 토스트 알림을 표시합니다.
  * @param message - 표시할 안내 문구
- * @param type - 알림 종류 ('info' | 'error')
+ * @param type - 알림 종류 ('info' | 'error' | 'warning')
  */
-const showToast = (message: string, type: 'info' | 'error' = 'info'): void => {
+const showToast = (
+  message: string,
+  type: 'info' | 'error' | 'warning' = 'info'
+): void => {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -138,6 +161,27 @@ let lastAutoSpokenTime = 0;
 let lastStoppedText = '';
 let lastStoppedTime = 0;
 let isQueueActive = false;
+let lastFallbackToastTime = 0;
+
+/** 대체 TTS 엔진 폴백 알림 토스트 표시 쿨다운 (6초) */
+const FALLBACK_TOAST_COOLDOWN_MS = 6000;
+
+/**
+ * TTS 엔진 오류(예: 할당량 초과)로 Edge-TTS 대체 재생이 발생했을 때 토스트 알림을 표시합니다.
+ * @param result - 음성 합성 결과 객체
+ */
+const notifyFallbackIfNeeded = (result: SynthesizeResult): void => {
+  if (result.isFallback) {
+    const now = Date.now();
+    if (now - lastFallbackToastTime > FALLBACK_TOAST_COOLDOWN_MS) {
+      lastFallbackToastTime = now;
+      showToast(
+        '⚠️ Gemini 할당량 초과(또는 오류)로 기본 Edge-TTS로 대체 재생되었습니다.',
+        'warning'
+      );
+    }
+  }
+};
 
 /**
  * 진행 중인 모든 음성 재생 및 비동기 합성을 즉시 중단하고 오디오 자원을 해제합니다.
@@ -177,16 +221,15 @@ const speakText = async (textToRead: string): Promise<void> => {
     return;
   }
 
-  // 2. 단일 문장이면 즉시 단일 합성 및 재생
-  if (sentences.length === 1) {
-    const singleSentence = sentences[0];
-    if (!singleSentence) {
-      return;
-    }
+  // 2. Gemini 엔진이거나 단일 문장인 경우:
+  // Gemini 엔진은 문장을 쪼개지 않고 전체 서사를 단일 트랙으로 합성하여 서사의 기승전결과 중세 감정선을 100% 보존합니다.
+  if (state.settings.provider === 'gemini' || sentences.length === 1) {
+    const textToSynthesize =
+      state.settings.provider === 'gemini' ? textToRead : (sentences[0] ?? textToRead);
 
     try {
       const result = await window.electronAPI.synthesizeSpeech({
-        text: singleSentence,
+        text: textToSynthesize,
         settings: state.settings
       });
 
@@ -199,8 +242,11 @@ const speakText = async (textToRead: string): Promise<void> => {
         return;
       }
 
-      const mime = result.mimeType ?? 'audio/mp3';
+      notifyFallbackIfNeeded(result);
+
+      const mime = result.mimeType ?? 'audio/wav';
       audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
+      syncAudioPlaybackRate();
       await audioPlayer.play();
       setAudioPlayingState(true);
     } catch (error: unknown) {
@@ -247,8 +293,11 @@ const speakText = async (textToRead: string): Promise<void> => {
         return;
       }
 
+      notifyFallbackIfNeeded(result);
+
       const mime = result.mimeType ?? 'audio/mp3';
       audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
+      syncAudioPlaybackRate();
       await audioPlayer.play();
       setAudioPlayingState(true);
 
@@ -342,28 +391,40 @@ const renderHistoryList = (): void => {
 const handleNewEvent = (event: Ck3EventMessage): void => {
   const now = Date.now();
 
-  // 1. 창 닫기(Stop)가 발생한 직후 5초 이내에 방금 닫힌 동일 이벤트가 다시 들어오면 완전 차단
-  if (event.content === lastStoppedText && now - lastStoppedTime < 5000) {
-    return;
-  }
+  // 이벤트 중복 및 재진입 방어 검사 (현재 재생 중 동일 이벤트, 60초 쿨다운, 닫힌 창 방어)
+  const shouldPlay = shouldPlayEvent(
+    event,
+    {
+      isPlaying: state.isPlaying,
+      currentEvent: state.currentEvent,
+      lastAutoSpokenText,
+      lastAutoSpokenTime,
+      lastStoppedText,
+      lastStoppedTime
+    },
+    now
+  );
 
-  // 2. 직전에 자동 낭독한 이벤트와 완전히 같고 5초 이내면 무시
-  if (event.content === lastAutoSpokenText && now - lastAutoSpokenTime < 5000) {
+  if (!shouldPlay) {
+    console.info('ℹ️ [Event Deduplicator] 중복 또는 재생 중인 동일 이벤트 무시됨:', event.title);
     return;
   }
 
   state.currentEvent = event;
-  state.history.unshift(event);
-  if (state.history.length > 20) {
-    state.history.pop();
+
+  // 최신 히스토리와 동일한 내용이 연달아 중복 적재되지 않도록 방어
+  if (state.history.length === 0 || state.history[0]?.content !== event.content) {
+    state.history.unshift(event);
+    if (state.history.length > 20) {
+      state.history.pop();
+    }
+    renderHistoryList();
   }
 
   currentEventTitle.textContent = event.title ?? '새로운 사건 발생';
   currentEventContent.textContent = event.content;
   currentEventContent.classList.remove('placeholder-text');
   btnReplay.disabled = false;
-
-  renderHistoryList();
 
   if (state.settings.isAutoPlayEnabled) {
     lastAutoSpokenText = event.content;
@@ -464,14 +525,38 @@ const bindEventListeners = (): void => {
     renderHistoryList();
   });
 
-  // 모달 열기/닫기
+  // 설정 모달 열기/닫기 제어
+  /**
+   * 설정 모달 창을 화면에서 닫습니다.
+   */
+  const closeSettingsModal = (): void => {
+    settingsModal.classList.add('modal-hidden');
+  };
+
   btnOpenSettings.addEventListener('click', () => {
     syncSettingsForm();
     settingsModal.classList.remove('modal-hidden');
   });
 
-  btnCloseSettings.addEventListener('click', () => {
-    settingsModal.classList.add('modal-hidden');
+  // 닫기 버튼 클릭 시 모달 닫기
+  btnCloseSettings.addEventListener('click', (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeSettingsModal();
+  });
+
+  // 모달 바깥 어두운 배경(Backdrop) 클릭 시 닫기
+  settingsModal.addEventListener('click', (event: MouseEvent) => {
+    if (event.target === settingsModal) {
+      closeSettingsModal();
+    }
+  });
+
+  // ESC 키 입력 시 모달 닫기
+  window.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !settingsModal.classList.contains('modal-hidden')) {
+      closeSettingsModal();
+    }
   });
 
   // 엔진 탭 전환
@@ -540,6 +625,7 @@ const bindEventListeners = (): void => {
       });
 
       if (result.isSuccess && result.audioBase64) {
+        notifyFallbackIfNeeded(result);
         audioPlayer.src = `data:${result.mimeType ?? 'audio/mp3'};base64,${result.audioBase64}`;
         await audioPlayer.play();
         setAudioPlayingState(true);
@@ -577,7 +663,7 @@ const bindEventListeners = (): void => {
     if (isSaved) {
       state.settings = updatedSettings;
       syncSettingsForm();
-      settingsModal.classList.add('modal-hidden');
+      closeSettingsModal();
       showToast('✅ 설정이 안전하게 저장 및 적용되었습니다.', 'info');
     } else {
       showToast('❌ 설정 저장에 실패했습니다. 입력값을 확인해 주세요.', 'error');

@@ -10,6 +10,7 @@ window = {
 	using = Window_Background
 	using = Window_Decoration_Spike
 
+
 	state = {
 		name = _show
 		using = Animation_FadeIn_Quick
@@ -29,7 +30,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
 	}
 
 	vbox = {
@@ -54,15 +55,15 @@ window = {
 				name = "tts_replay_button"
 				position = { 10 10 }
 				parentanchor = top|left
-				size = { 30 30 }
+				size = { 36 36 }
 				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
 
 				button_icon = {
 					alwaystransparent = yes
 					parentanchor = center
-					size = { 20 20 }
-					texture = "gfx/interface/icons/icon_sound.dds"
+					size = { 24 24 }
+					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
 				}
 			}
 		}

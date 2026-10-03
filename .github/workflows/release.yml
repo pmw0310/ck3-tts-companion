@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Portable (.exe)
+    runs-on: windows-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and Package (Windows Portable)
+        run: npm run pack:win
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-assets
+          path: dist/*.exe
+
+  build-macos:
+    name: Build macOS Zip (.zip)
+    runs-on: macos-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and Package (macOS Zip)
+        run: npm run pack:mac
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-assets
+          path: dist/*.zip
+
+  bundle-mod:
+    name: Bundle CK3 Mod (.zip)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Mod Zip Package
+        run: |
+          mkdir -p mod-dist
+          TAG_OR_REF="${{ github.ref_name }}"
+          [ -z "$TAG_OR_REF" ] && TAG_OR_REF="latest"
+          cd ck3-mod
+          zip -r "../mod-dist/ck3-mod-${TAG_OR_REF}.zip" .
+
+      - name: Upload Mod Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mod-assets
+          path: mod-dist/*.zip
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-windows, build-macos, bundle-mod]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Assets
+        run: ls -lh release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+          body: |
+            ### 🎮 배포 파일 안내
+            - **Windows**: `CK3-TTS-Companion-<version>.exe` (설치 없이 바로 실행되는 단일 포터블 파일)
+            - **macOS (Apple Silicon M1/M2/M3/M4)**: `CK3-TTS-Companion-<version>-mac-arm64.zip` (압축 해제 후 즉시 실행)
+            - **macOS (Intel Mac)**: `CK3-TTS-Companion-<version>-mac-x64.zip` (압축 해제 후 즉시 실행)
+            - **CK3 게임 모드**: `ck3-mod-<version>.zip` (`Paradox Interactive/Crusader Kings III/mod` 폴더에 압축 해제)
+
+            ---
+
+            ### 💡 첫 실행 시 보안 경고 해결 안내 (무인증서 오픈소스 배포)
+            본 프로그램은 개인 무료 오픈소스 프로젝트로 고가의 유료 인증서가 포함되어 있지 않습니다.
+            첫 실행 시 운영체제 보안 경고가 나타나면 다음 방법으로 한 번만 실행을 허용해 주세요:
+
+            - **🪟 Windows (SmartScreen 경고)**:
+              - *"Windows의 PC 보호"* 파란색 창에서 **[추가 정보]**를 클릭한 뒤 나타나는 **[실행]** 버튼을 클릭하세요.
+            - **🍎 macOS (Gatekeeper 경고)**:
+              - *"악성 소프트웨어..."* 또는 *"확인되지 않은 개발자..."* 경고가 나타나면 **[시스템 설정] -> [개인정보 보호 및 보안]** 하단의 **[확인 없이 열기]**를 클릭하거나, 앱 아이콘에서 **[우클릭(두 손가락 탭)] -> [열기]**를 선택하세요.

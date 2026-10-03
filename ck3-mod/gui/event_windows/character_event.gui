@@ -965,12 +965,13 @@ window = {
 				shortcut = "army_split_half"
 
 				button_icon = {
-					texture = "gfx/interface/icons/icon_sound.dds"
+					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
 					size = { 26 26 }
 					parentanchor = center
+					alwaystransparent = yes
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
 			}
 
 			icon = {

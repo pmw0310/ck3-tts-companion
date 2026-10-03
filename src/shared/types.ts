@@ -5,7 +5,7 @@ export type SupportedPlatform = 'darwin' | 'win32' | 'linux';
 export type TtsProviderType = 'edge' | 'gemini' | 'system';
 
 /** 지원하는 Gemini 음성 모델 프리셋 */
-export type GeminiVoiceName = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede';
+export type GeminiVoiceName = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede' | 'Algenib';
 
 /** 지원하는 Gemini 3.8 전용 TTS 모델 식별자 */
 export type GeminiModelName =
@@ -25,6 +25,7 @@ export type Ck3EventMessage = {
   readonly title?: string;
   readonly content: string;
   readonly rawText: string;
+  readonly isForceReplay?: boolean;
 };
 
 /** 애플리케이션 전체 설정 인터페이스 */
@@ -53,6 +54,8 @@ export type SynthesizeResult = {
   readonly audioBase64?: string;
   readonly mimeType?: string;
   readonly errorMessage?: string;
+  readonly isFallback?: boolean;
+  readonly fallbackReason?: string;
 };
 
 /** 렌더러와 메인 간의 IPC API 정의 */

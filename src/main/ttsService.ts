@@ -97,8 +97,45 @@ export const synthesizeWithEdgeTts = async (
 /**
  * Google Gemini 3.8 전용 TTS 모델을 사용하여 감정이 실린 오디오를 생성합니다.
  * @param text - 낭독할 이벤트 텍스트
- * @param settings - Gemini API 키 및 음성 설정
- * @returns WAV Base64 데이터 및 MIME 타입
+/**
+ * Gemini TTS의 중세 역사극 몰입도를 극대화하기 위해 자연스러운 문장 간 호흡 태그(<short pause>)와 톤 디렉션 태그를 결합합니다.
+ * @param text - 원본 낭독 텍스트
+ * @param prompt - 사용자가 선택한 어조 지침
+ * @returns 호흡 태그와 감정 연기 태그가 가미된 텍스트
+ */
+const enrichTextForGeminiMedievalImmersion = (text: string, prompt?: string): string => {
+  let enriched = text.trim();
+
+  // 1. 문장 마침표/물음표/느낌표 뒤에 자연스러운 호흡(<short pause>) 배치
+  enriched = enriched.replace(/([.!?])\s+/g, '$1 <short pause> ');
+
+  // 2. 어조 프롬프트에 맞는 첫머리 Director Tag 결정
+  const promptLower = (prompt ?? '').toLowerCase();
+  let directorTag = '[solemn]';
+
+  if (promptLower.includes('warrior') || promptLower.includes('knight') || promptLower.includes('기사')) {
+    directorTag = '[grave resolve]';
+  } else if (promptLower.includes('spymaster') || promptLower.includes('schemer') || promptLower.includes('모략')) {
+    directorTag = '[whispering]';
+  } else if (promptLower.includes('clergy') || promptLower.includes('holy') || promptLower.includes('사제')) {
+    directorTag = '[reverent]';
+  } else if (promptLower.includes('majesty') || promptLower.includes('emperor') || promptLower.includes('황제')) {
+    directorTag = '[regal and imposing]';
+  }
+
+  // 첫머리에 태그가 아직 없으면 주입
+  if (!enriched.startsWith('[')) {
+    enriched = `${directorTag} ${enriched}`;
+  }
+
+  return enriched;
+};
+
+/**
+ * Google GenAI SDK를 사용하여 텍스트를 음성(WAV/PCM)으로 합성합니다.
+ * @param text - 합성할 텍스트
+ * @param settings - 사용자 앱 설정
+ * @returns base64 인코딩된 오디오 데이터 및 MIME 타입
  */
 export const synthesizeWithGemini = async (
   text: string,
@@ -127,7 +164,7 @@ export const synthesizeWithGemini = async (
     speechConfig: {
       voiceConfig: {
         prebuiltVoiceConfig: {
-          voiceName: settings.geminiVoice || 'Aoede'
+          voiceName: settings.geminiVoice || 'Charon'
         }
       }
     }
@@ -137,6 +174,13 @@ export const synthesizeWithGemini = async (
     baseConfig.systemInstruction = effectiveSystemPrompt;
   }
 
+  // Gemini TTS 모델의 스타일 및 연기 디렉션을 전달하기 위해 speechMetadata.style 활용
+  const enrichedText = enrichTextForGeminiMedievalImmersion(text, userPrompt);
+  const userPart: Record<string, unknown> = { text: enrichedText };
+  if (userPrompt && userPrompt.length > 0) {
+    userPart.speechMetadata = { style: userPrompt };
+  }
+
   let response;
   try {
     response = await ai.models.generateContent({
@@ -144,15 +188,20 @@ export const synthesizeWithGemini = async (
       contents: [
         {
           role: 'user',
-          parts: [{ text }]
+          parts: [userPart]
         }
       ],
       config: baseConfig
     });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    // Developer instruction 미지원 에러인 경우 systemInstruction을 제거하고 자동 재시도
-    if (errMsg.includes('Developer instruction') && baseConfig.systemInstruction) {
+    // Developer instruction 또는 speechMetadata 미지원 에러인 경우 파라미터를 정리하고 안전하게 재시도
+    if (
+      (errMsg.includes('Developer instruction') && baseConfig.systemInstruction) ||
+      errMsg.includes('speechMetadata') ||
+      errMsg.includes('tag') ||
+      errMsg.includes('pause')
+    ) {
       delete baseConfig.systemInstruction;
       response = await ai.models.generateContent({
         model,
@@ -215,8 +264,9 @@ const maskApiKeyInMessage = (message: string, sensitiveKey?: string): string => 
 
 /**
  * 활성화된 설정에 따라 적합한 TTS 엔진을 호출하여 오디오 데이터를 생성합니다.
+ * 만약 Gemini TTS 호출 실패(할당량 초과 429, 네트워크 오류 등)가 발생하면 기본 Edge-TTS로 안전하게 자동 폴백합니다.
  * @param request - 합성 요청 객체
- * @returns 합성 결과 객체
+ * @returns 합성 결과 객체 (폴백 시 isFallback 및 fallbackReason 포함)
  */
 export const processTtsRequest = async (
   request: SynthesizeRequest
@@ -230,17 +280,48 @@ export const processTtsRequest = async (
     };
   }
 
-  try {
-    if (settings.provider === 'gemini') {
+  if (settings.provider === 'gemini') {
+    try {
       const result = await synthesizeWithGemini(text, settings);
       return {
         isSuccess: true,
         audioBase64: result.audioBase64,
         mimeType: result.mimeType
       };
-    }
+    } catch (geminiError: unknown) {
+      const rawErrorMsg =
+        geminiError instanceof Error ? geminiError.message : '알 수 없는 Gemini TTS 오류';
+      const maskedError = maskApiKeyInMessage(rawErrorMsg, settings.geminiApiKey);
+      console.warn(
+        '⚠️ [TTS Service]: Gemini 합성 실패(할당량 초과 등), 기본 Edge-TTS로 자동 대체합니다:',
+        maskedError
+      );
 
-    // 기본값: Edge-TTS
+      try {
+        // 기본 Edge-TTS로 자동 폴백
+        const fallbackResult = await synthesizeWithEdgeTts(text, settings);
+        console.log('✅ [TTS Service]: 기본 Edge-TTS 자동 대체 재생 성공');
+        return {
+          isSuccess: true,
+          audioBase64: fallbackResult.audioBase64,
+          mimeType: fallbackResult.mimeType,
+          isFallback: true,
+          fallbackReason: maskedError
+        };
+      } catch (fallbackError: unknown) {
+        const rawFallbackMsg =
+          fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
+        console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
+        return {
+          isSuccess: false,
+          errorMessage: `Gemini 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
+        };
+      }
+    }
+  }
+
+  // 기본값: Edge-TTS
+  try {
     const result = await synthesizeWithEdgeTts(text, settings);
     return {
       isSuccess: true,
@@ -249,12 +330,11 @@ export const processTtsRequest = async (
     };
   } catch (error: unknown) {
     const rawErrorMsg =
-      error instanceof Error ? error.message : '알 수 없는 TTS 변환 오류';
-    const errorMsg = maskApiKeyInMessage(rawErrorMsg, settings.geminiApiKey);
-    console.error('❌ [TTS Service Error]:', errorMsg);
+      error instanceof Error ? error.message : '알 수 없는 Edge-TTS 변환 오류';
+    console.error('❌ [TTS Service Error]:', rawErrorMsg);
     return {
       isSuccess: false,
-      errorMessage: errorMsg
+      errorMessage: rawErrorMsg
     };
   }
 };

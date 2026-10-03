@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.blackolf.ck3ttscompanion",
+  "productName": "CK3 TTS Companion",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "out/**/*",
+    "package.json",
+    "resources/**/*"
+  ],
+  "win": {
+    "icon": "build/icon.png",
+    "target": [
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}.${ext}",
+    "verifyUpdateCodeSignature": false
+  },
+  "mac": {
+    "icon": "build/icon.icns",
+    "target": [
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
+    "identity": null
+  }
+}

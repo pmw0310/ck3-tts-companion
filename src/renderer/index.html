@@ -22,7 +22,7 @@
       <!-- 상단 네비게이션 헤더 -->
       <header class="app-header">
         <div class="brand">
-          <div class="brand-crest">⚔️</div>
+          <img src="./assets/app-icon.png" alt="CK3 TTS Emblem" class="brand-crest-img" />
           <div class="brand-text">
             <h1 class="brand-title">CK3 TTS COMPANION</h1>
             <span class="brand-subtitle">실시간 인게임 나레이션 보이스 엔진</span>
@@ -114,7 +114,7 @@
       <div id="settings-modal" class="modal-backdrop modal-hidden">
         <div class="modal-dialog glass-panel">
           <div class="modal-header">
-            <h3 class="modal-title">⚔️ 나레이션 및 음성 엔진 설정</h3>
+            <h3 class="modal-title">⚙️ 나레이션 및 음성 엔진 설정</h3>
             <button id="btn-close-settings" class="btn-close" aria-label="닫기">✕</button>
           </div>
 
@@ -180,20 +180,23 @@
               <div class="form-row">
                 <label for="select-gemini-voice" class="setting-label">Gemini 보이스</label>
                 <select id="select-gemini-voice" class="form-select">
-                  <option value="Aoede">Aoede (장엄하고 신비로운 나레이션)</option>
-                  <option value="Charon">Charon (깊고 중후한 군주/노학자)</option>
-                  <option value="Fenrir">Fenrir (거칠고 박력 있는 전사/기사)</option>
-                  <option value="Puck">Puck (영민하고 빠른 모략가/가신)</option>
-                  <option value="Kore">Kore (기품 있는 귀족/왕비)</option>
+                  <option value="Charon">Charon (추천 - 깊고 중후한 대서사관 / 원로 재상)</option>
+                  <option value="Algenib">Algenib (신규 추천 - 스튜디오급 역사 스토리텔러 / 사관)</option>
+                  <option value="Fenrir">Fenrir (거칠고 박력 있는 성전 기사 / 군주)</option>
+                  <option value="Kore">Kore (기품 있고 엄숙한 왕비 / 수녀원장)</option>
+                  <option value="Puck">Puck (영민하고 빠른 궁정 첩보관 / 모략가)</option>
+                  <option value="Aoede">Aoede (맑고 온화한 궁정 공주 / 외교관)</option>
                 </select>
               </div>
 
               <div class="form-row">
                 <label for="select-gemini-tone" class="setting-label">나레이터 어조 프리셋</label>
                 <select id="select-gemini-tone" class="form-select">
-                  <option value="narrator">장엄한 역사 대하드라마 궁정 나레이터</option>
+                  <option value="narrator">장엄한 역사 대하드라마 궁정 사관 (기본 권장)</option>
                   <option value="warrior">비장하고 거친 전장의 성전 기사</option>
                   <option value="schemer">낮고 은밀한 음흉한 궁정 모략가</option>
+                  <option value="clergy">성스럽고 경건한 대주교의 기도문</option>
+                  <option value="emperor">위엄 있고 당당한 제왕의 칙령</option>
                   <option value="custom">직접 프롬프트 작성...</option>
                 </select>
               </div>
@@ -223,6 +226,18 @@
                 <button type="button" id="btn-browse-log" class="btn btn-secondary">
                   찾아보기...
                 </button>
+            </div>
+
+            <!-- CK3 모드 썸네일 및 동기화 상태 -->
+            <div class="form-row mod-preview-row">
+              <label class="setting-label">연동 CK3 모드 (패러독스 런처)</label>
+              <div class="mod-preview-box">
+                <img src="./assets/mod-thumbnail.png" alt="Mod Thumbnail" class="mod-thumbnail-img" />
+                <div class="mod-preview-details">
+                  <div class="mod-title">CK3 TTS Companion Bridge</div>
+                  <div class="mod-status-text">✅ 패러독스 게임 모드 폴더 동기화 완료</div>
+                  <div class="mod-subtext">런처 모드 플레이셋에서 본 모드를 활성화해 주세요.</div>
+                </div>
               </div>
             </div>
 

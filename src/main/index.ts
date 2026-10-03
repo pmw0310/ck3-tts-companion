@@ -17,9 +17,9 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   edgeVoice: 'ko-KR-SunHiNeural',
   geminiApiKey: '',
   geminiModel: 'gemini-3.8-flash-tts',
-  geminiVoice: 'Aoede',
+  geminiVoice: 'Charon',
   geminiSystemPrompt:
-    '너는 크루세이더 킹즈 3의 장엄하고 비장한 중세 궁정 나레이터다. 주어진 중세 역사 사건 텍스트를 감정을 듬뿍 실어 진중하고 몰입감 넘치게 읽어라.',
+    'A solemn, deep, and majestic medieval court chronicler reciting the annals of history. Speak in a grave, resonant, and measured cadence with deep historical gravitas. Do not sound modern or cheerful; deliver every word with historical weight and quiet reverence. 진중하고 장엄한 중세 사관의 목소리로 낭독하라.',
   speechRate: '+0%',
   speechVolume: '+0%',
   customLogPath: null,
@@ -138,15 +138,35 @@ const restartWatcher = (): void => {
 };
 
 /**
+ * 애플리케이션 아이콘 파일의 절대 경로를 탐색하여 반환합니다.
+ * @returns icon.png 파일의 절대 경로
+ */
+const getAppIconPath = (): string => {
+  const candidates = [
+    path.join(__dirname, '../../resources/icon.png'),
+    path.join(__dirname, '../resources/icon.png'),
+    path.join(process.cwd(), 'resources/icon.png')
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return path.join(__dirname, '../../resources/icon.png');
+};
+
+/**
  * Electron 메인 브라우저 창을 생성합니다.
  */
 const createMainWindow = (): void => {
+  const iconPath = getAppIconPath();
   mainWindow = new BrowserWindow({
     width: 780,
     height: 620,
     minWidth: 600,
     minHeight: 460,
     title: 'CK3 TTS Companion',
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     backgroundColor: '#0c0f17',
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
@@ -245,8 +265,23 @@ const initializeIpcAndShortcuts = (): void => {
 };
 
 // Electron 앱 라이프사이클 이벤트
+app.setName('CK3 TTS Companion');
+
 app.whenReady().then(() => {
   currentSettings = loadStoredSettings();
+
+  // macOS Dock 아이콘 및 프로세스 명칭 명시적 설정
+  if (process.platform === 'darwin' && app.dock) {
+    const iconPath = getAppIconPath();
+    if (fs.existsSync(iconPath)) {
+      try {
+        app.dock.setIcon(iconPath);
+      } catch (dockError: unknown) {
+        console.warn('⚠️ [App] Dock 아이콘 적용 실패:', dockError);
+      }
+    }
+  }
+
   initializeIpcAndShortcuts();
   createMainWindow();
   restartWatcher();
