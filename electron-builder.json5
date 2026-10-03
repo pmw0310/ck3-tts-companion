@@ -26,11 +26,26 @@
     "icon": "build/icon.icns",
     "target": [
       {
-        "target": "zip",
-        "arch": ["x64", "arm64"]
+        "target": ["dmg", "zip"],
+        "arch": ["arm64", "x64"]
       }
     ],
     "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
     "identity": null
+  },
+  "dmg": {
+    "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
   }
 }

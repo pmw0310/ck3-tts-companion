@@ -57,14 +57,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and Package (macOS Zip)
+      - name: Build and Package (macOS DMG & Zip)
         run: npm run pack:mac
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-assets
-          path: dist/*.zip
+          path: |
+            dist/*.dmg
+            dist/*.zip
 
   bundle-mod:
     name: Bundle CK3 Mod (.zip)
@@ -108,9 +110,12 @@ jobs:
           generate_release_notes: true
           body: |
             ### 🎮 배포 파일 안내
-            - **Windows**: `CK3-TTS-Companion-<version>.exe` (설치 없이 바로 실행되는 단일 포터블 파일)
-            - **macOS (Apple Silicon M1/M2/M3/M4)**: `CK3-TTS-Companion-<version>-mac-arm64.zip` (압축 해제 후 즉시 실행)
-            - **macOS (Intel Mac)**: `CK3-TTS-Companion-<version>-mac-x64.zip` (압축 해제 후 즉시 실행)
+            - **macOS 설치 디스크 (.dmg 추천)**:
+              - **Apple Silicon (M1/M2/M3/M4)**: `CK3.TTS.Companion-<version>-mac-arm64.dmg` (더블 클릭 후 Applications 폴더로 드래그)
+              - **Intel Mac**: `CK3.TTS.Companion-<version>-mac-x64.dmg` (더블 클릭 후 Applications 폴더로 드래그)
+            - **macOS 포터블 압축 (.zip)**:
+              - `CK3.TTS.Companion-<version>-mac-arm64.zip` / `CK3.TTS.Companion-<version>-mac-x64.zip`
+            - **Windows**: `CK3.TTS.Companion-<version>.exe` (설치 없이 바로 실행되는 단일 포터블 파일)
             - **CK3 게임 모드**: `ck3-mod-<version>.zip` (`Paradox Interactive/Crusader Kings III/mod` 폴더에 압축 해제)
 
             ---
@@ -119,7 +124,9 @@ jobs:
             본 프로그램은 개인 무료 오픈소스 프로젝트로 고가의 유료 인증서가 포함되어 있지 않습니다.
             첫 실행 시 운영체제 보안 경고가 나타나면 다음 방법으로 한 번만 실행을 허용해 주세요:
 
+            - **🍎 macOS (Gatekeeper 경고 / 손상 메시지 해결)**:
+              - **DMG 설치 권장**: DMG 파일을 열고 앱 아이콘을 **응용 프로그램(Applications) 폴더로 드래그하여 복사한 뒤 실행**하세요.
+              - *"확인되지 않은 개발자..."* 경고가 나타나면: 앱 아이콘에서 **[우클릭(두 손가락 탭)] -> [열기]**를 선택하거나, **[시스템 설정] -> [개인정보 보호 및 보안]** 하단의 **[확인 없이 열기]**를 클릭하세요.
+              - 여전히 차단될 경우: 터미널에서 `xattr -cr /Applications/"CK3 TTS Companion.app"` 한 줄을 실행하면 즉시 격리가 해제됩니다.
             - **🪟 Windows (SmartScreen 경고)**:
               - *"Windows의 PC 보호"* 파란색 창에서 **[추가 정보]**를 클릭한 뒤 나타나는 **[실행]** 버튼을 클릭하세요.
-            - **🍎 macOS (Gatekeeper 경고)**:
-              - *"악성 소프트웨어..."* 또는 *"확인되지 않은 개발자..."* 경고가 나타나면 **[시스템 설정] -> [개인정보 보호 및 보안]** 하단의 **[확인 없이 열기]**를 클릭하거나, 앱 아이콘에서 **[우클릭(두 손가락 탭)] -> [열기]**를 선택하세요.
