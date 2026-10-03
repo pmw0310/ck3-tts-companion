@@ -43,7 +43,6 @@ window = {
 
 	state = {
 		name = _show
-		trigger_on_create = yes
 		using = Animation_FadeIn_Quick
 
 		position = { 0 120 }

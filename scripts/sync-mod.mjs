@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -104,6 +105,38 @@ const syncDirectory = (src, dest) => {
   }
 };
 
+/**
+ * 패러독스 런처의 SQLite 데이터베이스(launcher-v2.sqlite)에 로컬 모드 썸네일 경로를 자동 주입합니다.
+ * @param {string} targetModDir - 실제 CK3 모드 설치 경로
+ */
+const syncLauncherThumbnail = (targetModDir) => {
+  const homeDir = os.homedir();
+  const candidates = [
+    path.join(homeDir, 'Documents', 'Paradox Interactive', 'Crusader Kings III', 'launcher-v2.sqlite'),
+    path.join(homeDir, 'OneDrive', 'Documents', 'Paradox Interactive', 'Crusader Kings III', 'launcher-v2.sqlite'),
+    path.join(homeDir, '.local', 'share', 'Paradox Interactive', 'Crusader Kings III', 'launcher-v2.sqlite')
+  ];
+
+  const dbPath = candidates.find((p) => fs.existsSync(p));
+  if (!dbPath) {
+    return;
+  }
+
+  const thumbnailPath = path.join(targetModDir, 'thumbnail.png');
+  if (!fs.existsSync(thumbnailPath)) {
+    return;
+  }
+
+  try {
+    const escapedThumbPath = thumbnailPath.replace(/'/g, "''");
+    const sql = `UPDATE mods SET thumbnailPath = '${escapedThumbPath}' WHERE dirPath LIKE '%ck3-tts-companion%';`;
+    execFileSync('sqlite3', [dbPath, sql], { stdio: 'pipe' });
+    console.log('🖼️ [Mod Sync] 패러독스 런처 DB에 로컬 모드 썸네일 경로를 자동 등록했습니다.');
+  } catch (error) {
+    console.warn('⚠️ [Mod Sync] 패러독스 런처 썸네일 자동 주입 건너뜀 (sqlite3 CLI 미지원 등)');
+  }
+};
+
 const main = () => {
   console.log('🔄 [Mod Sync] CK3 모드 자동 동기화 시작...');
   if (!fs.existsSync(sourceModDir)) {
@@ -117,6 +150,7 @@ const main = () => {
 
   try {
     syncDirectory(sourceModDir, targetModDir);
+    syncLauncherThumbnail(targetModDir);
     console.log('✅ [Mod Sync] 실제 게임 모드 폴더로 모든 파일이 성공적으로 동기화되었습니다!');
   } catch (error) {
     console.error('❌ [Mod Sync] 동기화 중 오류 발생:', error);

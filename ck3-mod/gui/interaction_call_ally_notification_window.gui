@@ -13,7 +13,6 @@ window = {
 
 	state = {
 		name = _show
-		trigger_on_create = yes
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
 		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"

@@ -902,7 +902,55 @@ types BigWindowTypes {
 						text = "[EventWindowData.GetTitle]"
 						default_format = "#high;glow_color:{0.1,0.1,0.1,1.0}"
 						using = Font_Type_Flavor
-₩
+						max_width = 950
+
+						alpha = 0
+
+						state = {
+							name = start
+							trigger_on_create = yes
+							delay = 0.2
+							using = Animation_Curve_Default
+							alpha = 1
+							duration = 0.5
+						}
+					}
+
+					button_round = {
+						name = "tts_speak_button"
+						parentanchor = vcenter|right
+						position = { -20 0 }
+						size = { 42 42 }
+						raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+						shortcut = "army_split_half"
+
+						button_icon = {
+							texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+							size = { 26 26 }
+							parentanchor = center
+							alwaystransparent = yes
+						}
+
+						onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+					}
+
+					icon = {
+						name = "theme_icon"
+						position = { 28 -19 }
+						size = { 90 90 }
+						texture = "[EventWindowData.GetThemeIcon]"
+
+						modify_texture = {
+							name = overlay
+							texture = "gfx/interface/component_effects/effect_blue_shine.dds"
+							blend_mode = colordodge
+							translate_uv = { 0.6 0 }
+						}
+
+						state = {
+							name = right
+							next = left
+
 							duration = 2
 							bezier = { .8 .18 .96 .05 }
 
@@ -977,6 +1025,18 @@ types BigWindowTypes {
 	}
 
 	type scheme_conclusion_window = big_event_window {
+		state = {
+			name = tts_scheme_conclusion_auto_play
+			trigger_on_create = yes
+			delay = 0.1
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+		}
+
+		state = {
+			name = _hide
+			on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+		}
+
 		blockoverride "window_decoration" {
 			widget = {
 				parentanchor = bottom|hcenter
@@ -1177,6 +1237,24 @@ types BigWindowTypes {
 						alpha = 1
 						duration = 0.3
 					}
+				}
+
+				button_round = {
+					name = "tts_speak_button"
+					parentanchor = vcenter|right
+					position = { -35 0 }
+					size = { 42 42 }
+					raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+					shortcut = "army_split_half"
+
+					button_icon = {
+						texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+						size = { 26 26 }
+						parentanchor = center
+						alwaystransparent = yes
+					}
+
+					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
 				}
 			}
 		}

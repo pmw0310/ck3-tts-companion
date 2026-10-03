@@ -64,9 +64,15 @@ export const isValidNarrativeText = (text: string): boolean => {
     return false;
   }
 
-  // 3. 한글, 영문, 숫자 등 유의미한 자연어 글자가 최소 2자 이상 존재하는지 검사
+  // 3. 한글, 영문, 숫자 등 유의미한 자연어 글자 검사
+  // - 한글은 1글자만으로도 완전한 단어(예: "개", "말", "꿈", "꽃")가 성립하므로 1자 이상 허용
+  // - 영문/숫자 단독 파편(예: 'I', 'x', '1')을 거르기 위해 한글이 없으면 2자 이상 필요
+  const hasHangul = /[가-힣]/.test(trimmed);
   const meaningfulCharMatch = trimmed.match(/[가-힣a-zA-Z0-9]/g);
-  if (!meaningfulCharMatch || meaningfulCharMatch.length < 2) {
+  if (!meaningfulCharMatch) {
+    return false;
+  }
+  if (!hasHangul && meaningfulCharMatch.length < 2) {
     return false;
   }
 
@@ -273,7 +279,9 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = resolveKoreanParticles(cleaned);
 
   // 7. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|이|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다)(?=[^\w가-힣]|$)/g, '$1$2');
+  // 단, '이'는 지시관형사(예: "이 녀석", "이 결정")로 쓰일 수 있으므로 뒤에 또 다른 한글 단어가 오는 경우(\s+[가-힣])에는 앞 단어와 붙이지 않음
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다)(?=[^\w가-힣]|$)/g, '$1$2');
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+이(?=[,.?!;:)]|$)/g, '$1이');
 
   // 8. 문장 부호 앞 공백 및 연속 공백 정리
   return cleaned
