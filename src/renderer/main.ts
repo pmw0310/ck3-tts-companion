@@ -7,11 +7,13 @@ import type {
   SynthesizeResult,
   TtsProviderType
 } from '@/shared/types';
-import { splitIntoSentences } from '@/shared/sentenceSplitter';
+import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
 import { shouldPlayEvent } from '@/shared/eventDeduplicator';
 
 /** Gemini 어조 프리셋 레코드 */
 const GEMINI_TONE_PRESETS: Record<string, string> = {
+  trailer:
+    'A calm, intellectual, deep, and slightly dry gravelly baritone with a weary yet dignified delivery, reminiscent of the Crusader Kings trailer narrator and Kim Kitsuragi. Speak in a composed, measured, and deadpan solemnity with quiet authority. Do not shout, do not sound cheerful or melodramatic. Deliver every line with dry gravitas and philosophical composure. 차분하고 냉철하며 묵직한 중저음의 지적인 어조로 낭독하라.',
   narrator:
     'A solemn, deep, and majestic medieval court chronicler reciting the annals of history. Speak in a grave, resonant, and measured cadence with deep historical gravitas. Do not sound modern or cheerful; deliver every word with historical weight and quiet reverence. 진중하고 장엄한 중세 사관의 목소리로 낭독하라.',
   warrior:
@@ -60,6 +62,8 @@ const logStatusText = document.getElementById('log-status-text') as HTMLSpanElem
 const logPathDisplay = document.getElementById('log-path-display') as HTMLSpanElement;
 const providerBadge = document.getElementById('provider-badge') as HTMLSpanElement;
 const audioVisualizer = document.getElementById('audio-visualizer') as HTMLDivElement;
+const ttsStatusIndicator = document.getElementById('tts-status-indicator') as HTMLDivElement;
+const ttsStatusText = document.getElementById('tts-status-text') as HTMLSpanElement;
 
 const currentEventTitle = document.getElementById('current-event-title') as HTMLHeadingElement;
 const currentEventContent = document.getElementById('current-event-content') as HTMLDivElement;
@@ -94,20 +98,78 @@ const customPromptWrapper = document.getElementById('custom-prompt-wrapper') as 
 const textareaGeminiPrompt = document.getElementById('textarea-gemini-prompt') as HTMLTextAreaElement;
 const inputCustomLogPath = document.getElementById('input-custom-log-path') as HTMLInputElement;
 
+/** TTS UI 낭독/합성 상태 타입 */
+type TtsUiStatus = 'idle' | 'synthesizing' | 'playing' | 'error';
+
 /**
- * 오디오 재생 시작 상태를 UI에 반영합니다.
+ * TTS 음성 합성 및 재생 상태를 메인 카드 UI(스피너, 상태 텍스트, 비주얼라이저, 버튼)에 동기화합니다.
+ * @param status - 변경할 상태 ('idle' | 'synthesizing' | 'playing' | 'error')
+ * @param detailText - 상태 보조 안내 문구 (선택적)
+ */
+const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
+  state.isPlaying = status === 'playing';
+
+  ttsStatusIndicator.classList.remove(
+    'status-idle',
+    'status-synthesizing',
+    'status-playing',
+    'status-error'
+  );
+  audioVisualizer.classList.remove(
+    'visualizer-idle',
+    'visualizer-synthesizing',
+    'visualizer-playing'
+  );
+
+  switch (status) {
+    case 'synthesizing': {
+      ttsStatusIndicator.classList.add('status-synthesizing');
+      const defaultText =
+        state.settings.provider === 'gemini'
+          ? 'Gemini AI 음성 생성 중...'
+          : '음성 합성 중...';
+      ttsStatusText.textContent = detailText ?? defaultText;
+      audioVisualizer.classList.add('visualizer-synthesizing');
+      btnStopAudio.disabled = false; // 통신 중에도 중지(취소) 가능!
+      btnReplay.disabled = true;
+      break;
+    }
+
+    case 'playing': {
+      ttsStatusIndicator.classList.add('status-playing');
+      ttsStatusText.textContent = detailText ?? '낭독 중';
+      audioVisualizer.classList.add('visualizer-playing');
+      btnStopAudio.disabled = false;
+      btnReplay.disabled = true;
+      break;
+    }
+
+    case 'error': {
+      ttsStatusIndicator.classList.add('status-error');
+      ttsStatusText.textContent = detailText ?? '오류 발생';
+      audioVisualizer.classList.add('visualizer-idle');
+      btnStopAudio.disabled = true;
+      btnReplay.disabled = state.currentEvent === null;
+      break;
+    }
+
+    case 'idle':
+    default: {
+      ttsStatusIndicator.classList.add('status-idle');
+      ttsStatusText.textContent = '대기 중';
+      audioVisualizer.classList.add('visualizer-idle');
+      btnStopAudio.disabled = true;
+      btnReplay.disabled = state.currentEvent === null;
+      break;
+    }
+  }
+};
+
+/**
+ * 하위 호환성을 위해 오디오 재생 시작 상태를 UI에 반영합니다.
  */
 const setAudioPlayingState = (isPlaying: boolean): void => {
-  state.isPlaying = isPlaying;
-  if (isPlaying) {
-    audioVisualizer.classList.remove('visualizer-idle');
-    audioVisualizer.classList.add('visualizer-playing');
-    btnStopAudio.disabled = false;
-  } else {
-    audioVisualizer.classList.remove('visualizer-playing');
-    audioVisualizer.classList.add('visualizer-idle');
-    btnStopAudio.disabled = true;
-  }
+  setTtsUiState(isPlaying ? 'playing' : 'idle');
 };
 
 /**
@@ -160,6 +222,7 @@ let lastAutoSpokenText = '';
 let lastAutoSpokenTime = 0;
 let lastStoppedText = '';
 let lastStoppedTime = 0;
+let lastEventDetectedTime = 0;
 let isQueueActive = false;
 let lastFallbackToastTime = 0;
 
@@ -194,12 +257,12 @@ const stopAudio = (): void => {
   audioPlayer.src = '';
   lastStoppedText = state.currentEvent?.content ?? '';
   lastStoppedTime = Date.now();
-  setAudioPlayingState(false);
+  setTtsUiState('idle');
 };
 
 /**
- * 텍스트 음성 합성을 문장 단위로 분할하여 첫 문장을 0.3초 내에 즉각 재생하고,
- * 나머지 문장은 백그라운드 사전 합성(Prefetch)으로 대기열을 이어달립니다.
+ * 텍스트 음성 합성을 최적 크기의 청크로 분할하여 첫 구절을 1초 내에 즉각 낭독(Fast-Start)하고,
+ * 나머지 구절은 백그라운드 사전 합성(Prefetch Queue)으로 매끄럽게 이어 재생합니다.
  * @param textToRead - 낭독할 전체 텍스트
  */
 const speakText = async (textToRead: string): Promise<void> => {
@@ -214,22 +277,23 @@ const speakText = async (textToRead: string): Promise<void> => {
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
   audioPlayer.src = '';
-  setAudioPlayingState(false);
+  isQueueActive = false;
 
-  const sentences = splitIntoSentences(textToRead);
-  if (sentences.length === 0) {
+  // 2. 합성 시작 UI 상태 즉각 반영 (스피너 표시, 중지 버튼 활성화)
+  setTtsUiState('synthesizing');
+
+  // 3. TTS 엔진 특성에 맞춘 최적 크기 청크 분할 (Gemini: 1~1.5초 즉시 재생 청크 + 묶음 청크)
+  const chunks = splitIntoPlaybackChunks(textToRead, state.settings.provider);
+  if (chunks.length === 0) {
+    setTtsUiState('idle');
     return;
   }
 
-  // 2. Gemini 엔진이거나 단일 문장인 경우:
-  // Gemini 엔진은 문장을 쪼개지 않고 전체 서사를 단일 트랙으로 합성하여 서사의 기승전결과 중세 감정선을 100% 보존합니다.
-  if (state.settings.provider === 'gemini' || sentences.length === 1) {
-    const textToSynthesize =
-      state.settings.provider === 'gemini' ? textToRead : (sentences[0] ?? textToRead);
-
+  // 4. 단일 청크인 경우:
+  if (chunks.length === 1) {
     try {
       const result = await window.electronAPI.synthesizeSpeech({
-        text: textToSynthesize,
+        text: chunks[0]!,
         settings: state.settings
       });
 
@@ -238,32 +302,33 @@ const speakText = async (textToRead: string): Promise<void> => {
       }
 
       if (!result.isSuccess || !result.audioBase64) {
+        setTtsUiState('error', '합성 실패');
         showToast(`[음성 합성 실패] ${result.errorMessage ?? '알 수 없는 오류'}`, 'error');
         return;
       }
 
       notifyFallbackIfNeeded(result);
 
-      const mime = result.mimeType ?? 'audio/wav';
+      const mime = result.mimeType ?? (state.settings.provider === 'gemini' ? 'audio/wav' : 'audio/mp3');
       audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
       syncAudioPlaybackRate();
       await audioPlayer.play();
-      setAudioPlayingState(true);
+      setTtsUiState('playing');
     } catch (error: unknown) {
       if (currentRequestId === activeSpeechRequestId) {
         const errorMsg = error instanceof Error ? error.message : '오디오 재생 실패';
         console.error('❌ [Audio Playback Error]:', errorMsg);
-        setAudioPlayingState(false);
+        setTtsUiState('error');
       }
     }
     return;
   }
 
-  // 3. 다중 문장: 모든 문장을 병렬로 사전 합성(Prefetch) 시작하되, 첫 문장 완성 즉시 재생!
+  // 5. 다중 청크: 모든 청크를 백그라운드로 즉시 요청(Prefetch Queue)하되, 첫 번째 청크 도착 즉시 재생!
   isQueueActive = true;
-  const prefetchQueue = sentences.map((sentence) =>
+  const prefetchQueue = chunks.map((chunk) =>
     window.electronAPI.synthesizeSpeech({
-      text: sentence,
+      text: chunk,
       settings: state.settings
     })
   );
@@ -271,12 +336,14 @@ const speakText = async (textToRead: string): Promise<void> => {
   const playQueueIndex = async (index: number): Promise<void> => {
     if (index >= prefetchQueue.length) {
       isQueueActive = false;
-      setAudioPlayingState(false);
+      setTtsUiState('idle');
       return;
     }
 
     const task = prefetchQueue[index];
     if (!task) {
+      isQueueActive = false;
+      setTtsUiState('idle');
       return;
     }
 
@@ -287,21 +354,21 @@ const speakText = async (textToRead: string): Promise<void> => {
       }
 
       if (!result.isSuccess || !result.audioBase64) {
-        console.warn(`⚠️ [TTS Queue] 문장 ${index + 1} 합성 실패:`, result.errorMessage);
-        // 실패 시 다음 문장으로 건너뛰어 계속 재생
+        console.warn(`⚠️ [TTS Queue] 구절 ${index + 1} 합성 실패:`, result.errorMessage);
+        // 실패 시 다음 구절로 안전하게 건너뛰어 계속 재생
         await playQueueIndex(index + 1);
         return;
       }
 
       notifyFallbackIfNeeded(result);
 
-      const mime = result.mimeType ?? 'audio/mp3';
+      const mime = result.mimeType ?? (state.settings.provider === 'gemini' ? 'audio/wav' : 'audio/mp3');
       audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
       syncAudioPlaybackRate();
       await audioPlayer.play();
-      setAudioPlayingState(true);
+      setTtsUiState('playing');
 
-      // 이번 문장이 끝나면 다음 문장 즉각 연속 재생
+      // 이번 구절이 끝나면 다음 구절 즉각 연속 재생
       const handleEnded = async (): Promise<void> => {
         audioPlayer.removeEventListener('ended', handleEnded);
         if (currentRequestId === activeSpeechRequestId) {
@@ -312,13 +379,12 @@ const speakText = async (textToRead: string): Promise<void> => {
       audioPlayer.addEventListener('ended', handleEnded, { once: true });
     } catch (error: unknown) {
       if (currentRequestId === activeSpeechRequestId) {
-        console.warn(`[TTS Queue] 문장 ${index + 1} 재생 오류:`, error);
+        console.warn(`[TTS Queue] 구절 ${index + 1} 재생 오류:`, error);
         await playQueueIndex(index + 1);
       }
     }
   };
 
-  // 0번(첫 번째 문장)부터 즉각 릴레이 재생 시작!
   await playQueueIndex(0);
 };
 
@@ -390,6 +456,7 @@ const renderHistoryList = (): void => {
  */
 const handleNewEvent = (event: Ck3EventMessage): void => {
   const now = Date.now();
+  lastEventDetectedTime = now;
 
   // 이벤트 중복 및 재진입 방어 검사 (현재 재생 중 동일 이벤트, 60초 쿨다운, 닫힌 창 방어)
   const shouldPlay = shouldPlayEvent(
@@ -499,10 +566,14 @@ const bindEventListeners = (): void => {
   // 오디오 플레이어 완료/에러 이벤트
   audioPlayer.addEventListener('ended', () => {
     if (!isQueueActive) {
-      setAudioPlayingState(false);
+      setTtsUiState('idle');
     }
   });
-  audioPlayer.addEventListener('pause', () => setAudioPlayingState(false));
+  audioPlayer.addEventListener('pause', () => {
+    if (!isQueueActive && !state.isPlaying) {
+      setTtsUiState('idle');
+    }
+  });
 
   // 재낭독 및 중지
   btnReplay.addEventListener('click', () => {
@@ -710,6 +781,11 @@ const initializeApp = async (): Promise<void> => {
 
   // 인게임 창 닫힘 신호 수신 시 즉시 오디오 완전 중단
   window.electronAPI.onStopSpeech(() => {
+    // 결투 등 연속 이벤트 전환 시, 새 이벤트가 들어온 직후(300ms 이내)에 뒤늦게 도착한 이전 창의 잔여 STOP 신호는 무시
+    if (Date.now() - lastEventDetectedTime < 300) {
+      console.info('ℹ️ [Audio] 새 이벤트 직후 유입된 이전 창의 잔여 STOP 신호 무시');
+      return;
+    }
     stopAudio();
   });
 

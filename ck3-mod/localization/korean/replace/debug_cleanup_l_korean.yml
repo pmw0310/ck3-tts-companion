@@ -14,3 +14,13 @@
  DEBUG_VASSAL_INFO:0 ""
  DEBUG_IS_POWERFUL_VASSAL:0 ""
  DEBUG_VASSAL_POWER_VALUE:0 ""
+ EVENT_OPTION_AI_CHANCE:0 ""
+ DEBUG_COLON:0 ""
+ TOGGLE_DEBUG_OPTION_TOOLTIPS:0 ""
+ TOGGLE_DEVELOPER_EVENT_TOOLS:0 ""
+ REGENERATE_EVENT_CONTENTS:0 ""
+ TOGGLE_DATA_SYSTEM:0 ""
+ COPY_EVENT_CONTENTS:0 ""
+ rite_growth.0010.desc.differing.doctrine:0 "그중에서도 가장 눈에 띄는 차이는 [differing_doctrine.GetDescriptiveName( source_rite.GetFaith.Self )](이)다."
+ faith_creation.1021.desc.differing.doctrine:0 "가장 큰 차이는 [differing_doctrine.GetName](이)다."
+

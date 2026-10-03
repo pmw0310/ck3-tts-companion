@@ -16,8 +16,62 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /@[a-zA-Z0-9_!]+!/g,                                      // @skill_martial_icon! 등 아이콘
   /\b(?:indent_newline:\d|positive_value|negative_value)\b/g, // 들여쓰기 및 수치 변수
   /\b(?:COLOR_[A-Z0-9_]+)\b/g,                              // 컬러 상수
+  /\s*\(BUG:.*?\binstead\)/gi,                                // (BUG: ... line: 506 (set_focus), using '...' instead) 엔진 중첩 디버그 경고
+  /\s*\(BUG:[^)]*\)/gi,                                       // (BUG: ...) 단일 괄호 엔진 디버그 경고
+  /\bAI\s*(?:수준|weight)\s*:\s*[\d.]+/gi,                    // AI 수준: 25.00 디버그 가중치 정보
+  /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
   /[_]{2,}/g                                                // 불필요한 연속 언더스코어
 ] as const;
+
+/** Jomini GUI 스크립트 키워드, 함수 호출 및 파싱되지 않은 엔진 코드 패턴 목록 */
+const JOMINI_SCRIPT_GARBAGE_PATTERNS: readonly RegExp[] = [
+  /\bConcatenate\s*\(/i,
+  /\bSelect_CString\s*\(/i,
+  /\bStringIsEmpty\s*\(/i,
+  /\bExecuteConsoleCommand\b/i,
+  /\bEventWindowData\b/i,
+  /\bActivity\.[a-zA-Z0-9_]+/i,
+  /\bPdxGui[a-zA-Z0-9_]*/i,
+  /\b(?:GetTitle|GetDescription|GetOpening|GetContextName|GetNotificationText|GetSignature|GetHeader|GetDeadDesc|GetHeirDesc|GetOutcome|GetWarName|GetSimpleDescription|GetMessage)\b/i,
+  /\beffect\s+debug_log\b/i,
+  /\bdebug_log\s*=/i,
+  /^\s*['"][,\s]/,
+  /['"],\s*[a-zA-Z_]+\s*\(/
+] as const;
+
+/**
+ * 주어진 텍스트가 TTS로 낭독 가능한 정상적인 게임 내러티브 텍스트인지 검증합니다.
+ * Jomini GUI 스크립트 코드, 미평가 엔진 키워드, 단순 기호 나열 등 비정상 데이터는 false를 반환합니다.
+ * @param text - 검증할 텍스트
+ * @returns TTS 낭독에 적합한 유효 문장 여부
+ */
+export const isValidNarrativeText = (text: string): boolean => {
+  if (!text || text.trim().length === 0) {
+    return false;
+  }
+
+  const trimmed = text.trim();
+
+  // 1. Jomini GUI 스크립트 및 엔진 코드 패턴이 포함되어 있는지 검사
+  for (const pattern of JOMINI_SCRIPT_GARBAGE_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return false;
+    }
+  }
+
+  // 2. 따옴표나 쉼표로 시작하는 스크립트 파편 차단
+  if (/^['"][,\s]/.test(trimmed)) {
+    return false;
+  }
+
+  // 3. 한글, 영문, 숫자 등 유의미한 자연어 글자가 최소 2자 이상 존재하는지 검사
+  const meaningfulCharMatch = trimmed.match(/[가-힣a-zA-Z0-9]/g);
+  if (!meaningfulCharMatch || meaningfulCharMatch.length < 2) {
+    return false;
+  }
+
+  return true;
+};
 
 type JosaParticleType =
   | '은/는'
@@ -30,7 +84,8 @@ type JosaParticleType =
   | '이란/란'
   | '이라/라'
   | '이든/든'
-  | '이며/며';
+  | '이며/며'
+  | '이다/다';
 
 type JosaRule = {
   readonly pattern: RegExp;
@@ -40,63 +95,68 @@ type JosaRule = {
 
 /** 한국어 조건부 조사 변환 규칙 목록 */
 const KOREAN_JOSA_RULES: readonly JosaRule[] = [
-  // 1. 은/는
+  // 1. 이다/다 (서술격 조사 - 이/가 규칙보다 앞서 매칭하여 '(이)다'가 '가다'로 오변환되는 것을 원천 방지)
+  {
+    pattern: /\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/,
+    type: '이다/다'
+  },
+  // 2. 은/는
   {
     pattern: /\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/,
     type: '은/는'
   },
-  // 2. 이/가
+  // 3. 이/가 (뒤에 '다'가 오는 서술격 조사는 매칭하지 않도록 lookahead 적용)
   {
-    pattern: /\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?/,
+    pattern: /\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/,
     type: '이/가'
   },
-  // 3. 을/를
+  // 4. 을/를
   {
     pattern: /\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?/,
     type: '을/를'
   },
-  // 4. 와/과
+  // 5. 와/과
   {
     pattern: /\((?:과\s*[/]\s*와|와\s*[/]\s*과|과|와)\)(?:과|와)?/,
     type: '와/과'
   },
-  // 5. 으로서/로서
+  // 6. 으로서/로서
   {
     pattern: /\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/,
     type: '으로/로',
     suffix: '서'
   },
-  // 6. 으로/로
+  // 7. 으로/로
   {
     pattern: /\((?:으\s*[/]\s*로|로\s*[/]\s*으|으|로)\)(?:으|로)?/,
     type: '으로/로'
   },
-  // 7. 아/야
+  // 8. 아/야
   {
     pattern: /\((?:아\s*[/]\s*야|야\s*[/]\s*아|아|야)\)(?:아|야)?/,
     type: '아/야'
   },
-  // 8. 이나/나
+  // 9. 이나/나
   {
     pattern: /\((?:이\s*[/]\s*나|나\s*[/]\s*이|이|나)\)(?:이|나)?/,
     type: '이나/나'
   },
-  // 9. 이라/라
+  // 10. 이라/라
   {
     pattern: /\((?:이\s*[/]\s*라|라\s*[/]\s*이|이|라)\)(?:이|라)?/,
     type: '이라/라'
   },
-  // 10. 이란/란
+  // 11. 이란/란
   {
     pattern: /\((?:이\s*[/]\s*란|란\s*[/]\s*이|이|란)\)(?:이|란)?/,
     type: '이란/란'
   },
-  // 11. 이든/든
+  // 12. 이든/든
   {
     pattern: /\((?:이\s*[/]\s*든|든\s*[/]\s*이|이|든)\)(?:이|든)?/,
     type: '이든/든'
   },
-  // 12. 이며/며
+  // 13. 이며/며
   {
     pattern: /\((?:이\s*[/]\s*며|며\s*[/]\s*이|이|며)\)(?:이|며)?/,
     type: '이며/며'
@@ -137,6 +197,8 @@ const resolveKoreanParticles = (text: string): string => {
         particle = hasBatchim(word) ? '이든' : '든';
       } else if (rule.type === '이며/며') {
         particle = hasBatchim(word) ? '이며' : '며';
+      } else if (rule.type === '이다/다') {
+        particle = hasBatchim(word) ? '이다' : '다';
       } else {
         const withJosa = josa(word, rule.type);
         particle = withJosa.slice(word.length);
@@ -148,15 +210,17 @@ const resolveKoreanParticles = (text: string): string => {
 
   // 2. 앞 단어 매칭에 실패한 독립 잔여 괄호 조사 안전 변환 (Fallback)
   resolved = resolved
+    .replace(/(^|\s)\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/g, '$1다')
+    .replace(/\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/g, '다')
     .replace(/(^|\s)\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/g, '$1는')
-    .replace(/(^|\s)\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?/g, '$1가')
+    .replace(/(^|\s)\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/g, '$1가')
     .replace(/(^|\s)\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?/g, '$1를')
     .replace(/(^|\s)\((?:과\s*[/]\s*와|와\s*[/]\s*과|과|와)\)(?:과|와)?/g, '$1와')
     .replace(/(^|\s)\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/g, '$1로서')
     .replace(/(^|\s)\((?:으\s*[/]\s*로|로\s*[/]\s*으|으|로)\)(?:으|로)?/g, '$1로')
     .replace(/(^|\s)\((?:아\s*[/]\s*야|야\s*[/]\s*아|아|야)\)(?:아|야)?/g, '$1야')
     .replace(/\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/g, '는')
-    .replace(/\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?/g, '가')
+    .replace(/\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/g, '가')
     .replace(/\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?/g, '를')
     .replace(/\((?:과\s*[/]\s*와|와\s*[/]\s*과|과|와)\)(?:과|와)?/g, '와')
     .replace(/\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/g, '로서')
@@ -181,29 +245,37 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 0. 패러독스 엔진 내부 서식/색상 구분용 제어 문자(\x15, ASCII 21 등) 제거
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
-  // 1. CK3 태그 및 콘솔 로그 헤더 제거
+  // 1. 미평가/미치환 스코프 태그를 자연스러운 명사로 치환하거나 제거
+  cleaned = cleaned
+    .replace(/\[[a-zA-Z0-9_]*doctrine[a-zA-Z0-9_.]*(?:\([^)]*\))?(?:\|[a-zA-Z0-9_]+)?\]/gi, '교리')
+    .replace(/\[[a-zA-Z0-9_]*tenet[a-zA-Z0-9_.]*(?:\([^)]*\))?(?:\|[a-zA-Z0-9_]+)?\]/gi, '원리')
+    .replace(/\[[a-zA-Z0-9_]*faith[a-zA-Z0-9_.]*(?:\([^)]*\))?(?:\|[a-zA-Z0-9_]+)?\]/gi, '신앙')
+    .replace(/\[[a-zA-Z0-9_]*culture[a-zA-Z0-9_.]*(?:\([^)]*\))?(?:\|[a-zA-Z0-9_]+)?\]/gi, '문화')
+    .replace(/\[[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+(?:\([^)]*\))?(?:\|[a-zA-Z0-9_]+)?\]/g, ' ');
+
+  // 2. CK3 태그 및 콘솔 로그 헤더 제거
   for (const pattern of CK3_TAG_PATTERNS) {
     cleaned = cleaned.replace(pattern, ' ');
   }
 
-  // 2. 단어 앞의 세미콜론 제거 (예: "; 마이센" -> "마이센")
+  // 3. 단어 앞의 세미콜론 제거 (예: "; 마이센" -> "마이센")
   cleaned = cleaned.replace(/(?:^|\s);\s*/g, ' ');
 
-  // 3. 단어 뒤에 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
+  // 4. 단어 뒤에 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
   cleaned = cleaned.replace(/(?:\s*!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
   cleaned = cleaned.replace(/\s+!\s+/g, ' ');
   cleaned = cleaned.replace(/(?:![\s!]*!)/g, ' ');
 
-  // 4. 줄바꿈(\n)을 단락 간 자연스러운 공백으로 치환
+  // 5. 줄바꿈(\n)을 단락 간 자연스러운 공백으로 치환
   cleaned = cleaned.replace(/\r?\n+/g, ' ');
 
-  // 5. 한국어 조사 태그 자동 보정
+  // 6. 한국어 조사 태그 자동 보정
   cleaned = resolveKoreanParticles(cleaned);
 
-  // 6. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|이|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지)(?=[^\w가-힣]|$)/g, '$1$2');
+  // 7. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|이|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다)(?=[^\w가-힣]|$)/g, '$1$2');
 
-  // 7. 문장 부호 앞 공백 및 연속 공백 정리
+  // 8. 문장 부호 앞 공백 및 연속 공백 정리
   return cleaned
     .replace(/\s+([,.?!])/g, '$1')
     .replace(/\s{2,}/g, ' ')
@@ -264,6 +336,12 @@ export const extractCk3EventsFromChunk = (
     const payload = chunk.slice(contentStart, endTagIndex).trim();
     searchIndex = endTagIndex + endTag.length;
 
+    // 1차: 페이로드 원본 레벨에서 Jomini GUI 스크립트 코드 또는 미평가 표현식 유출 차단
+    if (!isValidNarrativeText(payload)) {
+      console.warn('⚠️ [TextSanitizer] 비정상 GUI 스크립트 페이로드가 감지되어 차단했습니다:', payload.slice(0, 100));
+      continue;
+    }
+
     if (payload.length > 0) {
       let title = '크루세이더 킹즈 3 사건';
       let content = '';
@@ -279,8 +357,11 @@ export const extractCk3EventsFromChunk = (
         content = sanitizeCk3Text(payload);
       }
 
-      if (content.length > 0) {
+      // 2차: 정제된 제목 및 본문이 유효한 내러티브 텍스트인지 최종 검증
+      if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
         candidateEvents.push({ title, content, isForceReplay });
+      } else {
+        console.warn('⚠️ [TextSanitizer] 정제 후 비정상 스크립트/무효 텍스트로 판정되어 차단했습니다:', { title, content });
       }
     }
   }

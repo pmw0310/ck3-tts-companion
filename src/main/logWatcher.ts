@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import chokidar from 'chokidar';
 import type { FSWatcher } from 'chokidar';
 import { extractCk3EventsFromChunk } from '@/main/textSanitizer';
@@ -63,13 +62,8 @@ export const startWatchingLogFile = (
   let watcher: FSWatcher | null = null;
   const recentEventCache = new Map<string, number>();
 
-  // 감시할 파일 목록 구성 (debug.log 및 error.log 동시 감시)
+  // 감시할 파일 목록 구성 (콘솔 명령어의 신뢰할 수 있는 단일 소스인 debug.log만 감시)
   const watchPaths: string[] = [logFilePath];
-  const logDir = path.dirname(logFilePath);
-  const errorLogPath = path.join(logDir, 'error.log');
-  if (!watchPaths.includes(errorLogPath)) {
-    watchPaths.push(errorLogPath);
-  }
 
   // 기존 파일 크기 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
   for (const targetPath of watchPaths) {
@@ -140,12 +134,18 @@ export const startWatchingLogFile = (
 
         // 1. 창 닫힘 신호([CK3_TTS_STOP]) 감지 시
         if (stopIndex !== -1) {
-          onStop?.();
-
           // STOP 태그 이전의 텍스트는 닫힌 창의 잔여물이므로 완전히 버림!
           // 오직 STOP 태그 이후에 연속으로 기록된 진짜 새 이벤트만 파싱
           const textAfterStop = bufferText.slice(stopIndex + stopTag.length);
           const newEvents = extractCk3EventsFromChunk(textAfterStop);
+
+          // 뒤에 신규 이벤트가 없는 순수 창 닫힘일 때만 렌더러에 STOP 신호 전송
+          // 뒤에 신규 이벤트가 즉시 이어지는 경우(결투 라운드 전환 등), 새 이벤트가 자연스럽게 이전 오디오를 대체하므로 STOP 미발화
+          if (newEvents.length === 0) {
+            onStop?.();
+            return;
+          }
+
           const now = Date.now();
 
           for (const event of newEvents) {

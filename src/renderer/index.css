@@ -243,9 +243,75 @@ body {
   font-weight: 500;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(212, 175, 55, 0.15);
-  color: #fef08a;
+  background: var(--gold-glow);
+  color: var(--gold-hover);
   border: 1px solid var(--gold-border);
+}
+
+/* 실시간 TTS 통신 및 낭독 상태 인디케이터 */
+.tts-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tts-status-indicator.status-idle {
+  display: none;
+}
+
+.tts-status-indicator.status-synthesizing {
+  display: inline-flex;
+  background: var(--gold-glow);
+  border: 1px solid var(--gold-border);
+  color: var(--gold-hover);
+  box-shadow: 0 0 10px var(--gold-glow);
+  animation: pulse-glow 1.5s infinite alternate ease-in-out;
+}
+
+.tts-status-indicator.status-playing {
+  display: inline-flex;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #6ee7b7;
+}
+
+.tts-status-indicator.status-error {
+  display: inline-flex;
+  background: rgba(239, 68, 68, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: var(--text-danger);
+}
+
+.status-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--gold-glow);
+  border-top-color: var(--gold-primary);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 4px var(--gold-glow);
+    border-color: var(--gold-border);
+  }
+  to {
+    box-shadow: 0 0 14px var(--gold-glow);
+    border-color: var(--gold-hover);
+  }
 }
 
 /* 오디오 비주얼라이저 */
@@ -269,6 +335,22 @@ body {
 .visualizer-playing .bar:nth-child(3) { animation: bounce 0.9s infinite ease-in-out 0.2s; }
 .visualizer-playing .bar:nth-child(4) { animation: bounce 0.7s infinite ease-in-out 0.15s; }
 .visualizer-playing .bar:nth-child(5) { animation: bounce 0.85s infinite ease-in-out 0.3s; }
+
+/* 통신/합성 중일 때 비주얼라이저 바 물결 펄스 애니메이션 */
+.visualizer-synthesizing .bar {
+  animation: wave-loading 1.2s infinite ease-in-out;
+  background: var(--gold-hover);
+}
+.visualizer-synthesizing .bar:nth-child(1) { animation-delay: 0.0s; }
+.visualizer-synthesizing .bar:nth-child(2) { animation-delay: 0.12s; }
+.visualizer-synthesizing .bar:nth-child(3) { animation-delay: 0.24s; }
+.visualizer-synthesizing .bar:nth-child(4) { animation-delay: 0.36s; }
+.visualizer-synthesizing .bar:nth-child(5) { animation-delay: 0.48s; }
+
+@keyframes wave-loading {
+  0%, 100% { height: 4px; opacity: 0.35; }
+  50% { height: 14px; opacity: 1; }
+}
 
 @keyframes bounce {
   0%, 100% { height: 4px; }

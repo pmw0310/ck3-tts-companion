@@ -113,7 +113,14 @@ const enrichTextForGeminiMedievalImmersion = (text: string, prompt?: string): st
   const promptLower = (prompt ?? '').toLowerCase();
   let directorTag = '[solemn]';
 
-  if (promptLower.includes('warrior') || promptLower.includes('knight') || promptLower.includes('기사')) {
+  if (
+    promptLower.includes('trailer') ||
+    promptLower.includes('트레일러') ||
+    promptLower.includes('kitsuragi') ||
+    promptLower.includes('지적')
+  ) {
+    directorTag = '[calm and measured, dry gravitas]';
+  } else if (promptLower.includes('warrior') || promptLower.includes('knight') || promptLower.includes('기사')) {
     directorTag = '[grave resolve]';
   } else if (promptLower.includes('spymaster') || promptLower.includes('schemer') || promptLower.includes('모략')) {
     directorTag = '[whispering]';

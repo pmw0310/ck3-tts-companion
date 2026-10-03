@@ -848,7 +848,7 @@ window = {
 					alwaystransparent = yes
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(Select_CString( StringIsEmpty(Activity.GetShortNameNoTooltip), EventWindowData.GetTitle, Concatenate(Activity.GetShortNameNoTooltip, Concatenate(': ', EventWindowData.GetTitle)) ), Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"'))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
 			}
 
 			background = {
@@ -1149,7 +1149,7 @@ types ActivityWindowTypes
 		state = {
 			name = activity_new_event_shown
 			on_start = "[PdxGuiTriggerAllAnimations( 'activity_event_appear' )]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(Select_CString( StringIsEmpty(Activity.GetShortNameNoTooltip), EventWindowData.GetTitle, Concatenate(Activity.GetShortNameNoTooltip, Concatenate(': ', EventWindowData.GetTitle)) ), Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"'))))))]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
 		}
 
 		state = {
