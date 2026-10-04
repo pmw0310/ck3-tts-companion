@@ -4,10 +4,12 @@ import type {
   EdgeVoiceName,
   GeminiModelName,
   GeminiVoiceName,
+  SpeakerGender,
   SynthesizeResult,
   TtsProviderType
 } from '@/shared/types';
 import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
+import { splitNarrativeAndDialogue } from '@/shared/narrativeDialogueSplitter';
 import { shouldPlayEvent } from '@/shared/eventDeduplicator';
 
 /** Gemini 어조 프리셋 레코드 */
@@ -49,7 +51,12 @@ const state: RendererState = {
     speechRate: '+0%',
     speechVolume: '+0%',
     customLogPath: null,
-    isAutoPlayEnabled: true
+    isAutoPlayEnabled: true,
+    isAudioDramaEnabled: true,
+    edgeVoiceMale: 'ko-KR-InJoonNeural',
+    edgeVoiceFemale: 'ko-KR-SunHiNeural',
+    geminiVoiceMale: 'Charon',
+    geminiVoiceFemale: 'Kore'
   },
   currentEvent: null,
   history: [],
@@ -97,6 +104,15 @@ const selectGeminiTone = document.getElementById('select-gemini-tone') as HTMLSe
 const customPromptWrapper = document.getElementById('custom-prompt-wrapper') as HTMLDivElement;
 const textareaGeminiPrompt = document.getElementById('textarea-gemini-prompt') as HTMLTextAreaElement;
 const inputCustomLogPath = document.getElementById('input-custom-log-path') as HTMLInputElement;
+
+// 오디오 드라마 모드 엘리먼트
+const chkAudioDrama = document.getElementById('chk-audio-drama') as HTMLInputElement;
+const edgeGenderVoicesGroup = document.getElementById('edge-gender-voices') as HTMLDivElement;
+const selectEdgeVoiceMale = document.getElementById('select-edge-voice-male') as HTMLSelectElement;
+const selectEdgeVoiceFemale = document.getElementById('select-edge-voice-female') as HTMLSelectElement;
+const geminiGenderVoicesGroup = document.getElementById('gemini-gender-voices') as HTMLDivElement;
+const selectGeminiVoiceMale = document.getElementById('select-gemini-voice-male') as HTMLSelectElement;
+const selectGeminiVoiceFemale = document.getElementById('select-gemini-voice-female') as HTMLSelectElement;
 
 /** TTS UI 낭독/합성 상태 타입 */
 type TtsUiStatus = 'idle' | 'synthesizing' | 'playing' | 'error';
@@ -284,11 +300,60 @@ const stopAudio = (): void => {
 };
 
 /**
- * 텍스트 음성 합성을 최적 크기의 청크로 분할하여 첫 구절을 1초 내에 즉각 낭독(Fast-Start)하고,
- * 나머지 구절은 백그라운드 사전 합성(Prefetch Queue)으로 매끄럽게 이어 재생합니다.
- * @param textToRead - 낭독할 전체 텍스트
+ * 주어진 성별과 세그먼트 타입(지문/대화문)에 따른 최적 음성 모델 및 어조 프롬프트를 결정합니다.
+ * @param type - 세그먼트 구분 ('narration' | 'dialogue')
+ * @param gender - 화자 성별 ('male' | 'female' | 'narrator')
+ * @returns 오버라이드할 음성 식별자 및 어조 지침
  */
-const speakText = async (textToRead: string): Promise<void> => {
+const resolveVoiceAndPromptForSegment = (
+  type: 'narration' | 'dialogue',
+  gender?: SpeakerGender
+): { voiceOverride?: string; promptOverride?: string } => {
+  const isGemini = state.settings.provider === 'gemini';
+
+  // 1. 지문(나레이션)이거나 성별이 narrator/미지정인 경우 -> 사관 나레이터 음성
+  if (type === 'narration' || gender === 'narrator' || !gender) {
+    return {
+      voiceOverride: isGemini ? state.settings.geminiVoice : state.settings.edgeVoice,
+      promptOverride: GEMINI_TONE_PRESETS.narrator
+    };
+  }
+
+  // 2. 여성 등장인물 대사인 경우
+  if (gender === 'female') {
+    return {
+      voiceOverride: isGemini
+        ? (state.settings.geminiVoiceFemale || 'Kore')
+        : (state.settings.edgeVoiceFemale || 'ko-KR-SunHiNeural'),
+      promptOverride:
+        'A regal, expressive, and dignified noble lady or queen speaking with emotion and royal composure. 품격 있고 감정이 실린 중세 귀족 여성의 어조로 대사를 말하라.'
+    };
+  }
+
+  // 3. 남성 등장인물 대사인 경우 (male)
+  return {
+    voiceOverride: isGemini
+      ? (state.settings.geminiVoiceMale || 'Charon')
+      : (state.settings.edgeVoiceMale || 'ko-KR-InJoonNeural'),
+    promptOverride:
+      'A resolute, commanding, and proud medieval lord, commander, or king speaking with deep authority. 위엄 있고 단호한 중세 남성 영주/기사의 어조로 대사를 말하라.'
+  };
+};
+
+/**
+ * 텍스트 음성 합성을 최적 크기의 청크/세그먼트로 분할하여 첫 구절을 1초 내에 즉각 낭독(Fast-Start)하고,
+ * 나머지 구절은 백그라운드 사전 합성(Prefetch Queue)으로 매끄럽게 이어 재생합니다.
+ * - 일반 이벤트: 오디오 드라마 모드 활성화 시 지문(사관)과 인물 대사(남/여)를 교차 재생
+ * - 편지 이벤트(letter): 발신자 1인이 작성한 독백 서신이므로 발신자(남/여) 단일 목소리로 편지 전체를 완독
+ * @param textToRead - 낭독할 전체 텍스트
+ * @param speakerGender - 이벤트 메인 화자 성별 ('male' | 'female' | 'narrator')
+ * @param eventType - 이벤트 유형 ('letter' | 'character' | 'default')
+ */
+const speakText = async (
+  textToRead: string,
+  speakerGender?: SpeakerGender,
+  eventType?: 'letter' | 'character' | 'default'
+): Promise<void> => {
   if (!textToRead || textToRead.trim().length === 0) {
     return;
   }
@@ -305,70 +370,124 @@ const speakText = async (textToRead: string): Promise<void> => {
   // 2. 합성 시작 UI 상태 즉각 반영 (스피너 표시, 중지 버튼 활성화)
   setTtsUiState('synthesizing');
 
-  // 3. TTS 엔진 특성에 맞춘 최적 크기 청크 분할 (Gemini: 1~1.5초 즉시 재생 청크 + 묶음 청크)
-  const chunks = splitIntoPlaybackChunks(textToRead, state.settings.provider);
-  if (chunks.length === 0) {
+  // 3. 재생 아이템(텍스트, 음성, 프롬프트) 목록 구성
+  type PlaybackItem = {
+    text: string;
+    voiceOverride?: string;
+    promptOverride?: string;
+  };
+
+  let playbackItems: PlaybackItem[] = [];
+
+  // [편지 이벤트 예외 처리]: 편지는 발신자 1인의 독백 서신이므로, 지문/대사 교차 분기 없이 발신자 단일 보이스로 전체 완독
+  if (eventType === 'letter') {
+    const letterVoiceInfo = resolveVoiceAndPromptForSegment('dialogue', speakerGender);
+    const chunks = splitIntoPlaybackChunks(textToRead, state.settings.provider);
+    playbackItems = chunks.map((chunk) => ({
+      text: chunk,
+      voiceOverride: letterVoiceInfo.voiceOverride,
+      promptOverride: letterVoiceInfo.promptOverride
+    }));
+  }
+  // [일반 이벤트 - 오디오 드라마 모드]: 본문 내 지문(나레이션)과 따옴표 대사를 분리하여 각각 사관 및 인물 목소리 매핑
+  else if (state.settings.isAudioDramaEnabled) {
+    const segments = splitNarrativeAndDialogue(textToRead, speakerGender);
+    if (segments.length > 0) {
+      for (const seg of segments) {
+        const { voiceOverride, promptOverride } = resolveVoiceAndPromptForSegment(
+          seg.type,
+          seg.speakerGender
+        );
+
+        // 지문이 여러 문장으로 길 경우 초기 1초 재생 레이턴시를 위해 서브 청킹 적용
+        if (seg.type === 'narration' && seg.text.length > 80) {
+          const subChunks = splitIntoPlaybackChunks(seg.text, state.settings.provider);
+          for (const chunk of subChunks) {
+            playbackItems.push({
+              text: chunk,
+              voiceOverride,
+              promptOverride
+            });
+          }
+        } else {
+          playbackItems.push({
+            text: seg.text,
+            voiceOverride,
+            promptOverride
+          });
+        }
+      }
+    }
+  }
+
+  // [일반 단일 모드]: 오디오 드라마 모드가 비활성화되었거나 세그먼트가 없는 경우 기본 사관 나레이터 보이스 단일 적용
+  if (playbackItems.length === 0) {
+    const chunks = splitIntoPlaybackChunks(textToRead, state.settings.provider);
+    const { voiceOverride, promptOverride } = resolveVoiceAndPromptForSegment(
+      'narration',
+      'narrator'
+    );
+    playbackItems = chunks.map((chunk) => ({
+      text: chunk,
+      voiceOverride,
+      promptOverride
+    }));
+  }
+
+
+  if (playbackItems.length === 0) {
     setTtsUiState('idle');
     return;
   }
 
-  // 4. 단일 청크인 경우:
-  if (chunks.length === 1) {
-    try {
-      const result = await window.electronAPI.synthesizeSpeech({
-        text: chunks[0]!,
-        settings: state.settings
+  // 4. 동시성 제어 프리페치 파이프라인 (JIT Sequential Pipeline)
+  // Gemini API의 경우 동시 요청(Burst Request) 시 429 Rate Limit(동시성 제한)이 발동하므로,
+  // 첫 청크(index 0)만 즉각 요청하여 빠른 재생(Fast-Start)을 시작하고,
+  // 청크가 재생되는 동안 다음 청크(index + 1)를 1개씩 순차적으로 미리 요청하여 동시성을 항상 1로 유지합니다.
+  isQueueActive = true;
+  const prefetchTasks: Array<Promise<SynthesizeResult> | null> = new Array(playbackItems.length).fill(null);
+
+  const startFetchChunk = (idx: number): Promise<SynthesizeResult> => {
+    if (idx >= playbackItems.length) {
+      return Promise.resolve({
+        isSuccess: false,
+        errorMessage: '청크 인덱스 초과'
       });
-
-      if (currentRequestId !== activeSpeechRequestId) {
-        return;
-      }
-
-      if (!result.isSuccess || !result.audioBase64) {
-        setTtsUiState('error', '합성 실패');
-        showToast(`[음성 합성 실패] ${result.errorMessage ?? '알 수 없는 오류'}`, 'error');
-        return;
-      }
-
-      notifyFallbackIfNeeded(result);
-
-      const mime = result.mimeType ?? (state.settings.provider === 'gemini' ? 'audio/wav' : 'audio/mp3');
-      audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
-      syncAudioPlaybackRate();
-      await audioPlayer.play();
-      setTtsUiState('playing');
-    } catch (error: unknown) {
-      if (currentRequestId === activeSpeechRequestId) {
-        const errorMsg = error instanceof Error ? error.message : '오디오 재생 실패';
-        console.error('❌ [Audio Playback Error]:', errorMsg);
-        setTtsUiState('error');
-      }
     }
-    return;
+    if (prefetchTasks[idx]) {
+      return prefetchTasks[idx]!;
+    }
+    const item = playbackItems[idx]!;
+    const task = window.electronAPI.synthesizeSpeech({
+      text: item.text,
+      settings: state.settings,
+      voiceOverride: item.voiceOverride,
+      promptOverride: item.promptOverride
+    });
+    prefetchTasks[idx] = task;
+    return task;
+  };
+
+  // 첫 번째 청크 즉시 단일 요청 (빠른 1초 Fast-Start)
+  startFetchChunk(0);
+
+  // Edge-TTS의 경우 동시성 제한이 없으므로 다음 청크도 미리 선행 요청 가능
+  if (state.settings.provider === 'edge' && playbackItems.length > 1) {
+    startFetchChunk(1);
   }
 
-  // 5. 다중 청크: 모든 청크를 백그라운드로 즉시 요청(Prefetch Queue)하되, 첫 번째 청크 도착 즉시 재생!
-  isQueueActive = true;
-  const prefetchQueue = chunks.map((chunk) =>
-    window.electronAPI.synthesizeSpeech({
-      text: chunk,
-      settings: state.settings
-    })
-  );
-
-  const playQueueIndex = async (index: number): Promise<void> => {
-    if (index >= prefetchQueue.length) {
+  // 5. 청크 순차 재생 및 재생 중 다음 청크 백그라운드 선행 합성(JIT 바통 터치)
+  const playQueueIndex = async (index: number, consecutiveFailures = 0): Promise<void> => {
+    if (index >= playbackItems.length || consecutiveFailures >= 3) {
+      if (consecutiveFailures >= 3) {
+        console.warn('⚠️ [TTS Queue] 3회 연속 합성 실패로 큐 재생을 안전하게 중단합니다.');
+      }
       isQueueActive = false;
       setTtsUiState('idle');
       return;
     }
 
-    const task = prefetchQueue[index];
-    if (!task) {
-      isQueueActive = false;
-      setTtsUiState('idle');
-      return;
-    }
+    const task = startFetchChunk(index);
 
     try {
       const result = await task;
@@ -378,8 +497,8 @@ const speakText = async (textToRead: string): Promise<void> => {
 
       if (!result.isSuccess || !result.audioBase64) {
         console.warn(`⚠️ [TTS Queue] 구절 ${index + 1} 합성 실패:`, result.errorMessage);
-        // 실패 시 다음 구절로 안전하게 건너뛰어 계속 재생
-        await playQueueIndex(index + 1);
+        // 실패 시 다음 구절로 안전하게 건너뛰어 계속 재생 (연속 실패 카운트 증가)
+        await playQueueIndex(index + 1, consecutiveFailures + 1);
         return;
       }
 
@@ -390,6 +509,12 @@ const speakText = async (textToRead: string): Promise<void> => {
       syncAudioPlaybackRate();
       await audioPlayer.play();
       setTtsUiState('playing');
+
+      // [핵심 최적화]: 현재 청크 재생이 시작되었으므로, 다음 청크(index + 1)를 1개만 미리 요청!
+      // 재생 시간(보통 4~8초) 동안 다음 청크가 조용히 완성되므로 청크 간 간격 없이 즉각 이어집니다.
+      if (index + 1 < playbackItems.length) {
+        startFetchChunk(index + 1);
+      }
 
       // 이번 구절이 끝나면 다음 구절 즉각 연속 재생
       const handleEnded = async (): Promise<void> => {
@@ -460,11 +585,12 @@ const renderHistoryList = (): void => {
     playBtn.innerHTML = '<span>▶</span> 낭독';
     playBtn.title = '이 사건 다시 낭독하기';
     playBtn.addEventListener('click', () => {
+      state.currentEvent = item;
       currentEventTitle.textContent = item.title ?? '크루세이더 킹즈 3 사건';
       currentEventContent.textContent = item.content;
       currentEventContent.classList.remove('placeholder-text');
       btnReplay.disabled = false;
-      speakText(item.content);
+      speakText(item.content, item.speakerGender, item.eventType);
     });
 
     itemEl.appendChild(infoEl);
@@ -474,10 +600,33 @@ const renderHistoryList = (): void => {
 };
 
 /**
- * 새로운 CK3 이벤트를 화면에 표시하고 필요 시 자동 낭독을 시작합니다.
- * @param event - 감지된 이벤트 데이터
+ * 렌더러 화면 자막 및 TTS 처리를 위해 메타데이터 마커 및 파이프 기호를 완전히 정제합니다.
+ * @param text - 원본 텍스트
+ * @returns 화면 표시 및 재생용 순수 텍스트
  */
-const handleNewEvent = (event: Ck3EventMessage): void => {
+const sanitizeDisplayText = (text: string): string => {
+  if (!text) {
+    return '';
+  }
+  return text
+    .replace(/(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '')
+    .replace(/\s*\|{2,}\s*/g, ' ')
+    .replace(/\s*\|\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+};
+
+/**
+ * 새로운 CK3 이벤트를 화면에 표시하고 필요 시 자동 낭독을 시작합니다.
+ * @param rawEvent - 감지된 이벤트 원본 데이터
+ */
+const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
+  const event: Ck3EventMessage = {
+    ...rawEvent,
+    title: sanitizeDisplayText(rawEvent.title ?? ''),
+    content: sanitizeDisplayText(rawEvent.content ?? '')
+  };
+
   const now = Date.now();
   lastEventDetectedTime = now;
 
@@ -519,7 +668,7 @@ const handleNewEvent = (event: Ck3EventMessage): void => {
   if (state.settings.isAutoPlayEnabled) {
     lastAutoSpokenText = event.content;
     lastAutoSpokenTime = now;
-    speakText(event.content);
+    speakText(event.content, event.speakerGender, event.eventType);
   }
 };
 
@@ -543,12 +692,22 @@ const syncSettingsForm = (): void => {
   if (currentProvider === 'gemini') {
     edgeOptionsGroup.classList.add('option-hidden');
     geminiOptionsGroup.classList.remove('option-hidden');
+    edgeGenderVoicesGroup.classList.add('option-hidden');
+    geminiGenderVoicesGroup.classList.remove('option-hidden');
     providerBadge.textContent = 'Gemini 3.8 Flash TTS';
   } else {
     edgeOptionsGroup.classList.remove('option-hidden');
     geminiOptionsGroup.classList.add('option-hidden');
+    edgeGenderVoicesGroup.classList.remove('option-hidden');
+    geminiGenderVoicesGroup.classList.add('option-hidden');
     providerBadge.textContent = 'Edge-TTS';
   }
+
+  chkAudioDrama.checked = state.settings.isAudioDramaEnabled;
+  selectEdgeVoiceMale.value = state.settings.edgeVoiceMale;
+  selectEdgeVoiceFemale.value = state.settings.edgeVoiceFemale;
+  selectGeminiVoiceMale.value = state.settings.geminiVoiceMale;
+  selectGeminiVoiceFemale.value = state.settings.geminiVoiceFemale;
 
   selectEdgeVoice.value = state.settings.edgeVoice;
   const numericRate = parseInt(state.settings.speechRate.replace('%', ''), 10) || 0;
@@ -601,7 +760,11 @@ const bindEventListeners = (): void => {
   // 재낭독 및 중지
   btnReplay.addEventListener('click', () => {
     if (state.currentEvent) {
-      speakText(state.currentEvent.content);
+      speakText(
+        state.currentEvent.content,
+        state.currentEvent.speakerGender,
+        state.currentEvent.eventType
+      );
     }
   });
 
@@ -702,11 +865,16 @@ const bindEventListeners = (): void => {
     const tempSettings: AppSettings = {
       ...state.settings,
       edgeVoice: selectEdgeVoice.value as EdgeVoiceName,
+      edgeVoiceMale: selectEdgeVoiceMale.value as EdgeVoiceName,
+      edgeVoiceFemale: selectEdgeVoiceFemale.value as EdgeVoiceName,
       speechRate,
       geminiApiKey: inputGeminiKey.value.trim(),
       geminiModel: (selectGeminiModel.value as GeminiModelName) ?? 'gemini-3.8-flash-tts',
       geminiVoice: selectGeminiVoice.value as GeminiVoiceName,
-      geminiSystemPrompt: systemPrompt
+      geminiVoiceMale: selectGeminiVoiceMale.value as GeminiVoiceName,
+      geminiVoiceFemale: selectGeminiVoiceFemale.value as GeminiVoiceName,
+      geminiSystemPrompt: systemPrompt,
+      isAudioDramaEnabled: chkAudioDrama.checked
     };
 
     btnTestSpeech.disabled = true;
@@ -732,6 +900,18 @@ const bindEventListeners = (): void => {
     }
   });
 
+  // 오디오 드라마 모드 토글 즉시 반영
+  chkAudioDrama.addEventListener('change', () => {
+    state.settings = { ...state.settings, isAudioDramaEnabled: chkAudioDrama.checked };
+    window.electronAPI.saveSettings(state.settings);
+    showToast(
+      chkAudioDrama.checked
+        ? '🎭 오디오 드라마 모드(지문/대사 교차 낭독)가 활성화되었습니다.'
+        : '🎙️ 일반 단일 보이스 모드로 전환되었습니다.',
+      'info'
+    );
+  });
+
   // 설정 저장
   btnSaveSettings.addEventListener('click', async () => {
     const val = parseInt(rangeSpeechRate.value, 10);
@@ -745,12 +925,17 @@ const bindEventListeners = (): void => {
     const updatedSettings: AppSettings = {
       ...state.settings,
       edgeVoice: selectEdgeVoice.value as EdgeVoiceName,
+      edgeVoiceMale: selectEdgeVoiceMale.value as EdgeVoiceName,
+      edgeVoiceFemale: selectEdgeVoiceFemale.value as EdgeVoiceName,
       speechRate,
       geminiApiKey: inputGeminiKey.value.trim(),
       geminiModel: (selectGeminiModel.value as GeminiModelName) ?? 'gemini-3.8-flash-tts',
       geminiVoice: selectGeminiVoice.value as GeminiVoiceName,
+      geminiVoiceMale: selectGeminiVoiceMale.value as GeminiVoiceName,
+      geminiVoiceFemale: selectGeminiVoiceFemale.value as GeminiVoiceName,
       geminiSystemPrompt: systemPrompt,
-      customLogPath: inputCustomLogPath.value.trim() || null
+      customLogPath: inputCustomLogPath.value.trim() || null,
+      isAudioDramaEnabled: chkAudioDrama.checked
     };
 
     const isSaved = await window.electronAPI.saveSettings(updatedSettings);
@@ -802,6 +987,11 @@ const initializeApp = async (): Promise<void> => {
     handleNewEvent(event);
   });
 
+  // 화면에 이미 렌더링되어 있을 수 있는 잔류 마커 즉시 소거
+  if (currentEventContent.textContent) {
+    currentEventContent.textContent = sanitizeDisplayText(currentEventContent.textContent);
+  }
+
   // 인게임 창 닫힘 신호 수신 시 즉시 오디오 완전 중단
   window.electronAPI.onStopSpeech(() => {
     // 결투 등 연속 이벤트 전환 시, 새 이벤트가 들어온 직후(300ms 이내)에 뒤늦게 도착한 이전 창의 잔여 STOP 신호는 무시
@@ -819,7 +1009,11 @@ const initializeApp = async (): Promise<void> => {
       showToast('⏹️ 낭독을 중단했습니다.', 'info');
     } else if (state.currentEvent?.content) {
       showToast('▶️ 사건을 다시 낭독합니다.', 'info');
-      speakText(state.currentEvent.content).catch((err: unknown) => {
+      speakText(
+        state.currentEvent.content,
+        state.currentEvent.speakerGender,
+        state.currentEvent.eventType
+      ).catch((err: unknown) => {
         console.error('❌ [Audio Playback Error]:', err);
       });
     }

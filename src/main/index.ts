@@ -23,7 +23,12 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   speechRate: '+0%',
   speechVolume: '+0%',
   customLogPath: null,
-  isAutoPlayEnabled: true
+  isAutoPlayEnabled: true,
+  isAudioDramaEnabled: true,
+  edgeVoiceMale: 'ko-KR-InJoonNeural',
+  edgeVoiceFemale: 'ko-KR-SunHiNeural',
+  geminiVoiceMale: 'Charon',
+  geminiVoiceFemale: 'Kore'
 };
 
 let mainWindow: BrowserWindow | null = null;

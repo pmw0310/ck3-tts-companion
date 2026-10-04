@@ -18,6 +18,9 @@ export type EdgeVoiceName =
   | 'ko-KR-InJoonNeural'
   | 'ko-KR-HyunsuNeural';
 
+/** 화자 성별 구분 타입 */
+export type SpeakerGender = 'male' | 'female' | 'narrator';
+
 /** 감지된 CK3 게임 이벤트 데이터 */
 export type Ck3EventMessage = {
   readonly id: string;
@@ -26,7 +29,10 @@ export type Ck3EventMessage = {
   readonly content: string;
   readonly rawText: string;
   readonly isForceReplay?: boolean;
+  readonly speakerGender?: SpeakerGender;
+  readonly eventType?: 'letter' | 'character' | 'default';
 };
+
 
 /** 애플리케이션 전체 설정 인터페이스 */
 export type AppSettings = {
@@ -40,12 +46,19 @@ export type AppSettings = {
   readonly speechVolume: string; // 예: '+0%'
   readonly customLogPath: string | null;
   readonly isAutoPlayEnabled: boolean;
+  readonly isAudioDramaEnabled: boolean;
+  readonly edgeVoiceMale: EdgeVoiceName;
+  readonly edgeVoiceFemale: EdgeVoiceName;
+  readonly geminiVoiceMale: GeminiVoiceName;
+  readonly geminiVoiceFemale: GeminiVoiceName;
 };
 
 /** TTS 합성 요청 매개변수 */
 export type SynthesizeRequest = {
   readonly text: string;
   readonly settings: AppSettings;
+  readonly voiceOverride?: string;
+  readonly promptOverride?: string;
 };
 
 /** TTS 합성 결과 인터페이스 */

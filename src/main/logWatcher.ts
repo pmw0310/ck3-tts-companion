@@ -174,7 +174,9 @@ export const startWatchingLogFile = (
               title: event.title,
               content: event.content,
               rawText: textAfterStop,
-              isForceReplay: event.isForceReplay
+              isForceReplay: event.isForceReplay,
+              speakerGender: event.speakerGender,
+              eventType: event.eventType
             };
             onEvent(eventMessage);
           }
@@ -200,7 +202,9 @@ export const startWatchingLogFile = (
             title: event.title,
             content: event.content,
             rawText: bufferText,
-            isForceReplay: event.isForceReplay
+            isForceReplay: event.isForceReplay,
+            speakerGender: event.speakerGender,
+            eventType: event.eventType
           };
           onEvent(eventMessage);
         }

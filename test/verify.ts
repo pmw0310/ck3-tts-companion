@@ -42,6 +42,11 @@ const runVerification = async (): Promise<void> => {
       speechVolume: "+0%",
       customLogPath: null,
       isAutoPlayEnabled: true,
+      isAudioDramaEnabled: true,
+      edgeVoiceMale: "ko-KR-InJoonNeural",
+      edgeVoiceFemale: "ko-KR-SunHiNeural",
+      geminiVoiceMale: "Charon",
+      geminiVoiceFemale: "Kore",
       geminiModel: "gemini-3.8-flash-lite-tts",
    };
 

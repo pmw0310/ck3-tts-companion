@@ -15,7 +15,7 @@ window = {
 		name = _show
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, Select_CString( CharacterInteractionNotificationWindow.GetCharacter.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ))))))))]"
 	}
 
 	state = {
@@ -31,7 +31,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, Select_CString( CharacterInteractionNotificationWindow.GetCharacter.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ))))))))]"
 	}
 
 	vbox = {
@@ -68,7 +68,7 @@ window = {
 					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, Select_CString( CharacterInteractionNotificationWindow.GetCharacter.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ))))))))]"
 			}
 		}
 

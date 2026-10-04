@@ -278,7 +278,7 @@ const maskApiKeyInMessage = (message: string, sensitiveKey?: string): string => 
 export const processTtsRequest = async (
   request: SynthesizeRequest
 ): Promise<SynthesizeResult> => {
-  const { text, settings } = request;
+  const { text, settings: rawSettings, voiceOverride, promptOverride } = request;
 
   if (!text || text.trim().length === 0) {
     return {
@@ -286,6 +286,17 @@ export const processTtsRequest = async (
       errorMessage: '낭독할 텍스트가 비어 있습니다.'
     };
   }
+
+  // 세그먼트별 개별 음성/프롬프트 오버라이드가 요청된 경우 병합
+  const settings: AppSettings = {
+    ...rawSettings,
+    ...(voiceOverride
+      ? rawSettings.provider === 'gemini'
+        ? { geminiVoice: voiceOverride as AppSettings['geminiVoice'] }
+        : { edgeVoice: voiceOverride as AppSettings['edgeVoice'] }
+      : {}),
+    ...(promptOverride ? { geminiSystemPrompt: promptOverride } : {})
+  };
 
   if (settings.provider === 'gemini') {
     try {

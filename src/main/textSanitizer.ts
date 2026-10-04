@@ -21,6 +21,8 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\s*\(BUG:[^)]*\)/gi,                                       // (BUG: ...) 단일 괄호 엔진 디버그 경고
   /\bAI\s*(?:수준|weight)\s*:\s*[\d.]+/gi,                    // AI 수준: 25.00 디버그 가중치 정보
   /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
+  /(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi,       // |||GENDER:F, |||GENDER:M, |||GENDER:LETTER_F 등 성별 메타데이터 태그 잔여물
+  /\s*\|{2,}\s*/g,                                           // 불필요한 연속 파이프(||, |||) 잔여물
   /[_]{2,}/g                                                // 불필요한 연속 언더스코어
 ] as const;
 
@@ -324,9 +326,27 @@ const END_TAG_PATTERNS: readonly string[] = ['##CK3_TTS_END##', '[CK3_TTS_END]']
  */
 export const extractCk3EventsFromChunk = (
   chunk: string
-): Array<{ title: string; content: string; isForceReplay?: boolean }> => {
-  const events: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
-  const candidateEvents: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
+): Array<{
+  title: string;
+  content: string;
+  isForceReplay?: boolean;
+  speakerGender?: 'male' | 'female' | 'narrator';
+  eventType?: 'letter' | 'character' | 'default';
+}> => {
+  const events: Array<{
+    title: string;
+    content: string;
+    isForceReplay?: boolean;
+    speakerGender?: 'male' | 'female' | 'narrator';
+    eventType?: 'letter' | 'character' | 'default';
+  }> = [];
+  const candidateEvents: Array<{
+    title: string;
+    content: string;
+    isForceReplay?: boolean;
+    speakerGender?: 'male' | 'female' | 'narrator';
+    eventType?: 'letter' | 'character' | 'default';
+  }> = [];
 
   let searchIndex = 0;
   while (searchIndex < chunk.length) {
@@ -383,12 +403,39 @@ export const extractCk3EventsFromChunk = (
     if (payload.length > 0) {
       let title = '크루세이더 킹즈 3 사건';
       let content = '';
+      let speakerGender: 'male' | 'female' | 'narrator' | undefined;
+      let eventType: 'letter' | 'character' | 'default' = 'default';
 
       if (payload.includes('|||')) {
-        const [rawTitle, ...rest] = payload.split('|||');
-        const rawContent = rest.join('|||');
-        const sanitizedTitle = sanitizeCk3Text(rawTitle ?? '');
-        const sanitizedContent = sanitizeCk3Text(rawContent ?? '');
+        // 맨 앞에 불필요하게 시작된 파이프 기호(|||) 제거 (예: "[CK3_TTS]|||제목|||내용" 케이스 방어)
+        const cleanPayload = payload.replace(/^\|{2,}\s*/, '');
+        const parts = cleanPayload.split('|||');
+        const rawTitle = parts[0] ?? '';
+        let rawContent = parts.slice(1).join('|||');
+
+        // 마지막 세그먼트가 성별 태그(LETTER_F, LETTER_M, GENDER:F, GENDER:M, FEMALE, MALE)인지 검사
+        const lastPartRaw = (parts[parts.length - 1] ?? '').trim().toUpperCase();
+        if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
+          speakerGender = 'female';
+          eventType = 'letter';
+          rawContent = parts.slice(1, -1).join('|||');
+        } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
+          speakerGender = 'male';
+          eventType = 'letter';
+          rawContent = parts.slice(1, -1).join('|||');
+        } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
+          speakerGender = 'female';
+          rawContent = parts.slice(1, -1).join('|||');
+        } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
+          speakerGender = 'male';
+          rawContent = parts.slice(1, -1).join('|||');
+        }
+
+        // 혹시 분할되지 않고 본문 끝에 잔류한 성별 마커가 있다면 2차 방어로 완전 소멸
+        rawContent = rawContent.replace(/\|{1,3}\s*GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
+
+        const sanitizedTitle = sanitizeCk3Text(rawTitle);
+        const sanitizedContent = sanitizeCk3Text(rawContent);
         title = sanitizedTitle.length > 0 ? sanitizedTitle : title;
         content = sanitizedContent.length > 0 ? sanitizedContent : title;
       } else {
@@ -397,7 +444,7 @@ export const extractCk3EventsFromChunk = (
 
       // 2차: 정제된 제목 및 본문이 유효한 내러티브 텍스트인지 최종 검증
       if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
-        candidateEvents.push({ title, content, isForceReplay });
+        candidateEvents.push({ title, content, isForceReplay, speakerGender, eventType });
       } else {
         console.warn('⚠️ [TextSanitizer] 정제 후 비정상 스크립트/무효 텍스트로 판정되어 차단했습니다:', { title, content });
       }
