@@ -15,14 +15,14 @@ window = {
 		name = _show
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	state = {
 		name = _hide
 		using = Animation_FadeOut_Quick
 		using = Sound_WindowHide_Standard
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 	}
 
 	button = {
@@ -30,7 +30,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	vbox = {
@@ -48,7 +48,7 @@ window = {
 			blockoverride "button_close"
 			{
 				onclick = "[CharacterInteractionNotificationWindow.Close]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 			}
 
 			button_round = {
@@ -57,7 +57,7 @@ window = {
 				parentanchor = top|left
 				size = { 36 36 }
 				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 
 				button_icon = {
 					alwaystransparent = yes
@@ -90,7 +90,7 @@ window = {
 					name = "reject_button"
 					text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
 					onclick = "[CharacterInteractionNotificationWindow.Reject]"
-					onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 					enabled = "[CharacterInteractionNotificationWindow.CanReject]"
 					using = tooltip_ws
 					default_format = "#medium"
@@ -100,7 +100,7 @@ window = {
 					name = "accept_button"
 					text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
 					onclick = "[CharacterInteractionNotificationWindow.Accept]"
-					onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 					enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
 				}
 			}
@@ -110,14 +110,14 @@ window = {
 				name = "acknowledge_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerAcknowledgeText]"
 				onclick = "[CharacterInteractionNotificationWindow.Acknowledge]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 			}
 
 			button_standard = {
 				name = "block_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerBlockText]"
 				onclick = "[CharacterInteractionNotificationWindow.Block]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 				visible = "[CharacterInteractionNotificationWindow.CanPotentiallyBeBlocked]"
 				enabled = "[CharacterInteractionNotificationWindow.CanBeBlocked]"
 				tooltip = "[CharacterInteractionNotificationWindow.GetCanBeBlockedTooltip]"

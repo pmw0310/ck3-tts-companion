@@ -1,0 +1,2 @@
+﻿# CK3 디버그 EP3 상호작용 비활성화 오버라이드 (06_ep3_test_interactions_)
+# 디버그 모드에서 캐릭터 우클릭 메뉴의 Roads to Power 디버그 상호작용 노출을 차단합니다.

@@ -813,9 +813,13 @@ window = {
 			}
 		}
 
-		container = {
+		flowcontainer = {
 			name = "activity_event_titles"
 			visible = "[ActivityWindow.HasActiveEvent]"
+			datacontext = "[ActivityWindow.GetEventWindowInsert( PdxGuiWidget.AccessSelf )]"
+			datacontext = "[EventWindowViewInsert.GetOpenEvent]"
+			ignoreinvisible = yes
+			spacing = 15
 
 			parentanchor = hcenter
 			position = { 0 17 }
@@ -835,8 +839,7 @@ window = {
 			# CK3 TTS Companion: 활동 이벤트 낭독 버튼 및 F 단축키
 			button_round = {
 				name = "tts_speak_button"
-				parentanchor = vcenter|right
-				position = { 50 0 }
+				parentanchor = vcenter
 				size = { 38 38 }
 				raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
 				shortcut = "army_split_half"
@@ -848,7 +851,7 @@ window = {
 					alwaystransparent = yes
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 			}
 
 			background = {
@@ -888,7 +891,7 @@ window = {
 			blockoverride "button_close"
 			{
 				onclick = "[ActivityWindow.Close]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 			}
 			blockoverride "button_go_to"
 			{
@@ -1149,12 +1152,18 @@ types ActivityWindowTypes
 		state = {
 			name = activity_new_event_shown
 			on_start = "[PdxGuiTriggerAllAnimations( 'activity_event_appear' )]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+			next = tts_activity_event_auto_play
+		}
+
+		state = {
+			name = tts_activity_event_auto_play
+			trigger_when = "[EventWindowViewInsert.HasOpenEvent]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 		}
 
 		state = {
 			name = _hide
-			on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		}
 
 		event_window_background_widget = {
@@ -2016,14 +2025,40 @@ types ActivityWindowTypes
 						}
 					}
 				}
+
+				# CK3 TTS Companion: 토너먼트/활동 이벤트 낭독 버튼 및 F 단축키
+				button_round = {
+					name = "tts_speak_button"
+					parentanchor = vcenter|right
+					position = { -20 0 }
+					size = { 38 38 }
+					raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+					shortcut = "army_split_half"
+
+					button_icon = {
+						texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+						size = { 24 24 }
+						parentanchor = center
+						alwaystransparent = yes
+					}
+
+					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
+				}
 			}
 
 			expand = {}
 		}
 
+		# CK3 TTS Companion: 토너먼트/활동 이벤트 안전 자동 낭독 트리거 (딜레이 없이 즉시 격발하여 메모리 크래시 방어)
 		state = {
 			name = activity_new_event_shown
 			on_start = "[PdxGuiWidget.FindChild( 'event_video' ).GfxVideoControl.Restart]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
+		}
+
+		state = {
+			name = _hide
+			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		}
 
 		vbox = {

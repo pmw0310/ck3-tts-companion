@@ -129,14 +129,26 @@ export const startWatchingLogFile = (
       });
 
       stream.on('end', () => {
-        const stopTag = '[CK3_TTS_STOP]';
-        const stopIndex = bufferText.lastIndexOf(stopTag);
+        const stopTagHash = '##CK3_TTS_STOP##';
+        const stopTagBracket = '[CK3_TTS_STOP]';
+        const stopIndexHash = bufferText.lastIndexOf(stopTagHash);
+        const stopIndexBracket = bufferText.lastIndexOf(stopTagBracket);
 
-        // 1. 창 닫힘 신호([CK3_TTS_STOP]) 감지 시
+        let stopIndex = -1;
+        let stopTagLength = 0;
+        if (stopIndexHash > stopIndexBracket) {
+          stopIndex = stopIndexHash;
+          stopTagLength = stopTagHash.length;
+        } else if (stopIndexBracket !== -1) {
+          stopIndex = stopIndexBracket;
+          stopTagLength = stopTagBracket.length;
+        }
+
+        // 1. 창 닫힘 신호(##CK3_TTS_STOP## 또는 [CK3_TTS_STOP]) 감지 시
         if (stopIndex !== -1) {
           // STOP 태그 이전의 텍스트는 닫힌 창의 잔여물이므로 완전히 버림!
           // 오직 STOP 태그 이후에 연속으로 기록된 진짜 새 이벤트만 파싱
-          const textAfterStop = bufferText.slice(stopIndex + stopTag.length);
+          const textAfterStop = bufferText.slice(stopIndex + stopTagLength);
           const newEvents = extractCk3EventsFromChunk(textAfterStop);
 
           // 뒤에 신규 이벤트가 없는 순수 창 닫힘일 때만 렌더러에 STOP 신호 전송

@@ -28,7 +28,7 @@ window = {
 		duration = 1
 		on_start = "[PdxGuiWidget.AccessChild('letter_paper').TriggerAnimation('hide')]"
 		on_start = "[PdxGuiWidget.AccessChild('letter_content').TriggerAnimation('hide')]"
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 	}
 
 	state = {
@@ -137,7 +137,7 @@ window = {
 
 			using = Animation_FadeIn_Standard
 
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 
 			animation = {
 				size = { 675 530 }           ############ SIZES NEED TO MATCH
@@ -311,7 +311,7 @@ window = {
 								alwaystransparent = yes
 							}
 
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 						}
 					}
 
@@ -509,7 +509,7 @@ window = {
 						tooltip_visible = "[Not( StringIsEmpty( EventOption.GetTooltip ) )]"
 
 						onclick = "[EventOption.Select]"
-						onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+						onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 						onmousehierarchyenter = "[EventOption.OnEnter]"
 						onmousehierarchyleave = "[EventOption.OnLeave]"
 						enabled = "[EventOption.IsValid]"

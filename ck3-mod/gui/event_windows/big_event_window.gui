@@ -35,7 +35,7 @@ types BigWindowTypes {
 				duration = 0.7
 
 				on_start = "[GetVariableSystem.Clear( 'event_window_mouse_leave')]"
-				on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+				on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 
 				start_sound = {
 					soundeffect = "event:/SFX/Events/Panels/sfx_event_panel_large"
@@ -50,7 +50,7 @@ types BigWindowTypes {
 			state = {
 				name = _hide
 				using = Animation_FadeOut_Standard
-				on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 			}
 		}
 		state = {
@@ -931,7 +931,7 @@ types BigWindowTypes {
 							alwaystransparent = yes
 						}
 
-						onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+						onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 					}
 
 					icon = {
@@ -1029,12 +1029,12 @@ types BigWindowTypes {
 			name = tts_scheme_conclusion_auto_play
 			trigger_on_create = yes
 			delay = 0.1
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 		}
 
 		state = {
 			name = _hide
-			on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		}
 
 		blockoverride "window_decoration" {
@@ -1254,7 +1254,7 @@ types BigWindowTypes {
 						alwaystransparent = yes
 					}
 
-					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '[CK3_TTS_END]\"')))))]"
+					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 				}
 			}
 		}

@@ -24,12 +24,12 @@ describe('승계 창(window_succession_event) 게임 시작 시 오발화 결함
       'window_succession_event.gui 최상위 윈도우에 trigger_on_create = yes가 존재하면 게임 시작 시 "당신은 퇴위했습니다."가 상시 낭독되는 결함이 발생합니다. _show 상태의 on_start로 안전하게 격발해야 합니다.'
     );
 
-    // 올바른 설계 검증: _show 상태에 [CK3_TTS] 호출이 포함되어 있어야 함
-    const hasShowStateWithTts = /state\s*=\s*\{\s*name\s*=\s*_show[\s\S]*?\[CK3_TTS\]/m.test(topLines);
+    // 올바른 설계 검증: _show 상태에 ##CK3_TTS## 호출이 포함되어 있어야 함
+    const hasShowStateWithTts = /state\s*=\s*\{\s*name\s*=\s*_show[\s\S]*?(?:\[|##)CK3_TTS(?:\]|##)/m.test(topLines);
     assert.strictEqual(
       hasShowStateWithTts,
       true,
-      'window_succession_event.gui는 창이 실제로 열릴 때만 호출되는 _show state의 on_start에서 [CK3_TTS]를 호출해야 합니다.'
+      'window_succession_event.gui는 창이 실제로 열릴 때만 호출되는 _show state의 on_start에서 ##CK3_TTS##를 호출해야 합니다.'
     );
   });
 });

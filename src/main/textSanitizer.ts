@@ -5,11 +5,12 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 등 로그 헤더
   /\bconsole_success:\s*/gi,                                  // console_success 접두사
   /\bERROR:\s*/g,                                             // ERROR 접두사
+  /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s!]+/gi,  // ONCLICK:CHARACTER,12345 등 비대괄호 태그
   /\bEMP\b/gi,                                               // EMP 강조 서식
-  /\b[LEIP];\s*/gi,                                          // L;, E;, I;, P; 링크/개념/아이콘 마커
-  /(?:^|\s)[IEPL];?\s+(?=[가-힣a-zA-Z0-9])/g,                // 단독 I, E, L 마커 (예: "I 승전")
+  /\b[GLEIPB];\s*/gi,                                         // G;, L;, E;, I;, P;, B; 링크/게임컨셉/아이콘 마커
+  /(?:^|\s)[GIEPLB];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B 마커 (예: "G 강령술사", "L ' 엽사 '", "I 승전")
   /\b(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
@@ -267,6 +268,11 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 3. 단어 앞의 세미콜론 제거 (예: "; 마이센" -> "마이센")
   cleaned = cleaned.replace(/(?:^|\s);\s*/g, ' ');
 
+  // 3.5. 단독 잔여 Paradox 엔진 링크/컨셉 마커(L, G) 완벽 제거 (예: "L ' 장경 '", "L 장경", "^L ")
+  // 로마 숫자(I, IV세, IX 등) 손상을 방지하기 위해 단독 마커는 링크(L)와 컨셉(G)에 한정하고 뒤에 한글 또는 따옴표가 올 때만 정제
+  cleaned = cleaned.replace(/(?:^|\s)[LG];?\s*(?=['"`‘“「『가-힣])/gi, ' ');
+  cleaned = cleaned.replace(/^[LG]\s+/i, '');
+
   // 4. 단어 뒤에 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
   cleaned = cleaned.replace(/(?:\s*!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
   cleaned = cleaned.replace(/\s+!\s+/g, ' ');
@@ -280,18 +286,38 @@ export const sanitizeCk3Text = (rawText: string): string => {
 
   // 7. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
   // 단, '이'는 지시관형사(예: "이 녀석", "이 결정")로 쓰일 수 있으므로 뒤에 또 다른 한글 단어가 오는 경우(\s+[가-힣])에는 앞 단어와 붙이지 않음
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다)(?=[^\w가-힣]|$)/g, '$1$2');
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야)(?=[^\w가-힣]|$)/g, '$1$2');
   cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+이(?=[,.?!;:)]|$)/g, '$1이');
 
-  // 8. 문장 부호 앞 공백 및 연속 공백 정리
+  // 8. 따옴표 내부 불필요한 공백 정리 (예: "' 엽사 '" -> "'엽사'", "“ 영주 ”" -> "“영주”")
+  cleaned = cleaned
+    .replace(/(['"‘“「『])\s+([가-힣a-zA-Z0-9])/g, '$1$2')
+    .replace(/([가-힣a-zA-Z0-9])\s+(['"’”」』])/g, '$1$2');
+
+  // 9. 문장 부호 앞 공백 및 연속 공백 정리
   return cleaned
     .replace(/\s+([,.?!])/g, '$1')
     .replace(/\s{2,}/g, ' ')
     .trim();
 };
 
+/** 시작 태그 패턴 및 강제 재낭독 플래그 매핑 */
+type StartTagPattern = {
+  readonly tag: string;
+  readonly isForceReplay: boolean;
+};
+
+const START_TAG_PATTERNS: readonly StartTagPattern[] = [
+  { tag: '##CK3_TTS_FORCE##', isForceReplay: true },
+  { tag: '[CK3_TTS_FORCE]', isForceReplay: true },
+  { tag: '##CK3_TTS##', isForceReplay: false },
+  { tag: '[CK3_TTS]', isForceReplay: false }
+];
+
+const END_TAG_PATTERNS: readonly string[] = ['##CK3_TTS_END##', '[CK3_TTS_END]'];
+
 /**
- * 로그 텍스트 청크(멀티라인 줄바꿈 포함)에서 [CK3_TTS] 블록들을 온전하게 추출합니다.
+ * 로그 텍스트 청크(멀티라인 줄바꿈 포함)에서 ##CK3_TTS## 및 [CK3_TTS] 블록들을 온전하게 추출합니다.
  * 동일한 청크 내 중복 이벤트는 1회만 반환합니다.
  * @param chunk - 새로 읽어들인 debug.log 텍스트 청크
  * @returns 추출된 이벤트 목록
@@ -301,30 +327,27 @@ export const extractCk3EventsFromChunk = (
 ): Array<{ title: string; content: string; isForceReplay?: boolean }> => {
   const events: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
   const candidateEvents: Array<{ title: string; content: string; isForceReplay?: boolean }> = [];
-  const endTag = '[CK3_TTS_END]';
 
   let searchIndex = 0;
   while (searchIndex < chunk.length) {
-    const forceIndex = chunk.indexOf('[CK3_TTS_FORCE]', searchIndex);
-    const standardIndex = chunk.indexOf('[CK3_TTS]', searchIndex);
+    // 1. 가장 먼저 등장하는 시작 태그 탐색
+    let bestStart: { index: number; tag: string; isForceReplay: boolean } | null = null;
+    for (const pattern of START_TAG_PATTERNS) {
+      const idx = chunk.indexOf(pattern.tag, searchIndex);
+      if (idx !== -1 && (bestStart === null || idx < bestStart.index)) {
+        bestStart = { index: idx, tag: pattern.tag, isForceReplay: pattern.isForceReplay };
+      }
+    }
 
-    let startIndex = -1;
-    let isForceReplay = false;
-    let prefixLength = 0;
-
-    if (forceIndex !== -1 && (standardIndex === -1 || forceIndex <= standardIndex)) {
-      startIndex = forceIndex;
-      isForceReplay = true;
-      prefixLength = '[CK3_TTS_FORCE]'.length;
-    } else if (standardIndex !== -1) {
-      startIndex = standardIndex;
-      isForceReplay = false;
-      prefixLength = '[CK3_TTS]'.length;
-    } else {
+    if (!bestStart) {
       break;
     }
 
-    // 1. 앞선 로그가 ERROR: 로 시작하는 경우 패러독스 파서가 따옴표 등으로 잘라버린 불완전 에러 라인이므로 스킵
+    const startIndex = bestStart.index;
+    const isForceReplay = bestStart.isForceReplay;
+    const prefixLength = bestStart.tag.length;
+
+    // 2. 앞선 로그가 ERROR: 로 시작하는 경우 패러독스 파서가 따옴표 등으로 잘라버린 불완전 에러 라인이므로 스킵
     const prefixContext = chunk.slice(Math.max(0, startIndex - 15), startIndex);
     if (prefixContext.includes('ERROR:')) {
       searchIndex = startIndex + prefixLength;
@@ -333,16 +356,23 @@ export const extractCk3EventsFromChunk = (
 
     const contentStart = startIndex + prefixLength;
 
-    // 2. 반드시 [CK3_TTS_END] 닫는 태그가 온전히 존재하는 블록만 유효한 이벤트로 채택
-    const endTagIndex = chunk.indexOf(endTag, contentStart);
-    if (endTagIndex === -1) {
+    // 3. 가장 먼저 등장하는 닫는 태그 탐색
+    let bestEnd: { index: number; tag: string } | null = null;
+    for (const endTag of END_TAG_PATTERNS) {
+      const idx = chunk.indexOf(endTag, contentStart);
+      if (idx !== -1 && (bestEnd === null || idx < bestEnd.index)) {
+        bestEnd = { index: idx, tag: endTag };
+      }
+    }
+
+    if (!bestEnd) {
       // 닫는 태그가 없다면 불완전한 파편이므로 스킵
       searchIndex = contentStart;
       continue;
     }
 
-    const payload = chunk.slice(contentStart, endTagIndex).trim();
-    searchIndex = endTagIndex + endTag.length;
+    const payload = chunk.slice(contentStart, bestEnd.index).trim();
+    searchIndex = bestEnd.index + bestEnd.tag.length;
 
     // 1차: 페이로드 원본 레벨에서 Jomini GUI 스크립트 코드 또는 미평가 표현식 유출 차단
     if (!isValidNarrativeText(payload)) {

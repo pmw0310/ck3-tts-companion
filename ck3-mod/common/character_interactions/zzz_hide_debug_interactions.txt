@@ -1,0 +1,562 @@
+﻿# CK3 디버그 및 테스트 상호작용 숨김 오버라이드
+# Jomini 엔진은 Key-Value 사전 병합 방식이므로 각 상호작용을 비활성화 처리해야 인게임에서 숨겨짐
+# 주의: migration_interaction 등 C++ 엔진(NAISituations::HandleMigration)이 직접 참조하는 AI 시스템 상호작용은 제외해야 함
+
+change_hunt_success_chance = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_give_animal_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_debug_test_story_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+change_tournament_score = {
+	is_shown = {
+		always = no
+	}
+}
+
+add_to_court_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_secrets_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+add_hook_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+set_relation_debug = {
+	is_shown = {
+		always = no
+	}
+}
+
+change_character_weight_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+slay_character_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+change_cultural_acceptance_debug_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+learn_language_debug_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_learn_all_tenets_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+start_bout_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+add_artifact_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_artifact_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+add_artifact_claim_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_destroy_artifact_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+inspire_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+sponsor_inspiration_debug = {
+	is_shown = {
+		always = no
+	}
+}
+
+complete_inspiration_debug = {
+	is_shown = {
+		always = no
+	}
+}
+
+test_effect_localization_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+give_criminal_trait_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+generate_artifact_with_history_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_sex_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_every_county = {
+	is_shown = {
+		always = no
+	}
+}
+
+do_a_crime_embezzle_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+add_glory_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_progress_all_active_schemes_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_travel_to_ruler_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_add_truce_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+spawn_epidemic_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+spawn_legend_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_buff_schemes = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_clear_agents_from_schemes = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_make_laamp = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_add_to_contact_list_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_alliance_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+create_task_contract_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_move_domicile_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_populate_contracts = {
+	is_shown = {
+		always = no
+	}
+}
+
+give_infinite_schemes_of_type_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+antagonise_court = {
+	is_shown = {
+		always = no
+	}
+}
+
+spawn_courtier_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+destroy_title_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_the_great_steppe = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_coronation_add_to_guest_subset_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+change_coronation_law = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_dynastic_cycle = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_silk_road_cycle = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_set_mandala_aspect = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_the_christian_church = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_imprison_simple_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_force_next_realm_priest_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_opinion_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_lover_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_soulmate_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_rival_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_nemesis_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+remove_rival_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_friend_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+learn_secrets_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_dynasty_house_head_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_title_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_domain_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_realm_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_vassal_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_tributary_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_independent_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+start_pregnancy_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+get_claim_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+claim_all_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+get_claim_on_all_creatable_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+test_dynasty_prestige_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_start_era_of_great_holy_wars_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_council_task_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_trigger_localization_testing_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+create_betrothal_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+set_relation_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+designate_diarch_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+start_diarchy_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+end_diarchy_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+test_cooldown_category_10_days = {
+	is_shown = {
+		always = no
+	}
+}
+
+test_cooldown_category_against_30_days = {
+	is_shown = {
+		always = no
+	}
+}
+
+take_hostage_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+release_hostage_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+make_noble_family_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+destroy_noble_family_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+invest_appointment_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+transfer_title_army_maa_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_impact_house_relation_interaction = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_spawn_natural_disaster = {
+	is_shown = {
+		always = no
+	}
+}
+
+debug_change_bloc_cohesion = {
+	is_shown = {
+		always = no
+	}
+}
+

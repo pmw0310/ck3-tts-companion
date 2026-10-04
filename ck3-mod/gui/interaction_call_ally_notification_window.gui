@@ -15,14 +15,14 @@ window = {
 		name = _show
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	state = {
 		name = _hide
 		using = Animation_FadeOut_Quick
 		using = Sound_WindowHide_Standard
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 	}
 
 	# CK3 TTS Companion: F 단축키로 다시 낭독
@@ -31,7 +31,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	vbox = {
@@ -49,7 +49,7 @@ window = {
 			blockoverride "button_close"
 			{
 				onclick = "[CallAllyInteractionNotificationWindow.Close]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 			}
 
 			# CK3 TTS Companion: 전쟁 소집 서신 낭독 버튼
@@ -68,7 +68,7 @@ window = {
 					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"[CK3_TTS_FORCE] ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '[CK3_TTS_END]\"')))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, Concatenate(' ', Concatenate(CharacterInteractionNotificationWindow.GetSignature, '##CK3_TTS_END##\"')))))))]"
 			}
 		}
 
@@ -212,7 +212,7 @@ window = {
 				name = "reject_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
 				onclick = "[CharacterInteractionNotificationWindow.Reject]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanReject]"
 				using = tooltip_ws
 				default_format = "#medium"
@@ -222,7 +222,7 @@ window = {
 				name = "accept_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
 				onclick = "[CharacterInteractionNotificationWindow.Accept]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"[CK3_TTS_STOP]\"')]"
+				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
 			}
 		}
