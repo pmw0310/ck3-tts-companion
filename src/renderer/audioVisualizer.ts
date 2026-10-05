@@ -32,6 +32,7 @@ const FREQUENCY_BAND_BINS = [
 
 let audioContext: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
+let gainNode: GainNode | null = null;
 let sourceNode: MediaElementAudioSourceNode | null = null;
 let animationFrameId: number | null = null;
 let dataArray: Uint8Array<ArrayBuffer> | null = null;
@@ -71,6 +72,17 @@ export const initAudioVisualizer = (
    * 렌더 루프를 멈추고 막대 스타일을 기본 대기 높이로 리셋합니다.
    */
   const stop = (): void => {
+    // 안티 팝 소프트 스탑 (정지 시 진동판 튐으로 인한 퍽 소리 방지)
+    if (gainNode && audioContext && typeof audioContext.currentTime === 'number') {
+      try {
+        const now = audioContext.currentTime;
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.linearRampToValueAtTime(0.001, now + 0.008);
+      } catch {
+        // 테스트 환경 등 미지원 시 안전 무시
+      }
+    }
+
     if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
@@ -96,7 +108,8 @@ export const initAudioVisualizer = (
         return false;
       }
 
-      audioContext = new AudioCtxClass();
+      // 버퍼 언더런(득득 소리) 방지를 위해 playback 레이턴시 힌트 적용
+      audioContext = new AudioCtxClass({ latencyHint: 'playback' } as AudioContextOptions);
       analyser = audioContext.createAnalyser();
 
       // 초경량 FFT 설정: CPU 0.05% 미만 유지 (빈 개수: 32개)
@@ -110,10 +123,19 @@ export const initAudioVisualizer = (
       // 단 1회만 audio element를 노드에 연결
       sourceNode = audioContext.createMediaElementSource(audioEl);
       sourceNode.connect(analyser);
-      analyser.connect(audioContext.destination);
+
+      // 헤드셋 팝 노이즈(퍽 소리) 및 0dBFS 디지털 클리핑 방지 전용 안티 팝 GainNode
+      if (typeof audioContext.createGain === 'function') {
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.90;
+        analyser.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+      } else {
+        analyser.connect(audioContext.destination);
+      }
 
       isInitialized = true;
-      console.log('✅ [AudioVisualizer] Web Audio API 그래프 연결 완료 (fftSize: 64, CPU 절전 모드)');
+      console.log('✅ [AudioVisualizer] Web Audio API 안티 팝 그래프 연결 완료 (fftSize: 64, Gain: 0.90)');
       return true;
     } catch (err) {
       console.error('❌ [AudioVisualizer] 오디오 그래프 초기화 실패:', err);
@@ -168,6 +190,18 @@ export const initAudioVisualizer = (
     }
 
     resumeAudioContext().catch(() => {});
+
+    // 안티 팝 소프트 스타트 (시작 시 진동판 튐으로 인한 퍽 소리 방지)
+    if (gainNode && audioContext && typeof audioContext.currentTime === 'number') {
+      try {
+        const now = audioContext.currentTime;
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.setValueAtTime(0.001, now);
+        gainNode.gain.linearRampToValueAtTime(0.90, now + 0.01);
+      } catch {
+        // 테스트 환경 등 미지원 시 안전 무시
+      }
+    }
 
     if (animationFrameId === null) {
       animationFrameId = requestAnimationFrame(renderLoop);

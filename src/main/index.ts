@@ -18,6 +18,12 @@ import type {
   UpdateCheckResult
 } from '@/shared/types';
 
+// Chromium 백그라운드 절전 및 오클루전(가려진 창) 스로틀링 원천 비활성화
+// 게임(CK3)이 전체화면/포커스를 가져가더라도 백그라운드 오디오 버퍼 언더런(드드득 끊김) 방지
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+
 /** 애플리케이션 기본 설정 값 */
 const DEFAULT_APP_SETTINGS: AppSettings = {
   provider: 'edge',
@@ -186,7 +192,8 @@ const createMainWindow = (): void => {
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: true,
-      contextIsolation: true
+      contextIsolation: true,
+      backgroundThrottling: false
     }
   });
 

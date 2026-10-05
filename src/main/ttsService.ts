@@ -98,18 +98,16 @@ export const synthesizeWithEdgeTts = async (
  * Google Gemini 3.8 전용 TTS 모델을 사용하여 감정이 실린 오디오를 생성합니다.
  * @param text - 낭독할 이벤트 텍스트
 /**
- * Gemini TTS의 중세 역사극 몰입도를 극대화하기 위해 자연스러운 문장 간 호흡 태그(<short pause>)와 톤 디렉션 태그를 결합합니다.
+ * Gemini TTS의 중세 역사극 몰입도를 높이기 위해 톤 디렉션 태그를 결합합니다.
+ * 인위적인 <short pause> 태그를 제거하여 문맥에 맞는 자연스러운 실제 사람의 호흡으로 발화하도록 합니다.
  * @param text - 원본 낭독 텍스트
  * @param prompt - 사용자가 선택한 어조 지침
- * @returns 호흡 태그와 감정 연기 태그가 가미된 텍스트
+ * @returns 감정 연기 태그가 가미된 텍스트
  */
 const enrichTextForGeminiMedievalImmersion = (text: string, prompt?: string): string => {
   let enriched = text.trim();
 
-  // 1. 문장 마침표/물음표/느낌표 뒤에 자연스러운 호흡(<short pause>) 배치
-  enriched = enriched.replace(/([.!?])\s+/g, '$1 <short pause> ');
-
-  // 2. 어조 프롬프트에 맞는 첫머리 Director Tag 결정
+  // 어조 프롬프트에 맞는 첫머리 Director Tag 결정
   const promptLower = (prompt ?? '').toLowerCase();
   let directorTag = '[solemn]';
 
@@ -156,7 +154,7 @@ export const synthesizeWithGemini = async (
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const model = settings.geminiModel || 'gemini-3.8-flash-tts';
+  let model = settings.geminiModel || 'gemini-3.8-flash-tts';
 
   // TTS 전용 모델(예: gemini-3.8-flash-tts 등 -tts 모델)은 Developer Instruction을 지원하지 않으므로 전송 제외
   const isDedicatedTtsModel = model.toLowerCase().includes('tts');
@@ -202,8 +200,29 @@ export const synthesizeWithGemini = async (
     });
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    // Developer instruction 또는 speechMetadata 미지원 에러인 경우 파라미터를 정리하고 안전하게 재시도
+
+    // 1) Flash-Lite 모델 일일 100회 쿼터 초과 시 표준 Flash 모델로 자동 승격 재시도
     if (
+      model === 'gemini-3.8-flash-lite-tts' &&
+      (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('RESOURCE_EXHAUSTED'))
+    ) {
+      console.info(
+        'ℹ️ [TTS Service] Flash-Lite 일일 쿼터 초과 감지, 표준 Flash 모델(gemini-3.8-flash-tts)로 자동 승격 재시도합니다.'
+      );
+      model = 'gemini-3.8-flash-tts';
+      response = await ai.models.generateContent({
+        model,
+        contents: [
+          {
+            role: 'user',
+            parts: [userPart]
+          }
+        ],
+        config: baseConfig
+      });
+    }
+    // 2) Developer instruction 또는 speechMetadata 미지원 에러인 경우 파라미터를 정리하고 안전하게 재시도
+    else if (
       (errMsg.includes('Developer instruction') && baseConfig.systemInstruction) ||
       errMsg.includes('speechMetadata') ||
       errMsg.includes('tag') ||

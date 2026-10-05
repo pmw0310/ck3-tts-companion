@@ -107,6 +107,29 @@ const btnBrowseLog = document.getElementById('btn-browse-log') as HTMLButtonElem
 const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
 
 const audioPlayer = document.getElementById('tts-audio-player') as HTMLAudioElement;
+// 헤드셋 0dBFS 피크 디지털 클리핑 및 진동판 과부하(퍽 소리) 방지를 위한 마진 확보
+audioPlayer.volume = 0.92;
+
+/** 현재 재생 중인 오디오 Blob URL 메모리 참조 */
+let currentAudioBlobUrl: string | null = null;
+
+/**
+ * Base64 인코딩된 오디오 데이터를 브라우저 메모리 Blob URL로 변환합니다.
+ * 거대한 data URL의 파싱 지연(100~200ms) 및 메인 스레드 GC 버벅임을 제거합니다.
+ * @param base64 - Base64 오디오 문자열
+ * @param mimeType - 오디오 MIME 타입
+ * @returns 브라우저 Blob URL
+ */
+const base64ToBlobUrl = (base64: string, mimeType: string): string => {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mimeType });
+  return URL.createObjectURL(blob);
+};
 
 // 실시간 오디오 파형(비주얼라이저) 제어 컨트롤러 초기화 (초경량 Web Audio API 연동)
 const visualizerController = initAudioVisualizer(audioPlayer, audioVisualizer);
@@ -447,9 +470,15 @@ const stopAudio = (): void => {
   activeSpeechRequestId++;
   isQueueActive = false;
   visualizerController.stop();
+  audioPlayer.volume = 0; // 정지 시 급격한 파형 단절(퍽 소리) 방지
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
+  audioPlayer.volume = 0.92;
   audioPlayer.src = '';
+  if (currentAudioBlobUrl) {
+    URL.revokeObjectURL(currentAudioBlobUrl);
+    currentAudioBlobUrl = null;
+  }
   lastStoppedText = state.currentEvent?.content ?? '';
   lastStoppedTime = Date.now();
   setTtsUiState('idle');
@@ -661,7 +690,15 @@ const speakText = async (
       notifyFallbackIfNeeded(result);
 
       const mime = result.mimeType ?? (state.settings.provider === 'gemini' ? 'audio/wav' : 'audio/mp3');
-      audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
+      const blobUrl = base64ToBlobUrl(result.audioBase64, mime);
+
+      // 이전 Blob URL 메모리 안전하게 해제
+      if (currentAudioBlobUrl) {
+        URL.revokeObjectURL(currentAudioBlobUrl);
+      }
+      currentAudioBlobUrl = blobUrl;
+
+      audioPlayer.src = blobUrl;
       syncAudioPlaybackRate();
       await visualizerController.resumeAudioContext();
       await audioPlayer.play();
@@ -1045,7 +1082,13 @@ const bindEventListeners = (): void => {
 
       if (result.isSuccess && result.audioBase64) {
         notifyFallbackIfNeeded(result);
-        audioPlayer.src = `data:${result.mimeType ?? 'audio/mp3'};base64,${result.audioBase64}`;
+        const mime = result.mimeType ?? 'audio/mp3';
+        const blobUrl = base64ToBlobUrl(result.audioBase64, mime);
+        if (currentAudioBlobUrl) {
+          URL.revokeObjectURL(currentAudioBlobUrl);
+        }
+        currentAudioBlobUrl = blobUrl;
+        audioPlayer.src = blobUrl;
         await visualizerController.resumeAudioContext();
         await audioPlayer.play();
         setAudioPlayingState(true);
