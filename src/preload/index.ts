@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type {
+  AppInfo,
   AppSettings,
   Ck3EventMessage,
   ElectronApiBridge,
   SynthesizeRequest,
-  SynthesizeResult
+  SynthesizeResult,
+  UpdateCheckResult
 } from '@/shared/types';
 
 /**
@@ -31,6 +33,18 @@ const electronApi: ElectronApiBridge = {
     request: SynthesizeRequest
   ): Promise<SynthesizeResult> => {
     return await ipcRenderer.invoke('ck3:synthesize-speech', request);
+  },
+
+  getAppInfo: async (): Promise<AppInfo> => {
+    return await ipcRenderer.invoke('ck3:get-app-info');
+  },
+
+  checkForUpdates: async (): Promise<UpdateCheckResult> => {
+    return await ipcRenderer.invoke('ck3:check-update');
+  },
+
+  openExternal: async (url: string): Promise<boolean> => {
+    return await ipcRenderer.invoke('ck3:open-external', url);
   },
 
   onEventDetected: (
@@ -88,6 +102,7 @@ const electronApi: ElectronApiBridge = {
     };
   }
 };
+
 
 // 렌더러 window 객체에 electronAPI 노출
 contextBridge.exposeInMainWorld('electronAPI', electronApi);

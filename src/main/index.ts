@@ -1,14 +1,21 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { resolveCk3LogPath } from '@/main/pathResolver';
 import { startWatchingLogFile, type LogWatcherHandle } from '@/main/logWatcher';
 import { processTtsRequest } from '@/main/ttsService';
+import {
+  getAppMetadata,
+  checkForAppUpdates,
+  isSafeExternalUrl
+} from '@/main/updateService';
 import type {
+  AppInfo,
   AppSettings,
   Ck3EventMessage,
   SynthesizeRequest,
-  SynthesizeResult
+  SynthesizeResult,
+  UpdateCheckResult
 } from '@/shared/types';
 
 /** 애플리케이션 기본 설정 값 */
@@ -174,6 +181,7 @@ const createMainWindow = (): void => {
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     backgroundColor: '#0c0f17',
     titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 20, y: 25 },
     vibrancy: 'under-window',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -257,6 +265,26 @@ const initializeIpcAndShortcuts = (): void => {
       return await processTtsRequest(request);
     }
   );
+
+  // 애플리케이션 정보(버전, 제작자) 조회
+  ipcMain.handle('ck3:get-app-info', (): AppInfo => {
+    return getAppMetadata();
+  });
+
+  // GitHub 릴리스 최신 버전 확인
+  ipcMain.handle('ck3:check-update', async (): Promise<UpdateCheckResult> => {
+    return await checkForAppUpdates();
+  });
+
+  // 안전한 외부 링크 브라우저 실행
+  ipcMain.handle('ck3:open-external', async (_event, url: unknown): Promise<boolean> => {
+    if (typeof url !== 'string' || !isSafeExternalUrl(url)) {
+      console.warn('⚠️ [IPC] 허용되지 않은 외부 URL 열기 시도 차단됨:', url);
+      return false;
+    }
+    await shell.openExternal(url);
+    return true;
+  });
 
   // 전역 단축키 등록 (Windows: Ctrl+Shift+S / macOS: Cmd+Shift+S)
   const toggleKey = 'CommandOrControl+Shift+S';

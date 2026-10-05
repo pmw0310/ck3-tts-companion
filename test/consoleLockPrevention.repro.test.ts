@@ -62,7 +62,7 @@ test('CK3 Jomini 콘솔 락 방지 및 TTS 태그 표준화 무결성 검증', a
       'ck3-mod/gui/window_succession_event.gui',
       'ck3-mod/gui/interaction_notification_window.gui',
       'ck3-mod/gui/interaction_call_ally_notification_window.gui',
-      'ck3-mod/gui/shared/event_windows.gui'
+      'ck3-mod/gui/window_court_events.gui'
     ];
 
     for (const relPath of coreFiles) {

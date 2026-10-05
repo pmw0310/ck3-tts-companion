@@ -955,25 +955,6 @@ window = {
 				}
 			}
 
-			# CK3 TTS Companion: 낭독 버튼 및 F 단축키
-			button_round = {
-				name = "tts_speak_button"
-				parentanchor = vcenter|right
-				position = { -20 5 }
-				size = { 42 42 }
-				raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
-				shortcut = "army_split_half"
-
-				button_icon = {
-					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
-					size = { 26 26 }
-					parentanchor = center
-					alwaystransparent = yes
-				}
-
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) ))))))]"
-
-			}
 
 			icon = {
 				name = "theme_icon"
@@ -1062,6 +1043,25 @@ window = {
 		allow_outside = yes
 		alwaystransparent = yes
 		using = Event_Window_Debug_OptionTooltips
+	}
+
+	# CK3 TTS Companion: 낭독 버튼 및 F 단축키 (DLC 표시 아래 최상위 레이어 배치)
+	button_round = {
+		name = "tts_speak_button"
+		parentanchor = top|right
+		position = { -40 95 }
+		size = { 42 42 }
+		raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+		shortcut = "army_split_half"
+
+		button_icon = {
+			texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+			size = { 26 26 }
+			parentanchor = center
+			alwaystransparent = yes
+		}
+
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) ))))))]"
 	}
 }
 

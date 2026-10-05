@@ -1,4 +1,5 @@
 import type {
+  AppInfo,
   AppSettings,
   Ck3EventMessage,
   EdgeVoiceName,
@@ -6,11 +7,28 @@ import type {
   GeminiVoiceName,
   SpeakerGender,
   SynthesizeResult,
-  TtsProviderType
+  TtsProviderType,
+  UpdateCheckResult
 } from '@/shared/types';
 import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
 import { splitNarrativeAndDialogue } from '@/shared/narrativeDialogueSplitter';
 import { shouldPlayEvent } from '@/shared/eventDeduplicator';
+import { initAudioVisualizer } from '@/renderer/audioVisualizer';
+
+// macOS 환경 감지 시 네이티브 신호등(트래픽 라이트) 버튼 안전 여백 클래스 즉시 부여
+if (
+  typeof navigator !== 'undefined' &&
+  (navigator.userAgent.includes('Mac') || navigator.platform.includes('Mac'))
+) {
+  document.documentElement.classList.add('platform-darwin');
+  if (document.body) {
+    document.body.classList.add('platform-darwin');
+  } else {
+    window.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('platform-darwin');
+    });
+  }
+}
 
 /** Gemini 어조 프리셋 레코드 */
 const GEMINI_TONE_PRESETS: Record<string, string> = {
@@ -90,6 +108,9 @@ const settingsModal = document.getElementById('settings-modal') as HTMLDivElemen
 
 const audioPlayer = document.getElementById('tts-audio-player') as HTMLAudioElement;
 
+// 실시간 오디오 파형(비주얼라이저) 제어 컨트롤러 초기화 (초경량 Web Audio API 연동)
+const visualizerController = initAudioVisualizer(audioPlayer, audioVisualizer);
+
 // 설정 폼 엘리먼트
 const edgeOptionsGroup = document.getElementById('edge-options') as HTMLDivElement;
 const geminiOptionsGroup = document.getElementById('gemini-options') as HTMLDivElement;
@@ -113,6 +134,35 @@ const selectEdgeVoiceFemale = document.getElementById('select-edge-voice-female'
 const geminiGenderVoicesGroup = document.getElementById('gemini-gender-voices') as HTMLDivElement;
 const selectGeminiVoiceMale = document.getElementById('select-gemini-voice-male') as HTMLSelectElement;
 const selectGeminiVoiceFemale = document.getElementById('select-gemini-voice-female') as HTMLSelectElement;
+
+// 버전 및 제작자 정보 표시 엘리먼트
+const appVersionBadge = document.getElementById('app-version-badge') as HTMLSpanElement;
+const appAuthorTag = document.getElementById('app-author-tag') as HTMLSpanElement;
+const modalAppVersion = document.getElementById('modal-app-version') as HTMLElement;
+const modalAppAuthor = document.getElementById('modal-app-author') as HTMLElement;
+
+// 신규 버전 알림 배너 엘리먼트
+const updateBanner = document.getElementById('update-notification-banner') as HTMLElement;
+const updateBannerTitle = document.getElementById('update-banner-title') as HTMLElement;
+const updateBannerDesc = document.getElementById('update-banner-desc') as HTMLElement;
+const btnUpdateDownload = document.getElementById('btn-update-download') as HTMLButtonElement;
+const btnUpdateDismiss = document.getElementById('btn-update-dismiss') as HTMLButtonElement;
+
+// 모달 내 수동 업데이트 및 저장소 바로가기 엘리먼트
+const btnManualCheckUpdate = document.getElementById('btn-manual-check-update') as HTMLButtonElement;
+const btnOpenRepo = document.getElementById('btn-open-repo') as HTMLButtonElement;
+const manualUpdateStatus = document.getElementById('manual-update-status') as HTMLSpanElement;
+
+/** 애플리케이션 메타데이터 상태 */
+let currentAppInfo: AppInfo = {
+  version: '1.4.0',
+  author: 'BlackOlf',
+  productName: 'CK3 TTS Companion',
+  repoUrl: 'https://github.com/pmw0310/ck3-tts-companion'
+};
+
+/** 최신 버전 검사 결과 캐시 */
+let latestUpdateResult: UpdateCheckResult | null = null;
 
 /** TTS UI 낭독/합성 상태 타입 */
 type TtsUiStatus = 'idle' | 'synthesizing' | 'playing' | 'error';
@@ -148,6 +198,7 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       audioVisualizer.classList.add('visualizer-synthesizing');
       btnStopAudio.disabled = false; // 통신 중에도 중지(취소) 가능!
       btnReplay.disabled = true;
+      visualizerController.stop();
       break;
     }
 
@@ -157,6 +208,7 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       audioVisualizer.classList.add('visualizer-playing');
       btnStopAudio.disabled = false;
       btnReplay.disabled = true;
+      visualizerController.start();
       break;
     }
 
@@ -166,6 +218,7 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       audioVisualizer.classList.add('visualizer-idle');
       btnStopAudio.disabled = true;
       btnReplay.disabled = state.currentEvent === null;
+      visualizerController.stop();
       break;
     }
 
@@ -176,6 +229,7 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       audioVisualizer.classList.add('visualizer-idle');
       btnStopAudio.disabled = true;
       btnReplay.disabled = state.currentEvent === null;
+      visualizerController.stop();
       break;
     }
   }
@@ -240,6 +294,107 @@ let lastStoppedText = '';
 let lastStoppedTime = 0;
 let lastEventDetectedTime = 0;
 let isQueueActive = false;
+
+/**
+ * 애플리케이션 버전 및 제작자 정보를 UI 각 영역에 동기화하여 표시합니다.
+ * @param info - 애플리케이션 메타 정보
+ */
+const applyAppInfoToUi = (info: AppInfo): void => {
+  if (appVersionBadge) {
+    appVersionBadge.textContent = `v${info.version}`;
+  }
+  if (appAuthorTag) {
+    appAuthorTag.textContent = `제작: ${info.author}`;
+  }
+  if (modalAppVersion) {
+    modalAppVersion.textContent = `v${info.version}`;
+  }
+  if (modalAppAuthor) {
+    modalAppAuthor.textContent = info.author;
+  }
+};
+
+/**
+ * 상단 업데이트 알림 배너를 화면에 표시합니다.
+ * @param result - 업데이트 검사 결과
+ */
+const displayUpdateBanner = (result: UpdateCheckResult): void => {
+  if (!updateBanner) {
+    return;
+  }
+  latestUpdateResult = result;
+  if (updateBannerTitle) {
+    updateBannerTitle.textContent = `🚀 새로운 버전(${result.releaseTitle ?? `v${result.latestVersion}`})이 출시되었습니다!`;
+  }
+  if (updateBannerDesc) {
+    updateBannerDesc.textContent = `현재 버전 v${result.currentVersion} → 최신 버전 v${result.latestVersion}`;
+  }
+  updateBanner.classList.remove('banner-hidden');
+};
+
+/**
+ * 상단 업데이트 알림 배너를 숨깁니다.
+ */
+const hideUpdateBanner = (): void => {
+  if (updateBanner) {
+    updateBanner.classList.add('banner-hidden');
+  }
+};
+
+/**
+ * GitHub 최신 버전을 확인하고 결과를 UI에 반영합니다.
+ * @param isManual - 사용자가 직접 버튼을 클릭해 호출했는지 여부
+ */
+const checkAppUpdates = async (isManual = false): Promise<void> => {
+  if (isManual && manualUpdateStatus) {
+    manualUpdateStatus.className = 'update-status-msg';
+    manualUpdateStatus.textContent = '확인 중...';
+    btnManualCheckUpdate.disabled = true;
+  }
+
+  try {
+    const result = await window.electronAPI.checkForUpdates();
+    latestUpdateResult = result;
+
+    if (result.hasUpdate) {
+      displayUpdateBanner(result);
+      if (isManual) {
+        if (manualUpdateStatus) {
+          manualUpdateStatus.className = 'update-status-msg status-new';
+          manualUpdateStatus.textContent = `🎉 최신 v${result.latestVersion} 출시됨`;
+        }
+        showToast(`🎉 새로운 버전 v${result.latestVersion}이 출시되었습니다!`, 'info');
+      }
+    } else if (result.errorMessage) {
+      if (isManual) {
+        if (manualUpdateStatus) {
+          manualUpdateStatus.className = 'update-status-msg status-error';
+          manualUpdateStatus.textContent = '확인 실패 (네트워크 연결 확인)';
+        }
+        showToast(`⚠️ 업데이트 확인 실패: ${result.errorMessage}`, 'warning');
+      }
+    } else {
+      hideUpdateBanner();
+      if (isManual) {
+        if (manualUpdateStatus) {
+          manualUpdateStatus.className = 'update-status-msg status-success';
+          manualUpdateStatus.textContent = `✅ 최신 버전(v${result.currentVersion}) 사용 중`;
+        }
+        showToast(`✅ 현재 최신 버전(v${result.currentVersion})을 사용하고 계십니다.`, 'info');
+      }
+    }
+  } catch (error: unknown) {
+    console.warn('⚠️ [UpdateCheck] 버전 검사 오류:', error);
+    if (isManual && manualUpdateStatus) {
+      manualUpdateStatus.className = 'update-status-msg status-error';
+      manualUpdateStatus.textContent = '네트워크 오류 발생';
+    }
+  } finally {
+    if (isManual) {
+      btnManualCheckUpdate.disabled = false;
+    }
+  }
+};
 let lastFallbackToastTime = 0;
 
 /** 대체 TTS 엔진 폴백 알림 토스트 표시 쿨다운 (6초) */
@@ -291,6 +446,7 @@ const notifyFallbackIfNeeded = (result: SynthesizeResult): void => {
 const stopAudio = (): void => {
   activeSpeechRequestId++;
   isQueueActive = false;
+  visualizerController.stop();
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
   audioPlayer.src = '';
@@ -507,6 +663,7 @@ const speakText = async (
       const mime = result.mimeType ?? (state.settings.provider === 'gemini' ? 'audio/wav' : 'audio/mp3');
       audioPlayer.src = `data:${mime};base64,${result.audioBase64}`;
       syncAudioPlaybackRate();
+      await visualizerController.resumeAudioContext();
       await audioPlayer.play();
       setTtsUiState('playing');
 
@@ -889,6 +1046,7 @@ const bindEventListeners = (): void => {
       if (result.isSuccess && result.audioBase64) {
         notifyFallbackIfNeeded(result);
         audioPlayer.src = `data:${result.mimeType ?? 'audio/mp3'};base64,${result.audioBase64}`;
+        await visualizerController.resumeAudioContext();
         await audioPlayer.play();
         setAudioPlayingState(true);
       } else {
@@ -948,17 +1106,56 @@ const bindEventListeners = (): void => {
       showToast('❌ 설정 저장에 실패했습니다. 입력값을 확인해 주세요.', 'error');
     }
   });
+
+  // 상단 업데이트 배너 '새 버전 다운로드' 버튼 클릭
+  btnUpdateDownload?.addEventListener('click', async () => {
+    const targetUrl = latestUpdateResult?.releaseUrl ?? currentAppInfo.repoUrl;
+    await window.electronAPI.openExternal(targetUrl);
+  });
+
+  // 상단 업데이트 배너 닫기 버튼 클릭
+  btnUpdateDismiss?.addEventListener('click', () => {
+    hideUpdateBanner();
+  });
+
+  // 설정 모달 내 수동 최신 버전 확인 버튼 클릭
+  btnManualCheckUpdate?.addEventListener('click', async () => {
+    await checkAppUpdates(true);
+  });
+
+  // 설정 모달 내 GitHub 저장소 바로가기 버튼 클릭
+  btnOpenRepo?.addEventListener('click', async () => {
+    await window.electronAPI.openExternal(currentAppInfo.repoUrl);
+  });
 };
 
 /**
  * 애플리케이션 초기화 루틴
  */
 const initializeApp = async (): Promise<void> => {
+  // macOS 환경 감지 시 네이티브 신호등(트래픽 라이트) 버튼 안전 여백 클래스 부여
+  if (navigator.userAgent.includes('Mac') || navigator.platform.includes('Mac')) {
+    document.body.classList.add('platform-darwin');
+  }
+
   bindEventListeners();
+
+  // 앱 버전 및 제작자 정보 로드 및 UI 렌더링
+  try {
+    currentAppInfo = await window.electronAPI.getAppInfo();
+    applyAppInfoToUi(currentAppInfo);
+  } catch (err: unknown) {
+    console.warn('⚠️ [AppInfo] 정보 조회 실패, 기본값 유지:', err);
+  }
 
   // 기존 설정 로드
   state.settings = await window.electronAPI.getSettings();
   syncSettingsForm();
+
+  // 비동기 백그라운드 자동 업데이트 확인 실행 (앱 시작 시점)
+  checkAppUpdates(false).catch((err: unknown) => {
+    console.warn('⚠️ [UpdateCheck] 백그라운드 업데이트 확인 실패:', err);
+  });
 
   // 초기 경로 표시 및 감시 상태 활성화
   const initialPath = await window.electronAPI.getLogPath();

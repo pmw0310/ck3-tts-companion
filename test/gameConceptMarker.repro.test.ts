@@ -109,4 +109,24 @@ test('CK3 Game Concept 서식 마커(G;) 및 서술격 조사(임이) 정제 검
     assert.ok(content.includes('장경'), `별칭 장경이 포함되어야 합니다. 현재 본문: "${content}"`);
     assert.ok(content.includes('자현의 잘린 머리를'), `자현의 잘린 머리 내용이 포함되어야 합니다. 현재 본문: "${content}"`);
   });
+
+  await t.test('6. [사용자 실전 제보] 궁정 주최 개회 수치 마커(V; 3) 및 단위성 명사 공백 정제 검증', () => {
+    const rawSample = '내 앞에 선 사람들을 세어보니 총 V; 3 명의 탄원인이 자기 차례를 기다리고 있었다.';
+    const sanitized = sanitizeCk3Text(rawSample);
+
+    // V; 마커가 완전히 제거되어야 함
+    assert.ok(!sanitized.includes('V;'), `"V;" 마커가 제거되어야 합니다. 현재 출력: "${sanitized}"`);
+    assert.ok(!sanitized.includes('V '), `단독 "V " 마커가 제거되어야 합니다. 현재 출력: "${sanitized}"`);
+
+    // "3 명의" -> "3명의"로 자연스럽게 정제되어야 함
+    assert.ok(
+      sanitized.includes('총 3명의 탄원인이') || sanitized.includes('총 3 명의 탄원인이'),
+      `수치가 보존되고 자연스러운 문장으로 정제되어야 합니다. 현재 출력: "${sanitized}"`
+    );
+    assert.equal(
+      sanitized,
+      '내 앞에 선 사람들을 세어보니 총 3명의 탄원인이 자기 차례를 기다리고 있었다.'
+    );
+  });
 });
+

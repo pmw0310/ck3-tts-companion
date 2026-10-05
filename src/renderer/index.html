@@ -24,8 +24,13 @@
         <div class="brand">
           <img src="./assets/app-icon.png" alt="CK3 TTS Emblem" class="brand-crest-img" />
           <div class="brand-text">
-            <h1 class="brand-title">CK3 TTS COMPANION</h1>
-            <span class="brand-subtitle">실시간 인게임 나레이션 보이스 엔진</span>
+            <div class="brand-title-row">
+              <h1 class="brand-title">CK3 TTS COMPANION</h1>
+              <span id="app-version-badge" class="version-badge" title="현재 애플리케이션 버전">v1.4.0</span>
+            </div>
+            <span class="brand-subtitle">
+              실시간 인게임 나레이션 보이스 엔진 • <span id="app-author-tag" class="author-tag">제작: BlackOlf</span>
+            </span>
           </div>
         </div>
 
@@ -42,6 +47,25 @@
           </button>
         </div>
       </header>
+
+      <!-- 신규 버전 출시 알림 배너 -->
+      <aside id="update-notification-banner" class="update-banner banner-hidden" aria-live="polite">
+        <div class="update-banner-content">
+          <span class="update-banner-icon">🚀</span>
+          <div class="update-banner-text">
+            <strong id="update-banner-title">새로운 버전이 출시되었습니다!</strong>
+            <span id="update-banner-desc" class="update-banner-desc">최신 업데이트를 확인해 보세요.</span>
+          </div>
+        </div>
+        <div class="update-banner-actions">
+          <button type="button" id="btn-update-download" class="btn btn-sm btn-gold">
+            새 버전 다운로드 ↗
+          </button>
+          <button type="button" id="btn-update-dismiss" class="btn-icon btn-sm" aria-label="알림 닫기" title="닫기">
+            ✕
+          </button>
+        </div>
+      </aside>
 
       <!-- 메인 콘텐츠 영역 -->
       <main class="app-content">
@@ -271,6 +295,13 @@
               </div>
             </div>
 
+            <!-- 테스트 낭독 섹션 (음성 설정 바로 아래에 배치하여 즉각적인 청취 테스트 지원) -->
+            <div class="test-speech-bar">
+              <button type="button" id="btn-test-speech" class="btn btn-gold">
+                🎙️ 현재 설정으로 목소리 테스트
+              </button>
+            </div>
+
             <!-- CK3 로그 경로 수동 설정 -->
             <div class="form-row log-path-row">
               <label class="setting-label">CK3 debug.log 경로</label>
@@ -285,6 +316,7 @@
                 <button type="button" id="btn-browse-log" class="btn btn-secondary">
                   찾아보기...
                 </button>
+              </div>
             </div>
 
             <!-- CK3 모드 썸네일 및 동기화 상태 -->
@@ -300,13 +332,34 @@
               </div>
             </div>
 
-            <!-- 테스트 낭독 섹션 -->
-            <div class="test-speech-bar">
-              <button type="button" id="btn-test-speech" class="btn btn-gold">
-                🎙️ 현재 설정으로 목소리 테스트
-              </button>
+            <!-- 소프트웨어 정보 및 수동 업데이트 확인 -->
+            <div class="form-row software-info-row">
+              <label class="setting-label">소프트웨어 정보 & 업데이트</label>
+              <div class="software-info-card">
+                <div class="software-meta-row">
+                  <span class="meta-item">
+                    <span class="meta-label">현재 버전:</span>
+                    <strong id="modal-app-version" class="meta-val gold-text">v1.4.0</strong>
+                  </span>
+                  <span class="meta-separator">•</span>
+                  <span class="meta-item">
+                    <span class="meta-label">제작자:</span>
+                    <strong id="modal-app-author" class="meta-val">BlackOlf</strong>
+                  </span>
+                </div>
+                <div class="software-actions-row">
+                  <button type="button" id="btn-manual-check-update" class="btn btn-secondary btn-sm">
+                    🔄 최신 버전 확인
+                  </button>
+                  <button type="button" id="btn-open-repo" class="btn btn-secondary btn-sm">
+                    🌐 GitHub 저장소 ↗
+                  </button>
+                  <span id="manual-update-status" class="update-status-msg"></span>
+                </div>
+              </div>
             </div>
           </div>
+
 
           <div class="modal-footer">
             <button id="btn-save-settings" class="btn btn-primary">

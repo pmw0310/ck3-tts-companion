@@ -71,6 +71,26 @@ export type SynthesizeResult = {
   readonly fallbackReason?: string;
 };
 
+/** 애플리케이션 정보 인터페이스 */
+export type AppInfo = {
+  readonly version: string;
+  readonly author: string;
+  readonly productName: string;
+  readonly repoUrl: string;
+};
+
+/** GitHub 릴리스 업데이트 검사 결과 인터페이스 */
+export type UpdateCheckResult = {
+  readonly hasUpdate: boolean;
+  readonly currentVersion: string;
+  readonly latestVersion: string;
+  readonly releaseUrl: string;
+  readonly releaseTitle?: string;
+  readonly releaseNotes?: string;
+  readonly publishedAt?: string;
+  readonly errorMessage?: string;
+};
+
 /** 렌더러와 메인 간의 IPC API 정의 */
 export type ElectronApiBridge = {
   readonly getLogPath: () => Promise<string | null>;
@@ -82,4 +102,8 @@ export type ElectronApiBridge = {
   readonly onLogStatusChange: (callback: (isWatching: boolean, path: string | null) => void) => () => void;
   readonly onToggleSpeech: (callback: () => void) => () => void;
   readonly selectCustomLogPath: () => Promise<string | null>;
+  readonly getAppInfo: () => Promise<AppInfo>;
+  readonly checkForUpdates: () => Promise<UpdateCheckResult>;
+  readonly openExternal: (url: string) => Promise<boolean>;
 };
+

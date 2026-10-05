@@ -88,7 +88,6 @@ types Events
 
 		default_clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
 		onclick = "[EventOption.Select]"
-		onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		clicksound = "[EventOption.GetClickSound]"
 		block "eventoption_down" {
 			down = "[And(GetVariableSystem.HasValue('event_tooltip', EventOption.GetText), PdxGuiFoldOut.IsUnfolded)]"

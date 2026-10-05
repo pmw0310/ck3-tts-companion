@@ -1,4 +1,5 @@
 import { hasBatchim, josa } from 'es-hangul';
+import { convertLatinPhrasesInText } from '@/main/latinTransliteration';
 
 /** CK3 내부 서식, 아이콘, 툴팁 명령을 제거하기 위한 정규식 패턴 목록 */
 const CK3_TAG_PATTERNS: readonly RegExp[] = [
@@ -9,8 +10,8 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s!]+/gi,  // ONCLICK:CHARACTER,12345 등 비대괄호 태그
   /\bEMP\b/gi,                                               // EMP 강조 서식
-  /\b[GLEIPB];\s*/gi,                                         // G;, L;, E;, I;, P;, B; 링크/게임컨셉/아이콘 마커
-  /(?:^|\s)[GIEPLB];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B 마커 (예: "G 강령술사", "L ' 엽사 '", "I 승전")
+  /\b[GLEIPBVN];\s*/gi,                                         // G;, L;, E;, I;, P;, B;, V;, N; 링크/게임컨셉/수치/아이콘 마커
+  /(?:^|\s)[GIEPLBVN];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B, V, N 마커 (예: "G 강령술사", "V; 3", "L ' 엽사 '", "I 승전")
   /\b(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
@@ -270,10 +271,10 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 3. 단어 앞의 세미콜론 제거 (예: "; 마이센" -> "마이센")
   cleaned = cleaned.replace(/(?:^|\s);\s*/g, ' ');
 
-  // 3.5. 단독 잔여 Paradox 엔진 링크/컨셉 마커(L, G) 완벽 제거 (예: "L ' 장경 '", "L 장경", "^L ")
-  // 로마 숫자(I, IV세, IX 등) 손상을 방지하기 위해 단독 마커는 링크(L)와 컨셉(G)에 한정하고 뒤에 한글 또는 따옴표가 올 때만 정제
-  cleaned = cleaned.replace(/(?:^|\s)[LG];?\s*(?=['"`‘“「『가-힣])/gi, ' ');
-  cleaned = cleaned.replace(/^[LG]\s+/i, '');
+  // 3.5. 단독 잔여 Paradox 엔진 링크/컨셉/수치 마커(L, G, V) 완벽 제거 (예: "L ' 장경 '", "V; 3", "L 장경", "^L ")
+  // 로마 숫자(I, IV세, IX 등) 손상을 방지하기 위해 단독 마커는 링크(L), 컨셉(G), 수치(V)에 한정하고 뒤에 한글, 숫자 또는 따옴표가 올 때만 정제
+  cleaned = cleaned.replace(/(?:^|\s)[LGV];?\s*(?=['"`‘“「『가-힣\d])/gi, ' ');
+  cleaned = cleaned.replace(/^[LGV]\s+/i, '');
 
   // 4. 단어 뒤에 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
   cleaned = cleaned.replace(/(?:\s*!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
@@ -283,6 +284,9 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 5. 줄바꿈(\n)을 단락 간 자연스러운 공백으로 치환
   cleaned = cleaned.replace(/\r?\n+/g, ' ');
 
+  // 5.5. 라틴어 기도문, 성경 구절, 유명 격언을 유창한 한글 독음으로 자동 변환
+  cleaned = convertLatinPhrasesInText(cleaned);
+
   // 6. 한국어 조사 태그 자동 보정
   cleaned = resolveKoreanParticles(cleaned);
 
@@ -290,6 +294,9 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 단, '이'는 지시관형사(예: "이 녀석", "이 결정")로 쓰일 수 있으므로 뒤에 또 다른 한글 단어가 오는 경우(\s+[가-힣])에는 앞 단어와 붙이지 않음
   cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야)(?=[^\w가-힣]|$)/g, '$1$2');
   cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+이(?=[,.?!;:)]|$)/g, '$1이');
+
+  // 7.5. 수치 서식 태그 제거 후 발생한 숫자 뒤 단위성 명사 앞 공백 정리 (예: "3 명의" -> "3명의", "10 곳" -> "10곳")
+  cleaned = cleaned.replace(/(\d+)\s+(명|개|세|살|번|곳|마리|척|채|권|장|병|잔|배|가지|년|월|일)(?=[의을를이가은는에서로와과도만부터까지,]|\s|$)/g, '$1$2');
 
   // 8. 따옴표 내부 불필요한 공백 정리 (예: "' 엽사 '" -> "'엽사'", "“ 영주 ”" -> "“영주”")
   cleaned = cleaned

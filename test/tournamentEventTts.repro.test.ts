@@ -20,7 +20,8 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     // activity_event_widget_base 블록 추출
     const baseWidgetIndex = content.indexOf('type activity_event_widget_base = widget');
     assert.ok(baseWidgetIndex !== -1, 'activity_event_widget_base 타입이 정의되어 있어야 합니다.');
-    const baseContent = content.slice(baseWidgetIndex, baseWidgetIndex + 20000);
+    const nextTypeIndex = content.indexOf('type container_tenet_doctrine_conclusion', baseWidgetIndex);
+    const baseContent = content.slice(baseWidgetIndex, nextTypeIndex !== -1 ? nextTypeIndex : undefined);
 
     // ##CK3_TTS## 자동 낭독 state 확인
     assert.ok(
