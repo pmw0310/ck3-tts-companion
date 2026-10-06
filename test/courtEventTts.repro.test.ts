@@ -13,21 +13,19 @@ test('궁정 이벤트 창(window_royal_court.gui & window_court_events.gui) TTS
   assert.ok(fs.existsSync(royalCourtGuiPath), 'window_royal_court.gui 파일이 존재해야 합니다.');
   assert.ok(fs.existsSync(courtGuiPath), 'window_court_events.gui 파일이 존재해야 합니다.');
 
-  const royalContent = fs.readFileSync(royalCourtGuiPath, 'utf-8');
   const courtContent = fs.readFileSync(courtGuiPath, 'utf-8');
 
-  await t.test('1. [실시간 자동 낭독 연동] window_court_events.gui의 widget_court_event에 EventWindowViewInsert.HasOpenEvent 기반 자동 낭독이 구현되어 있어야 함', () => {
+  await t.test('1. [데이터 스코프 및 수동 낭독 연동] header_pattern 내부에 tts_speak_button이 배치되어 모든 탄원인의 최신 데이터가 정상 바인딩되어야 함', () => {
     assert.match(
       courtContent,
-      /state\s*=\s*\{[\s\S]*?name\s*=\s*tts_court_event_auto_play[\s\S]*?trigger_when\s*=\s*"\[EventWindowViewInsert\.HasOpenEvent\]"[\s\S]*?##CK3_TTS##/,
-      '탄원인이 화면에 나타날 때(EventWindowViewInsert.HasOpenEvent) 실시간으로 ##CK3_TTS## 자동 낭독이 트리거되어야 합니다.'
+      /header_pattern\s*=\s*\{[\s\S]*?name\s*=\s*"tts_speak_button"[\s\S]*?##CK3_TTS_FORCE##/,
+      'header_pattern 내부에 tts_speak_button이 배치되어 court_event_data의 최신 EventWindowData를 낭독할 수 있어야 합니다.'
     );
     assert.match(
       courtContent,
       /EventWindowData\.GetTitle[\s\S]*?EventWindowData\.GetDescription/,
       '제목과 설명이 결합되어 TTS로 전달되어야 합니다.'
     );
-    // 문법 에러 방지: HasPortraitCharacter 뒤에 .IsFemale이 오지 않고 GetPortraitCharacter가 사용되어야 함
     assert.ok(
       !courtContent.includes("HasPortraitCharacter('left_portrait').IsFemale"),
       'HasPortraitCharacter에 .IsFemale을 호출하는 문법 에러가 없어야 합니다.'
@@ -39,33 +37,49 @@ test('궁정 이벤트 창(window_royal_court.gui & window_court_events.gui) TTS
     );
   });
 
-  await t.test('2. [오디오 즉시 중단 연동] window_court_events.gui에서 Not(EventWindowViewInsert.HasOpenEvent) 상태에서 ##CK3_TTS_STOP##이 호출되어 선택지 클릭 시 이전 음성이 즉시 멈추어야 함', () => {
+  await t.test('2. [버튼 잘림 방지 및 단축키 바인딩] widgetanchor = vcenter|right 및 넉넉한 안전 여백(-65 0)으로 우측 클리핑 방지 및 F 단축키 확인', () => {
     assert.match(
       courtContent,
-      /state\s*=\s*\{[\s\S]*?name\s*=\s*tts_court_event_auto_stop[\s\S]*?trigger_when\s*=\s*"\[Not\(EventWindowViewInsert\.HasOpenEvent\)\]"[\s\S]*?##CK3_TTS_STOP##/,
-      '탄원인 선택지 클릭 또는 창이 닫힐 때(Not HasOpenEvent) 이전 음성 즉시 중단(##CK3_TTS_STOP##)이 트리거되어야 합니다.'
+      /flowcontainer\s*=\s*\{[\s\S]*?parentanchor\s*=\s*vcenter\|right[\s\S]*?widgetanchor\s*=\s*vcenter\|right[\s\S]*?position\s*=\s*\{\s*-65\s+0\s*\}/,
+      '헤더 바 우측 안쪽으로 65px 이상 넉넉하게 정렬되어 버튼이 테두리에 전혀 잘리지 않아야 합니다.'
+    );
+    assert.match(
+      courtContent,
+      /button_round\s*=\s*\{[\s\S]*?name\s*=\s*"tts_speak_button"[\s\S]*?shortcut\s*=\s*"army_split_half"/,
+      '스피커 버튼에 F 단축키(army_split_half)가 바인딩되어 있어야 합니다.'
     );
   });
 
-  await t.test('3. [수동 낭독 버튼] window_court_events.gui 우측 상단 tts_speak_button 및 F 단축키 연동 확인', () => {
+  await t.test('3. [안내 라벨 및 툴팁] 궁정 TTS가 자동 재생 불가 및 수동 낭독임을 알리는 시각적 텍스트 라벨과 툴팁이 구비되어 있어야 함', () => {
     assert.match(
       courtContent,
-      /button_round\s*=\s*\{[\s\S]*?name\s*=\s*"tts_speak_button"[\s\S]*?parentanchor\s*=\s*top\|right[\s\S]*?position\s*=\s*\{\s*-25\s+15\s*\}/,
-      '우측 상단 모서리에 tts_speak_button이 배치되어야 합니다.'
+      /text_single\s*=\s*\{[\s\S]*?text\s*=\s*"궁정 자동 재생 불가"/,
+      '헤더 영역에 "궁정 자동 재생 불가" 안내 라벨이 시각적으로 노출되어야 합니다.'
     );
     assert.match(
       courtContent,
-      /shortcut\s*=\s*"army_split_half"/,
-      'F 단축키가 바인딩되어 있어야 합니다.'
+      /text_single\s*=\s*\{[\s\S]*?text\s*=\s*"수동 낭독 \(단축키: F\)"/,
+      '헤더 영역에 "수동 낭독 (단축키: F)" 안내 라벨이 시각적으로 노출되어야 합니다.'
     );
     assert.match(
       courtContent,
-      /##CK3_TTS_FORCE##/,
-      '버튼 클릭 시 강제 재낭독(FORCE)이 실행되어야 합니다.'
+      /(?:raw_)?tooltip\s*=\s*"(?:TTS_COURT_EVENT_TOOLTIP|TTS 이벤트 낭독[\s\S]*?궁정\(알현실\) 이벤트는)/,
+      '스피커 버튼에 자동 재생 불가 및 수동 낭독 안내 툴팁이 명시되어 있어야 합니다.'
     );
   });
 
-  await t.test('4. [크래시 방어] button_eventoption 내부에 중복 콘솔 명령어가 없어야 함 (FlushDestroyList 크래시 방어)', () => {
+  await t.test('4. [크래시 및 오발화 원천 차단] 불안정한 trigger_when 자동 재생 state가 제거되어 있어야 함', () => {
+    assert.ok(
+      !courtContent.includes('tts_court_event_auto_play'),
+      '알현실 3D 비동기 결함을 유발하는 tts_court_event_auto_play가 제거되어 있어야 합니다.'
+    );
+    assert.ok(
+      !courtContent.includes('tts_court_event_auto_stop'),
+      '미발화 결함을 유발하는 tts_court_event_auto_stop이 제거되어 있어야 합니다.'
+    );
+  });
+
+  await t.test('5. [선택지 크래시 방어] button_eventoption 내부에 중복 콘솔 명령어가 없어야 함 (FlushDestroyList 크래시 방어)', () => {
     // 1) window_court_events.gui 내부 button_eventoption 블록 추출
     const optionMatch = courtContent.match(/button_eventoption\s*=\s*\{([\s\S]*?)\n\t\t\t\t\t\t\t\}/);
     assert.ok(optionMatch, 'button_eventoption 블록이 존재해야 합니다.');
@@ -85,5 +99,19 @@ test('궁정 이벤트 창(window_royal_court.gui & window_court_events.gui) TTS
         'shared/event_windows.gui의 button_eventoption에는 크래시를 유발하는 콘솔 명령어가 없어야 합니다.'
       );
     }
+  });
+
+  await t.test('6. [엔진 레이아웃 무한 재귀 크래시 방어] flowcontainer 내부에 hbox/vbox가 직접 자식으로 없어야 함 (스택 오버플로우 방어)', () => {
+    // flowcontainer 내부에 vbox 또는 hbox가 직접 들어가면 엔진 크래시가 발생하므로 검증
+    const controlMatch = courtContent.match(/# CK3 TTS Companion: 궁정 수동 낭독 컨트롤[\s\S]*?name\s*=\s*"tts_speak_button"[\s\S]*?\n\t\t\t\t\t\}/);
+    assert.ok(controlMatch, 'TTS 컨트롤 flowcontainer가 확인되어야 합니다.');
+    assert.ok(
+      !controlMatch[0].includes('vbox = {'),
+      'flowcontainer의 직접 자식으로 vbox가 들어가면 C++ 엔진 무한 리사이즈 스택 오버플로우가 발생하므로 없어야 합니다.'
+    );
+    assert.ok(
+      !controlMatch[0].includes('hbox = {'),
+      'flowcontainer의 직접 자식으로 hbox가 들어가면 C++ 엔진 무한 리사이즈 스택 오버플로우가 발생하므로 없어야 합니다.'
+    );
   });
 });

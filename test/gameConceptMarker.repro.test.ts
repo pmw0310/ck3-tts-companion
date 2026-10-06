@@ -100,7 +100,7 @@ test('CK3 Game Concept 서식 마커(G;) 및 서술격 조사(임이) 정제 검
     const rawChunk = `[13:35:26][D][console.cpp:1193]: console_success: Executing effect script "debug_log = \\"[CK3_TTS] 그의 머리를 가져오라: 성공!||| ONCLICK:CHARACTER,79491  TOOLTIP:CHARACTER,79491  L ' TOOLTIP:NICKNAME,nick_longshanks,79491  L; 장경 ! !' 자현의 ! ! ! 잘린 머리를  ONCLICK:CHARACTER,33922  TOOLTIP:CHARACTER,33922  L 목사 박 언부의 ! ! ! 공모자 앞에 내던졌다. 검붉은 자줏빛으로 물든 고깃덩이가 질척한 소리를 내며 그 곁을 굴렀다.[CK3_TTS_END]\\"`;
     const events = extractCk3EventsFromChunk(rawChunk);
     assert.equal(events.length, 1, '이벤트가 1건 정상 추출되어야 합니다.');
-    assert.equal(events[0]?.title, '그의 머리를 가져오라: 성공');
+    assert.equal(events[0]?.title, '그의 머리를 가져오라: 성공!');
 
     const content = events[0]?.content ?? '';
     assert.ok(!content.startsWith('L '), `본문이 "L "로 시작하지 않아야 합니다. 현재 본문: "${content}"`);

@@ -1,10 +1,14 @@
 import type {
   AppInfo,
   AppSettings,
+  CacheStats,
   Ck3EventMessage,
   EdgeVoiceName,
+  ElevenLabsModelName,
   GeminiModelName,
   GeminiVoiceName,
+  OpenAiModelName,
+  OpenAiVoiceName,
   SpeakerGender,
   SynthesizeResult,
   TtsProviderType,
@@ -74,7 +78,21 @@ const state: RendererState = {
     edgeVoiceMale: 'ko-KR-InJoonNeural',
     edgeVoiceFemale: 'ko-KR-SunHiNeural',
     geminiVoiceMale: 'Charon',
-    geminiVoiceFemale: 'Kore'
+    geminiVoiceFemale: 'Kore',
+    openaiApiKey: '',
+    openaiModel: 'tts-1',
+    openaiVoice: 'onyx',
+    openaiVoiceMale: 'onyx',
+    openaiVoiceFemale: 'nova',
+    elevenLabsApiKey: '',
+    elevenLabsModel: 'eleven_multilingual_v2',
+    elevenLabsVoiceId: 'JBFqnCBsd6RMkjVDRZzb',
+    elevenLabsVoiceMale: 'JBFqnCBsd6RMkjVDRZzb',
+    elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
+    elevenLabsStability: 0.5,
+    elevenLabsSimilarity: 0.75,
+    isCacheEnabled: true,
+    maxCacheSizeMb: 500
   },
   currentEvent: null,
   history: [],
@@ -112,6 +130,8 @@ audioPlayer.volume = 0.92;
 
 /** 현재 재생 중인 오디오 Blob URL 메모리 참조 */
 let currentAudioBlobUrl: string | null = null;
+/** 오디오 재생 ended 이벤트 누락 방지 안전 가드 타이머 */
+let currentPlaybackSafetyTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Base64 인코딩된 오디오 데이터를 브라우저 메모리 Blob URL로 변환합니다.
@@ -149,6 +169,20 @@ const customPromptWrapper = document.getElementById('custom-prompt-wrapper') as 
 const textareaGeminiPrompt = document.getElementById('textarea-gemini-prompt') as HTMLTextAreaElement;
 const inputCustomLogPath = document.getElementById('input-custom-log-path') as HTMLInputElement;
 
+// OpenAI 설정 폼 엘리먼트
+const openaiOptionsGroup = document.getElementById('openai-options') as HTMLDivElement;
+const selectOpenaiModel = document.getElementById('select-openai-model') as HTMLSelectElement;
+const inputOpenaiKey = document.getElementById('input-openai-key') as HTMLInputElement;
+const selectOpenaiVoice = document.getElementById('select-openai-voice') as HTMLSelectElement;
+
+// ElevenLabs 설정 폼 엘리먼트
+const elevenlabsOptionsGroup = document.getElementById('elevenlabs-options') as HTMLDivElement;
+const selectElevenlabsModel = document.getElementById('select-elevenlabs-model') as HTMLSelectElement;
+const inputElevenlabsKey = document.getElementById('input-elevenlabs-key') as HTMLInputElement;
+const selectElevenlabsVoicePreset = document.getElementById('select-elevenlabs-voice-preset') as HTMLSelectElement;
+const elevenlabsCustomVoiceRow = document.getElementById('elevenlabs-custom-voice-row') as HTMLDivElement;
+const inputElevenlabsVoiceId = document.getElementById('input-elevenlabs-voice-id') as HTMLInputElement;
+
 // 오디오 드라마 모드 엘리먼트
 const chkAudioDrama = document.getElementById('chk-audio-drama') as HTMLInputElement;
 const edgeGenderVoicesGroup = document.getElementById('edge-gender-voices') as HTMLDivElement;
@@ -157,6 +191,12 @@ const selectEdgeVoiceFemale = document.getElementById('select-edge-voice-female'
 const geminiGenderVoicesGroup = document.getElementById('gemini-gender-voices') as HTMLDivElement;
 const selectGeminiVoiceMale = document.getElementById('select-gemini-voice-male') as HTMLSelectElement;
 const selectGeminiVoiceFemale = document.getElementById('select-gemini-voice-female') as HTMLSelectElement;
+const openaiGenderVoicesGroup = document.getElementById('openai-gender-voices') as HTMLDivElement;
+const selectOpenaiVoiceMale = document.getElementById('select-openai-voice-male') as HTMLSelectElement;
+const selectOpenaiVoiceFemale = document.getElementById('select-openai-voice-female') as HTMLSelectElement;
+const elevenlabsGenderVoicesGroup = document.getElementById('elevenlabs-gender-voices') as HTMLDivElement;
+const selectElevenlabsVoiceMale = document.getElementById('select-elevenlabs-voice-male') as HTMLSelectElement;
+const selectElevenlabsVoiceFemale = document.getElementById('select-elevenlabs-voice-female') as HTMLSelectElement;
 
 // 버전 및 제작자 정보 표시 엘리먼트
 const appVersionBadge = document.getElementById('app-version-badge') as HTMLSpanElement;
@@ -175,6 +215,97 @@ const btnUpdateDismiss = document.getElementById('btn-update-dismiss') as HTMLBu
 const btnManualCheckUpdate = document.getElementById('btn-manual-check-update') as HTMLButtonElement;
 const btnOpenRepo = document.getElementById('btn-open-repo') as HTMLButtonElement;
 const manualUpdateStatus = document.getElementById('manual-update-status') as HTMLSpanElement;
+
+// 로컬 오디오 캐시 설정 및 대시보드 엘리먼트
+const chkCacheEnabled = document.getElementById('chk-cache-enabled') as HTMLInputElement;
+const rangeCacheSize = document.getElementById('range-cache-size') as HTMLInputElement;
+const cacheSizeDisplay = document.getElementById('cache-size-display') as HTMLSpanElement;
+const cacheStatFiles = document.getElementById('cache-stat-files') as HTMLSpanElement;
+const cacheStatHits = document.getElementById('cache-stat-hits') as HTMLSpanElement;
+const cacheStatSize = document.getElementById('cache-stat-size') as HTMLSpanElement;
+const cacheUsageBar = document.getElementById('cache-usage-bar') as HTMLDivElement;
+const cacheUsageText = document.getElementById('cache-usage-text') as HTMLSpanElement;
+const cacheDirPreview = document.getElementById('cache-dir-preview') as HTMLSpanElement;
+
+const btnRefreshCacheStats = document.getElementById('btn-refresh-cache-stats') as HTMLButtonElement;
+const btnOpenCacheDir = document.getElementById('btn-open-cache-dir') as HTMLButtonElement;
+const btnClearCache = document.getElementById('btn-clear-cache') as HTMLButtonElement;
+
+/** 최근 메인 프로세스로부터 수신한 캐시 통계 상태 보관 */
+let lastKnownCacheStats: CacheStats | null = null;
+
+/**
+ * 슬라이더의 현재 값에 따라 채워진 황금색 트랙의 비율(--fill-percent)을 실시간으로 업데이트합니다.
+ * @param slider - 대상 input[type="range"] 엘리먼트
+ */
+const updateSliderFillTrack = (slider: HTMLInputElement): void => {
+  const min = parseFloat(slider.min) || 0;
+  const max = parseFloat(slider.max) || 100;
+  const val = parseFloat(slider.value) || 0;
+  const percent = max > min ? Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100)) : 0;
+  slider.style.setProperty('--fill-percent', `${percent}%`);
+};
+
+/**
+ * 캐시 용량(MB) 변경 시 하단 프로그레스 바와 사용량 텍스트를 실시간으로 동기화합니다.
+ * @param maxMb - 동기화할 최대 캐시 용량 (MB 단위)
+ */
+const syncCacheUsageDisplay = (maxMb: number): void => {
+  if (cacheSizeDisplay) {
+    cacheSizeDisplay.textContent = `${maxMb} MB`;
+  }
+  const currentBytes = lastKnownCacheStats?.totalSizeBytes ?? 0;
+  const currentMb = (currentBytes / 1024 / 1024).toFixed(1);
+  const maxBytes = maxMb * 1024 * 1024;
+  const usagePercent =
+    maxBytes > 0
+      ? Math.min(Math.round((currentBytes / maxBytes) * 100), 100)
+      : 0;
+
+  if (cacheUsageBar) {
+    cacheUsageBar.style.width = `${usagePercent}%`;
+  }
+  if (cacheUsageText) {
+    cacheUsageText.textContent = `${currentMb} MB / ${maxMb} MB (${usagePercent}%)`;
+  }
+  if (rangeCacheSize) {
+    updateSliderFillTrack(rangeCacheSize);
+  }
+};
+
+/**
+ * 메인 프로세스로부터 로컬 오디오 캐시 통계를 조회하여 UI를 최신화합니다.
+ */
+const updateCacheStatsUi = async (): Promise<void> => {
+  try {
+    const stats = await window.electronAPI.getCacheStats();
+    lastKnownCacheStats = stats;
+    if (cacheStatFiles) {
+      cacheStatFiles.textContent = `${stats.totalFiles.toLocaleString()}개`;
+    }
+    if (cacheStatHits) {
+      cacheStatHits.textContent = `${stats.hitCount.toLocaleString()}회`;
+    }
+
+    const currentMb = (stats.totalSizeBytes / 1024 / 1024).toFixed(1);
+    if (cacheStatSize) {
+      cacheStatSize.textContent = `${currentMb} MB`;
+    }
+
+    // 슬라이더의 현재 입력값 기준으로 하단 진행률 동기화 (설정 저장 전 슬라이더 조작 상태 보존)
+    const currentSliderMb = rangeCacheSize
+      ? parseInt(rangeCacheSize.value, 10) || 500
+      : Math.round(stats.maxSizeBytes / 1024 / 1024);
+    syncCacheUsageDisplay(currentSliderMb);
+
+    if (cacheDirPreview && stats.cacheDirPath) {
+      cacheDirPreview.textContent = stats.cacheDirPath;
+      cacheDirPreview.title = stats.cacheDirPath;
+    }
+  } catch (err: unknown) {
+    console.warn('⚠️ [AudioCache] 캐시 통계 조회 실패:', err);
+  }
+};
 
 /** 애플리케이션 메타데이터 상태 */
 let currentAppInfo: AppInfo = {
@@ -216,7 +347,11 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       const defaultText =
         state.settings.provider === 'gemini'
           ? 'Gemini AI 음성 생성 중...'
-          : '음성 합성 중...';
+          : state.settings.provider === 'openai'
+            ? 'OpenAI 고음질 음성 생성 중...'
+            : state.settings.provider === 'elevenlabs'
+              ? 'ElevenLabs 프리미엄 음성 생성 중...'
+              : '음성 합성 중...';
       ttsStatusText.textContent = detailText ?? defaultText;
       audioVisualizer.classList.add('visualizer-synthesizing');
       btnStopAudio.disabled = false; // 통신 중에도 중지(취소) 가능!
@@ -469,6 +604,10 @@ const notifyFallbackIfNeeded = (result: SynthesizeResult): void => {
 const stopAudio = (): void => {
   activeSpeechRequestId++;
   isQueueActive = false;
+  if (currentPlaybackSafetyTimer) {
+    clearTimeout(currentPlaybackSafetyTimer);
+    currentPlaybackSafetyTimer = null;
+  }
   visualizerController.stop();
   audioPlayer.volume = 0; // 정지 시 급격한 파형 단절(퍽 소리) 방지
   audioPlayer.pause();
@@ -494,32 +633,52 @@ const resolveVoiceAndPromptForSegment = (
   type: 'narration' | 'dialogue',
   gender?: SpeakerGender
 ): { voiceOverride?: string; promptOverride?: string } => {
-  const isGemini = state.settings.provider === 'gemini';
+  const provider = state.settings.provider;
 
   // 1. 지문(나레이션)이거나 성별이 narrator/미지정인 경우 -> 사관 나레이터 음성
   if (type === 'narration' || gender === 'narrator' || !gender) {
+    let voiceOverride: string = state.settings.edgeVoice;
+    if (provider === 'gemini') {
+      voiceOverride = state.settings.geminiVoice;
+    } else if (provider === 'openai') {
+      voiceOverride = state.settings.openaiVoice || 'onyx';
+    } else if (provider === 'elevenlabs') {
+      voiceOverride = state.settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb';
+    }
     return {
-      voiceOverride: isGemini ? state.settings.geminiVoice : state.settings.edgeVoice,
+      voiceOverride,
       promptOverride: GEMINI_TONE_PRESETS.narrator
     };
   }
 
   // 2. 여성 등장인물 대사인 경우
   if (gender === 'female') {
+    let femaleVoice: string = state.settings.edgeVoiceFemale || 'ko-KR-SunHiNeural';
+    if (provider === 'gemini') {
+      femaleVoice = state.settings.geminiVoiceFemale || 'Kore';
+    } else if (provider === 'openai') {
+      femaleVoice = state.settings.openaiVoiceFemale || 'nova';
+    } else if (provider === 'elevenlabs') {
+      femaleVoice = state.settings.elevenLabsVoiceFemale || 'Xb7hH8MSUJpSbSDYk0k2';
+    }
     return {
-      voiceOverride: isGemini
-        ? (state.settings.geminiVoiceFemale || 'Kore')
-        : (state.settings.edgeVoiceFemale || 'ko-KR-SunHiNeural'),
+      voiceOverride: femaleVoice,
       promptOverride:
         'A regal, expressive, and dignified noble lady or queen speaking with emotion and royal composure. 품격 있고 감정이 실린 중세 귀족 여성의 어조로 대사를 말하라.'
     };
   }
 
   // 3. 남성 등장인물 대사인 경우 (male)
+  let maleVoice: string = state.settings.edgeVoiceMale || 'ko-KR-InJoonNeural';
+  if (provider === 'gemini') {
+    maleVoice = state.settings.geminiVoiceMale || 'Charon';
+  } else if (provider === 'openai') {
+    maleVoice = state.settings.openaiVoiceMale || 'onyx';
+  } else if (provider === 'elevenlabs') {
+    maleVoice = state.settings.elevenLabsVoiceMale || 'JBFqnCBsd6RMkjVDRZzb';
+  }
   return {
-    voiceOverride: isGemini
-      ? (state.settings.geminiVoiceMale || 'Charon')
-      : (state.settings.edgeVoiceMale || 'ko-KR-InJoonNeural'),
+    voiceOverride: maleVoice,
     promptOverride:
       'A resolute, commanding, and proud medieval lord, commander, or king speaking with deep authority. 위엄 있고 단호한 중세 남성 영주/기사의 어조로 대사를 말하라.'
   };
@@ -702,7 +861,7 @@ const speakText = async (
       syncAudioPlaybackRate();
       await visualizerController.resumeAudioContext();
       await audioPlayer.play();
-      setTtsUiState('playing');
+      setTtsUiState('playing', result.fromCache ? '⚡ 로컬 캐시 즉시 낭독' : undefined);
 
       // [핵심 최적화]: 현재 청크 재생이 시작되었으므로, 다음 청크(index + 1)를 1개만 미리 요청!
       // 재생 시간(보통 4~8초) 동안 다음 청크가 조용히 완성되므로 청크 간 간격 없이 즉각 이어집니다.
@@ -710,15 +869,41 @@ const speakText = async (
         startFetchChunk(index + 1);
       }
 
-      // 이번 구절이 끝나면 다음 구절 즉각 연속 재생
-      const handleEnded = async (): Promise<void> => {
-        audioPlayer.removeEventListener('ended', handleEnded);
+      // 이번 구절이 끝나면 다음 구절 즉각 연속 재생 (ended, error, 안전 가드 타이머 3중 방어)
+      let isNextTriggered = false;
+      const clearSafetyTimer = (): void => {
+        if (currentPlaybackSafetyTimer) {
+          clearTimeout(currentPlaybackSafetyTimer);
+          currentPlaybackSafetyTimer = null;
+        }
+      };
+
+      const handleNext = async (): Promise<void> => {
+        if (isNextTriggered) return;
+        isNextTriggered = true;
+        clearSafetyTimer();
+        audioPlayer.removeEventListener('ended', handleNext);
+        audioPlayer.removeEventListener('error', handleNext);
         if (currentRequestId === activeSpeechRequestId) {
           await playQueueIndex(index + 1);
         }
       };
 
-      audioPlayer.addEventListener('ended', handleEnded, { once: true });
+      audioPlayer.addEventListener('ended', handleNext, { once: true });
+      audioPlayer.addEventListener('error', handleNext, { once: true });
+
+      // 오디오 길이(초) 기반 또는 기본 12초 안전 가드 타이머 (Chromium 백그라운드 지연 또는 이벤트 누락 시 영구 고착 방지)
+      const expectedDurationSec =
+        Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0
+          ? audioPlayer.duration
+          : 6;
+      const safetyTimeoutMs = Math.max(8000, Math.ceil(expectedDurationSec * 1500) + 3000);
+      currentPlaybackSafetyTimer = setTimeout(() => {
+        console.warn(
+          `⚠️ [TTS Queue] 구절 ${index + 1} 완료 이벤트 지연 감지(${safetyTimeoutMs}ms), 안전 타이머로 다음 단계 진행`
+        );
+        handleNext().catch(() => {});
+      }, safetyTimeoutMs);
     } catch (error: unknown) {
       if (currentRequestId === activeSpeechRequestId) {
         console.warn(`[TTS Queue] 구절 ${index + 1} 재생 오류:`, error);
@@ -872,28 +1057,57 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
 const syncSettingsForm = (): void => {
   const currentProvider = state.settings.provider;
 
-  // 탭 버튼 활성화 상태
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  tabButtons.forEach((btn) => {
-    const engine = btn.getAttribute('data-engine');
-    if (engine === currentProvider) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
+  // 엔진 카드 활성화 상태 동기화
+  const engineCards = document.querySelectorAll('.engine-card');
+  engineCards.forEach((card) => {
+    const engine = card.getAttribute('data-engine');
+    card.classList.toggle('active', engine === currentProvider);
   });
 
+  // 엔진별 세부 설정 및 성별 보이스 그룹 토글
   if (currentProvider === 'gemini') {
     edgeOptionsGroup.classList.add('option-hidden');
     geminiOptionsGroup.classList.remove('option-hidden');
+    openaiOptionsGroup.classList.add('option-hidden');
+    elevenlabsOptionsGroup.classList.add('option-hidden');
+
     edgeGenderVoicesGroup.classList.add('option-hidden');
     geminiGenderVoicesGroup.classList.remove('option-hidden');
+    openaiGenderVoicesGroup.classList.add('option-hidden');
+    elevenlabsGenderVoicesGroup.classList.add('option-hidden');
     providerBadge.textContent = 'Gemini 3.8 Flash TTS';
+  } else if (currentProvider === 'openai') {
+    edgeOptionsGroup.classList.add('option-hidden');
+    geminiOptionsGroup.classList.add('option-hidden');
+    openaiOptionsGroup.classList.remove('option-hidden');
+    elevenlabsOptionsGroup.classList.add('option-hidden');
+
+    edgeGenderVoicesGroup.classList.add('option-hidden');
+    geminiGenderVoicesGroup.classList.add('option-hidden');
+    openaiGenderVoicesGroup.classList.remove('option-hidden');
+    elevenlabsGenderVoicesGroup.classList.add('option-hidden');
+    providerBadge.textContent = `OpenAI TTS (${state.settings.openaiVoice || 'onyx'})`;
+  } else if (currentProvider === 'elevenlabs') {
+    edgeOptionsGroup.classList.add('option-hidden');
+    geminiOptionsGroup.classList.add('option-hidden');
+    openaiOptionsGroup.classList.add('option-hidden');
+    elevenlabsOptionsGroup.classList.remove('option-hidden');
+
+    edgeGenderVoicesGroup.classList.add('option-hidden');
+    geminiGenderVoicesGroup.classList.add('option-hidden');
+    openaiGenderVoicesGroup.classList.add('option-hidden');
+    elevenlabsGenderVoicesGroup.classList.remove('option-hidden');
+    providerBadge.textContent = 'ElevenLabs 다국어 v2';
   } else {
     edgeOptionsGroup.classList.remove('option-hidden');
     geminiOptionsGroup.classList.add('option-hidden');
+    openaiOptionsGroup.classList.add('option-hidden');
+    elevenlabsOptionsGroup.classList.add('option-hidden');
+
     edgeGenderVoicesGroup.classList.remove('option-hidden');
     geminiGenderVoicesGroup.classList.add('option-hidden');
+    openaiGenderVoicesGroup.classList.add('option-hidden');
+    elevenlabsGenderVoicesGroup.classList.add('option-hidden');
     providerBadge.textContent = 'Edge-TTS';
   }
 
@@ -902,6 +1116,10 @@ const syncSettingsForm = (): void => {
   selectEdgeVoiceFemale.value = state.settings.edgeVoiceFemale;
   selectGeminiVoiceMale.value = state.settings.geminiVoiceMale;
   selectGeminiVoiceFemale.value = state.settings.geminiVoiceFemale;
+  selectOpenaiVoiceMale.value = state.settings.openaiVoiceMale || 'onyx';
+  selectOpenaiVoiceFemale.value = state.settings.openaiVoiceFemale || 'nova';
+  selectElevenlabsVoiceMale.value = state.settings.elevenLabsVoiceMale || 'JBFqnCBsd6RMkjVDRZzb';
+  selectElevenlabsVoiceFemale.value = state.settings.elevenLabsVoiceFemale || 'Xb7hH8MSUJpSbSDYk0k2';
 
   selectEdgeVoice.value = state.settings.edgeVoice;
   const numericRate = parseInt(state.settings.speechRate.replace('%', ''), 10) || 0;
@@ -911,6 +1129,24 @@ const syncSettingsForm = (): void => {
   selectGeminiModel.value = state.settings.geminiModel;
   inputGeminiKey.value = state.settings.geminiApiKey;
   selectGeminiVoice.value = state.settings.geminiVoice;
+
+  selectOpenaiModel.value = state.settings.openaiModel || 'tts-1';
+  inputOpenaiKey.value = state.settings.openaiApiKey || '';
+  selectOpenaiVoice.value = state.settings.openaiVoice || 'onyx';
+
+  selectElevenlabsModel.value = state.settings.elevenLabsModel || 'eleven_multilingual_v2';
+  inputElevenlabsKey.value = state.settings.elevenLabsApiKey || '';
+  const currentVoiceId = state.settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb';
+  const knownPresets = ['JBFqnCBsd6RMkjVDRZzb', 'pNInz6obpgDQGcFmaJgB', 'Xb7hH8MSUJpSbSDYk0k2', 'pFZP5JQG7iQjIQuC4Bku'];
+  if (knownPresets.includes(currentVoiceId)) {
+    selectElevenlabsVoicePreset.value = currentVoiceId;
+    elevenlabsCustomVoiceRow.classList.add('option-hidden');
+    inputElevenlabsVoiceId.value = '';
+  } else {
+    selectElevenlabsVoicePreset.value = 'custom';
+    elevenlabsCustomVoiceRow.classList.remove('option-hidden');
+    inputElevenlabsVoiceId.value = currentVoiceId;
+  }
 
   // 어조 프리셋 매칭
   const currentPrompt = state.settings.geminiSystemPrompt;
@@ -933,6 +1169,21 @@ const syncSettingsForm = (): void => {
 
   inputCustomLogPath.value = state.settings.customLogPath ?? '';
   chkAutoPlay.checked = state.settings.isAutoPlayEnabled;
+
+  if (rangeSpeechRate) {
+    updateSliderFillTrack(rangeSpeechRate);
+  }
+
+  // 로컬 오디오 캐시 설정 동기화
+  if (chkCacheEnabled) {
+    chkCacheEnabled.checked = state.settings.isCacheEnabled ?? true;
+  }
+  if (rangeCacheSize) {
+    const sizeMb = state.settings.maxCacheSizeMb ?? 500;
+    rangeCacheSize.value = sizeMb.toString();
+    syncCacheUsageDisplay(sizeMb);
+    updateSliderFillTrack(rangeCacheSize);
+  }
 };
 
 /**
@@ -986,6 +1237,7 @@ const bindEventListeners = (): void => {
 
   btnOpenSettings.addEventListener('click', () => {
     syncSettingsForm();
+    updateCacheStatsUi().catch(() => {});
     settingsModal.classList.remove('modal-hidden');
   });
 
@@ -1010,13 +1262,29 @@ const bindEventListeners = (): void => {
     }
   });
 
-  // 엔진 탭 전환
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  tabButtons.forEach((btn) => {
+  // 상위 모달 탭 전환 이벤트 바인딩
+  const modalTabBtns = document.querySelectorAll('.modal-tab-btn');
+  const modalTabPanels = document.querySelectorAll('.modal-tab-panel');
+  modalTabBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const selected = btn.getAttribute('data-engine') as TtsProviderType;
-      state.settings = { ...state.settings, provider: selected };
-      syncSettingsForm();
+      const targetTab = btn.getAttribute('data-tab');
+      modalTabBtns.forEach((b) => b.classList.toggle('active', b === btn));
+      modalTabPanels.forEach((panel) => {
+        const panelId = `tab-panel-${targetTab}`;
+        panel.classList.toggle('active', panel.id === panelId);
+      });
+    });
+  });
+
+  // AI 엔진 선택 카드 클릭 이벤트 바인딩
+  const engineCards = document.querySelectorAll('.engine-card');
+  engineCards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const selected = card.getAttribute('data-engine') as TtsProviderType;
+      if (selected) {
+        state.settings = { ...state.settings, provider: selected };
+        syncSettingsForm();
+      }
     });
   });
 
@@ -1025,6 +1293,7 @@ const bindEventListeners = (): void => {
     const val = parseInt(rangeSpeechRate.value, 10);
     const formatted = val >= 0 ? `+${val}%` : `${val}%`;
     speechRateDisplay.textContent = formatted;
+    updateSliderFillTrack(rangeSpeechRate);
   });
 
   // 어조 프리셋 변경
@@ -1035,6 +1304,16 @@ const bindEventListeners = (): void => {
     } else {
       customPromptWrapper.classList.add('option-hidden');
       textareaGeminiPrompt.value = GEMINI_TONE_PRESETS[selected] ?? '';
+    }
+  });
+
+  // ElevenLabs 보이스 프리셋 변경
+  selectElevenlabsVoicePreset.addEventListener('change', () => {
+    const selected = selectElevenlabsVoicePreset.value;
+    if (selected === 'custom') {
+      elevenlabsCustomVoiceRow.classList.remove('option-hidden');
+    } else {
+      elevenlabsCustomVoiceRow.classList.add('option-hidden');
     }
   });
 
@@ -1056,6 +1335,11 @@ const bindEventListeners = (): void => {
       systemPrompt = GEMINI_TONE_PRESETS[selectGeminiTone.value] ?? systemPrompt;
     }
 
+    const elevenLabsVoiceId =
+      selectElevenlabsVoicePreset.value === 'custom'
+        ? inputElevenlabsVoiceId.value.trim() || 'JBFqnCBsd6RMkjVDRZzb'
+        : selectElevenlabsVoicePreset.value;
+
     const tempSettings: AppSettings = {
       ...state.settings,
       edgeVoice: selectEdgeVoice.value as EdgeVoiceName,
@@ -1068,6 +1352,16 @@ const bindEventListeners = (): void => {
       geminiVoiceMale: selectGeminiVoiceMale.value as GeminiVoiceName,
       geminiVoiceFemale: selectGeminiVoiceFemale.value as GeminiVoiceName,
       geminiSystemPrompt: systemPrompt,
+      openaiApiKey: inputOpenaiKey.value.trim(),
+      openaiModel: (selectOpenaiModel.value as OpenAiModelName) || 'tts-1',
+      openaiVoice: (selectOpenaiVoice.value as OpenAiVoiceName) || 'onyx',
+      openaiVoiceMale: (selectOpenaiVoiceMale.value as OpenAiVoiceName) || 'onyx',
+      openaiVoiceFemale: (selectOpenaiVoiceFemale.value as OpenAiVoiceName) || 'nova',
+      elevenLabsApiKey: inputElevenlabsKey.value.trim(),
+      elevenLabsModel: (selectElevenlabsModel.value as ElevenLabsModelName) || 'eleven_multilingual_v2',
+      elevenLabsVoiceId,
+      elevenLabsVoiceMale: selectElevenlabsVoiceMale.value || 'JBFqnCBsd6RMkjVDRZzb',
+      elevenLabsVoiceFemale: selectElevenlabsVoiceFemale.value || 'Xb7hH8MSUJpSbSDYk0k2',
       isAudioDramaEnabled: chkAudioDrama.checked
     };
 
@@ -1113,6 +1407,19 @@ const bindEventListeners = (): void => {
     );
   });
 
+  // 로컬 캐시 활성화 토글 즉시 반영
+  chkCacheEnabled?.addEventListener('change', (e: Event) => {
+    const isChecked = (e.target as HTMLInputElement)?.checked ?? false;
+    state.settings = { ...state.settings, isCacheEnabled: isChecked };
+    window.electronAPI.saveSettings(state.settings);
+    showToast(
+      isChecked
+        ? '⚡ 로컬 오디오 캐싱이 활성화되었습니다.'
+        : '⏸️ 로컬 오디오 캐싱이 일시 중지되었습니다.',
+      'info'
+    );
+  });
+
   // 설정 저장
   btnSaveSettings.addEventListener('click', async () => {
     const val = parseInt(rangeSpeechRate.value, 10);
@@ -1122,6 +1429,11 @@ const bindEventListeners = (): void => {
     if (selectGeminiTone.value !== 'custom') {
       systemPrompt = GEMINI_TONE_PRESETS[selectGeminiTone.value] ?? systemPrompt;
     }
+
+    const elevenLabsVoiceId =
+      selectElevenlabsVoicePreset.value === 'custom'
+        ? inputElevenlabsVoiceId.value.trim() || 'JBFqnCBsd6RMkjVDRZzb'
+        : selectElevenlabsVoicePreset.value;
 
     const updatedSettings: AppSettings = {
       ...state.settings,
@@ -1135,8 +1447,20 @@ const bindEventListeners = (): void => {
       geminiVoiceMale: selectGeminiVoiceMale.value as GeminiVoiceName,
       geminiVoiceFemale: selectGeminiVoiceFemale.value as GeminiVoiceName,
       geminiSystemPrompt: systemPrompt,
+      openaiApiKey: inputOpenaiKey.value.trim(),
+      openaiModel: (selectOpenaiModel.value as OpenAiModelName) || 'tts-1',
+      openaiVoice: (selectOpenaiVoice.value as OpenAiVoiceName) || 'onyx',
+      openaiVoiceMale: (selectOpenaiVoiceMale.value as OpenAiVoiceName) || 'onyx',
+      openaiVoiceFemale: (selectOpenaiVoiceFemale.value as OpenAiVoiceName) || 'nova',
+      elevenLabsApiKey: inputElevenlabsKey.value.trim(),
+      elevenLabsModel: (selectElevenlabsModel.value as ElevenLabsModelName) || 'eleven_multilingual_v2',
+      elevenLabsVoiceId,
+      elevenLabsVoiceMale: selectElevenlabsVoiceMale.value || 'JBFqnCBsd6RMkjVDRZzb',
+      elevenLabsVoiceFemale: selectElevenlabsVoiceFemale.value || 'Xb7hH8MSUJpSbSDYk0k2',
       customLogPath: inputCustomLogPath.value.trim() || null,
-      isAudioDramaEnabled: chkAudioDrama.checked
+      isAudioDramaEnabled: chkAudioDrama.checked,
+      isCacheEnabled: chkCacheEnabled ? chkCacheEnabled.checked : true,
+      maxCacheSizeMb: rangeCacheSize ? parseInt(rangeCacheSize.value, 10) || 500 : 500
     };
 
     const isSaved = await window.electronAPI.saveSettings(updatedSettings);
@@ -1170,6 +1494,47 @@ const bindEventListeners = (): void => {
   btnOpenRepo?.addEventListener('click', async () => {
     await window.electronAPI.openExternal(currentAppInfo.repoUrl);
   });
+
+  // 캐시 용량 슬라이더 입력 시 표시 텍스트 및 하단 현황판 실시간 연동
+  rangeCacheSize?.addEventListener('input', (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const newMaxMb = parseInt(target?.value ?? '500', 10) || 500;
+    syncCacheUsageDisplay(newMaxMb);
+    if (target) {
+      updateSliderFillTrack(target);
+    }
+  });
+
+  // 캐시 통계 새로고침 버튼
+  btnRefreshCacheStats?.addEventListener('click', async () => {
+    await updateCacheStatsUi();
+    showToast('🔄 캐시 통계가 새로고침되었습니다.', 'info');
+  });
+
+  // 캐시 폴더 열기 버튼
+  btnOpenCacheDir?.addEventListener('click', async () => {
+    const isOpened = await window.electronAPI.openCacheDir();
+    if (!isOpened) {
+      showToast('❌ 캐시 폴더 열기에 실패했습니다.', 'error');
+    }
+  });
+
+  // 캐시 전체 비우기 버튼
+  btnClearCache?.addEventListener('click', async () => {
+    const confirmed = confirm(
+      '정말로 저장된 모든 로컬 오디오 캐시를 삭제하시겠습니까?\n삭제 후 동일한 이벤트는 외부 API를 다시 호출하여 생성하게 됩니다.'
+    );
+    if (!confirmed) {
+      return;
+    }
+    const isCleared = await window.electronAPI.clearCache();
+    if (isCleared) {
+      await updateCacheStatsUi();
+      showToast('🗑️ 로컬 오디오 캐시가 깨끗이 비워졌습니다.', 'info');
+    } else {
+      showToast('❌ 캐시 비우기에 실패했습니다.', 'error');
+    }
+  });
 };
 
 /**
@@ -1182,6 +1547,11 @@ const initializeApp = async (): Promise<void> => {
   }
 
   bindEventListeners();
+
+  // 모든 슬라이더 초기 트랙 게이지 채우기 반영
+  document.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach((slider) => {
+    updateSliderFillTrack(slider);
+  });
 
   // 앱 버전 및 제작자 정보 로드 및 UI 렌더링
   try {

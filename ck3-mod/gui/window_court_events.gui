@@ -47,21 +47,9 @@ types RoyalCourtTypes
 			name = _hide
 			using = Animation_FadeOut_Quick
 			using = Sound_WindowHide_Standard
-		}
-
-		# CK3 TTS Companion: 탄원인 창이 열릴 때마다 실시간 자동 낭독
-		state = {
-			name = tts_court_event_auto_play
-			trigger_when = "[EventWindowViewInsert.HasOpenEvent]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) ) ))))))]"
-		}
-
-		# CK3 TTS Companion: 탄원인 선택지 클릭 또는 창 닫힐 때 이전 음성 즉시 정지
-		state = {
-			name = tts_court_event_auto_stop
-			trigger_when = "[Not(EventWindowViewInsert.HasOpenEvent)]"
 			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		}
+
 
 
 		### Event Portraits ###
@@ -105,6 +93,50 @@ types RoyalCourtTypes
 					blockoverride "button_close"
 					{
 						visible = no
+					}
+
+					# CK3 TTS Companion: 궁정 수동 낭독 컨트롤 및 안내 라벨 (F 단축키 & 스피커 버튼)
+					flowcontainer = {
+						parentanchor = vcenter|right
+						widgetanchor = vcenter|right
+						position = { -65 0 }
+						spacing = 10
+						direction = horizontal
+
+						flowcontainer = {
+							direction = vertical
+							parentanchor = vcenter
+							margin_right = 2
+
+							text_single = {
+								text = "궁정 자동 재생 불가"
+								default_format = "#weak"
+								fontsize = 12
+								align = right
+							}
+							text_single = {
+								text = "수동 낭독 (단축키: F)"
+								default_format = "#weak"
+								fontsize = 12
+								align = right
+							}
+						}
+
+						button_round = {
+							name = "tts_speak_button"
+							size = { 36 36 }
+							tooltip = "TTS_COURT_EVENT_TOOLTIP"
+							shortcut = "army_split_half"
+
+							button_icon = {
+								texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+								size = { 22 22 }
+								parentanchor = center
+								alwaystransparent = yes
+							}
+
+							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) ) ))))))]"
+						}
 					}
 				}
 			}
@@ -238,23 +270,6 @@ types RoyalCourtTypes
 			}
 		}
 
-		# CK3 TTS Companion: 궁정(Royal Court) 이벤트 수동 낭독 버튼 및 F 단축키
-		button_round = {
-			name = "tts_speak_button"
-			parentanchor = top|right
-			position = { -25 15 }
-			size = { 42 42 }
-			raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
-			shortcut = "army_split_half"
 
-			button_icon = {
-				texture = "gfx/interface/icons/flat_icons/play_sound.dds"
-				size = { 26 26 }
-				parentanchor = center
-				alwaystransparent = yes
-			}
-
-			onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) ) ))))))]"
-		}
 	}
 }

@@ -19,7 +19,21 @@ const MOCK_SETTINGS: AppSettings = {
   isAutoPlayEnabled: true,
   isAudioDramaEnabled: true,
   edgeVoiceMale: 'ko-KR-InJoonNeural',
-  edgeVoiceFemale: 'ko-KR-SunHiNeural'
+  edgeVoiceFemale: 'ko-KR-SunHiNeural',
+  openaiApiKey: '',
+  openaiModel: 'tts-1',
+  openaiVoice: 'onyx',
+  openaiVoiceMale: 'onyx',
+  openaiVoiceFemale: 'nova',
+  elevenLabsApiKey: '',
+  elevenLabsModel: 'eleven_multilingual_v2',
+  elevenLabsVoiceId: 'JBFqnCBsd6RMkjVDRZzb',
+  elevenLabsVoiceMale: 'JBFqnCBsd6RMkjVDRZzb',
+  elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
+  elevenLabsStability: 0.5,
+  elevenLabsSimilarity: 0.75,
+  isCacheEnabled: true,
+  maxCacheSizeMb: 500
 };
 
 /** main.ts와 동일한 보이스 및 프롬프트 결정 순수 헬퍼 */

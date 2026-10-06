@@ -689,6 +689,11 @@ export const convertLatinPhrasesInText = (text: string): string => {
         return match;
       }
 
+      // 엔진/콘솔 메타데이터 키워드(expanded, file, console, command, effect 등)는 라틴어 변환 제외
+      if (/\b(?:expanded|console|command|effect|line|file|error)\b/i.test(match)) {
+        return match;
+      }
+
       return match.replace(
         /[a-zA-ZæœÆŒ]+/g,
         (w) => transliterateLatinWord(w)

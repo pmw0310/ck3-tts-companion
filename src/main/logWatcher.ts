@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import chokidar from 'chokidar';
 import type { FSWatcher } from 'chokidar';
 import { extractCk3EventsFromChunk } from '@/main/textSanitizer';
@@ -12,8 +13,8 @@ export type LogWatcherHandle = {
 
 /** 중복 감시 캐시 최대 저장 개수 (메모리 팽창 방지) */
 const MAX_CACHE_SIZE = 100;
-/** 중복 감시 캐시 유효 시간 (30초) */
-const CACHE_TTL_MS = 30000;
+/** 중복 감시 캐시 유효 시간 (180초 = 3분, 알현실 체류 중 만료 방지) */
+const CACHE_TTL_MS = 180000;
 
 /**
  * 최근 이벤트 캐시에 항목을 기록하고 만료되었거나 상한을 초과한 항목을 안전하게 정리합니다.
@@ -62,8 +63,15 @@ export const startWatchingLogFile = (
   let watcher: FSWatcher | null = null;
   const recentEventCache = new Map<string, number>();
 
-  // 감시할 파일 목록 구성 (콘솔 명령어의 신뢰할 수 있는 단일 소스인 debug.log만 감시)
-  const watchPaths: string[] = [logFilePath];
+  // 감시할 파일 목록 구성 (기본 debug.log 및 파서 구문 에러가 기록되는 error.log 동시 감시)
+  const debugLogPath = path.resolve(logFilePath);
+  const logDir = path.dirname(debugLogPath);
+  const errorLogPath = path.join(logDir, 'error.log');
+
+  const watchPaths: string[] = [debugLogPath];
+  if (fs.existsSync(errorLogPath)) {
+    watchPaths.push(errorLogPath);
+  }
 
   // 기존 파일 크기 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
   for (const targetPath of watchPaths) {
@@ -80,11 +88,7 @@ export const startWatchingLogFile = (
   watcher = chokidar.watch(watchPaths, {
     persistent: true,
     usePolling: true,
-    interval: 200,
-    awaitWriteFinish: {
-      stabilityThreshold: 80,
-      pollInterval: 40
-    }
+    interval: 200
   });
 
   /**
@@ -92,15 +96,16 @@ export const startWatchingLogFile = (
    * @param targetFilePath - 변경된 파일의 절대 경로
    */
   const handleFileChange = (targetFilePath: string): void => {
-    if (!fs.existsSync(targetFilePath)) {
+    const normalizedPath = path.resolve(targetFilePath);
+    if (!fs.existsSync(normalizedPath)) {
       return;
     }
 
     try {
-      const currentStats = fs.statSync(targetFilePath);
-      let filePosition = filePositions.get(targetFilePath) ?? 0;
+      const currentStats = fs.statSync(normalizedPath);
+      let filePosition = filePositions.get(normalizedPath) ?? 0;
 
-      // 게임 재시작 등으로 파일이 새로 쓰여 크기가 줄어든 경우
+      // 게임 재시작 등으로 파일이 새로 쓰여 크기가 줄어든 경우 (truncate 또는 새 파일 생성)
       if (currentStats.size < filePosition) {
         filePosition = 0;
       }
@@ -109,13 +114,15 @@ export const startWatchingLogFile = (
         return;
       }
 
-      const stream = fs.createReadStream(targetFilePath, {
+      // createReadStream의 end는 inclusive(포함)이므로 정확한 바이트 경계를 위해 currentStats.size - 1 지정
+      const readEnd = Math.max(filePosition, currentStats.size - 1);
+      const stream = fs.createReadStream(normalizedPath, {
         start: filePosition,
-        end: currentStats.size,
+        end: readEnd,
         encoding: 'utf-8'
       });
 
-      filePositions.set(targetFilePath, currentStats.size);
+      filePositions.set(normalizedPath, currentStats.size);
 
       let bufferText = '';
       stream.on('data', (chunk: unknown) => {
@@ -162,7 +169,9 @@ export const startWatchingLogFile = (
 
           for (const event of newEvents) {
             const lastSeenTime = recentEventCache.get(event.content);
-            if (!event.isForceReplay && lastSeenTime && now - lastSeenTime < 3000) {
+            // 수동 강제 재낭독은 콘솔 에코 방지용 1초 디바운스만 적용하여 사용자의 재청취 편의 보장
+            const cooldownMs = event.isForceReplay ? 1000 : 3000;
+            if (lastSeenTime && now - lastSeenTime < cooldownMs) {
               continue;
             }
 
@@ -188,9 +197,10 @@ export const startWatchingLogFile = (
         const now = Date.now();
 
         for (const event of parsedEvents) {
-          // 콘솔 echo 및 다중 로그(debug.log/error.log 동시 기록) 중복 낭독 방지 (수동 강제 재낭독 제외)
+          // 콘솔 echo 방지: 수동 강제 재낭독은 1초, 자동 감지는 2초 쿨다운 적용
           const lastSeenTime = recentEventCache.get(event.content);
-          if (!event.isForceReplay && lastSeenTime && now - lastSeenTime < 2000) {
+          const cooldownMs = event.isForceReplay ? 1000 : 2000;
+          if (lastSeenTime && now - lastSeenTime < cooldownMs) {
             continue;
           }
 
@@ -224,7 +234,8 @@ export const startWatchingLogFile = (
   });
 
   watcher.on('unlink', (removedPath: string) => {
-    filePositions.delete(removedPath);
+    const normalizedRemoved = path.resolve(removedPath);
+    filePositions.delete(normalizedRemoved);
     if (!fs.existsSync(logFilePath)) {
       onStatusChange?.(false, logFilePath);
     }
@@ -235,11 +246,50 @@ export const startWatchingLogFile = (
     onStatusChange?.(false, logFilePath);
   });
 
+  // 장시간 실행 시 게임 재시작이나 파일 회전/재생성으로 인한 감시 유실(Drift) 방지 자가 치유 폴링 타이머
+  const healIntervalTimer = setInterval(() => {
+    try {
+      const activeWatchTargets = [path.resolve(logFilePath)];
+      const currentLogDir = path.dirname(activeWatchTargets[0] ?? '');
+      const currentErrorPath = path.join(currentLogDir, 'error.log');
+      if (fs.existsSync(currentErrorPath)) {
+        activeWatchTargets.push(currentErrorPath);
+      }
+
+      for (const normalizedTarget of activeWatchTargets) {
+        if (fs.existsSync(normalizedTarget)) {
+          const stats = fs.statSync(normalizedTarget);
+          const lastPos = filePositions.get(normalizedTarget);
+          // 파일이 새로 생성되었거나 크기가 변경되었는데 watcher가 놓친 경우 자가 치유
+          if (lastPos === undefined || stats.size !== lastPos) {
+            if (watcher) {
+              watcher.add(normalizedTarget);
+            }
+            if (normalizedTarget === path.resolve(logFilePath)) {
+              onStatusChange?.(true, logFilePath);
+            }
+            handleFileChange(normalizedTarget);
+          }
+        } else {
+          if (filePositions.has(normalizedTarget)) {
+            filePositions.delete(normalizedTarget);
+            if (normalizedTarget === path.resolve(logFilePath)) {
+              onStatusChange?.(false, logFilePath);
+            }
+          }
+        }
+      }
+    } catch (healError: unknown) {
+      // 헬스체크 중 일시적 접근 경합 안전 무시
+    }
+  }, 1500);
+
   onStatusChange?.(true, logFilePath);
 
   return {
     getPath: () => logFilePath,
     stop: async () => {
+      clearInterval(healIntervalTimer);
       if (watcher) {
         await watcher.close();
         watcher = null;

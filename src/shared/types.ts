@@ -2,7 +2,7 @@
 export type SupportedPlatform = 'darwin' | 'win32' | 'linux';
 
 /** TTS 엔진 제공자 구분 */
-export type TtsProviderType = 'edge' | 'gemini' | 'system';
+export type TtsProviderType = 'edge' | 'gemini' | 'openai' | 'elevenlabs' | 'system';
 
 /** 지원하는 Gemini 음성 모델 프리셋 */
 export type GeminiVoiceName = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede' | 'Algenib';
@@ -11,6 +11,26 @@ export type GeminiVoiceName = 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Aoede' | 
 export type GeminiModelName =
   | 'gemini-3.8-flash-tts'
   | 'gemini-3.8-flash-lite-tts';
+
+/** 지원하는 OpenAI 음성 프리셋 */
+export type OpenAiVoiceName =
+  | 'onyx'
+  | 'fable'
+  | 'alloy'
+  | 'echo'
+  | 'nova'
+  | 'shimmer';
+
+/** 지원하는 OpenAI 음성 합성 모델 식별자 */
+export type OpenAiModelName =
+  | 'tts-1'
+  | 'tts-1-hd';
+
+/** 지원하는 ElevenLabs 음성 합성 모델 식별자 */
+export type ElevenLabsModelName =
+  | 'eleven_multilingual_v2'
+  | 'eleven_turbo_v2_5'
+  | 'eleven_flash_v2_5';
 
 /** Edge-TTS 한국어 음성 프리셋 */
 export type EdgeVoiceName =
@@ -42,6 +62,16 @@ export type AppSettings = {
   readonly geminiModel: GeminiModelName;
   readonly geminiVoice: GeminiVoiceName;
   readonly geminiSystemPrompt: string;
+  readonly openaiApiKey: string;
+  readonly openaiModel: OpenAiModelName;
+  readonly openaiVoice: OpenAiVoiceName;
+  readonly elevenLabsApiKey: string;
+  readonly elevenLabsModel: ElevenLabsModelName;
+  readonly elevenLabsVoiceId: string;
+  readonly elevenLabsVoiceMale: string;
+  readonly elevenLabsVoiceFemale: string;
+  readonly elevenLabsStability: number;
+  readonly elevenLabsSimilarity: number;
   readonly speechRate: string; // 예: '+0%', '+10%'
   readonly speechVolume: string; // 예: '+0%'
   readonly customLogPath: string | null;
@@ -51,6 +81,10 @@ export type AppSettings = {
   readonly edgeVoiceFemale: EdgeVoiceName;
   readonly geminiVoiceMale: GeminiVoiceName;
   readonly geminiVoiceFemale: GeminiVoiceName;
+  readonly openaiVoiceMale: OpenAiVoiceName;
+  readonly openaiVoiceFemale: OpenAiVoiceName;
+  readonly isCacheEnabled: boolean;
+  readonly maxCacheSizeMb: number;
 };
 
 /** TTS 합성 요청 매개변수 */
@@ -69,6 +103,17 @@ export type SynthesizeResult = {
   readonly errorMessage?: string;
   readonly isFallback?: boolean;
   readonly fallbackReason?: string;
+  readonly fromCache?: boolean;
+};
+
+/** 로컬 오디오 캐시 통계 인터페이스 */
+export type CacheStats = {
+  readonly totalFiles: number;
+  readonly totalSizeBytes: number;
+  readonly maxSizeBytes: number;
+  readonly hitCount: number;
+  readonly savedTokensEstimate: number;
+  readonly cacheDirPath: string;
 };
 
 /** 애플리케이션 정보 인터페이스 */
@@ -105,5 +150,8 @@ export type ElectronApiBridge = {
   readonly getAppInfo: () => Promise<AppInfo>;
   readonly checkForUpdates: () => Promise<UpdateCheckResult>;
   readonly openExternal: (url: string) => Promise<boolean>;
+  readonly getCacheStats: () => Promise<CacheStats>;
+  readonly clearCache: () => Promise<boolean>;
+  readonly openCacheDir: () => Promise<boolean>;
 };
 

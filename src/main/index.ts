@@ -9,6 +9,11 @@ import {
   checkForAppUpdates,
   isSafeExternalUrl
 } from '@/main/updateService';
+import {
+  getCacheStats,
+  clearAudioCache,
+  openCacheDirectory
+} from '@/main/audioCacheService';
 import type {
   AppInfo,
   AppSettings,
@@ -33,6 +38,16 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   geminiVoice: 'Charon',
   geminiSystemPrompt:
     'A solemn, deep, and majestic medieval court chronicler reciting the annals of history. Speak in a grave, resonant, and measured cadence with deep historical gravitas. Do not sound modern or cheerful; deliver every word with historical weight and quiet reverence. 진중하고 장엄한 중세 사관의 목소리로 낭독하라.',
+  openaiApiKey: '',
+  openaiModel: 'tts-1',
+  openaiVoice: 'onyx',
+  elevenLabsApiKey: '',
+  elevenLabsModel: 'eleven_multilingual_v2',
+  elevenLabsVoiceId: 'JBFqnCBsd6RMkjVDRZzb',
+  elevenLabsVoiceMale: 'JBFqnCBsd6RMkjVDRZzb',
+  elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
+  elevenLabsStability: 0.5,
+  elevenLabsSimilarity: 0.75,
   speechRate: '+0%',
   speechVolume: '+0%',
   customLogPath: null,
@@ -41,7 +56,11 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   edgeVoiceMale: 'ko-KR-InJoonNeural',
   edgeVoiceFemale: 'ko-KR-SunHiNeural',
   geminiVoiceMale: 'Charon',
-  geminiVoiceFemale: 'Kore'
+  geminiVoiceFemale: 'Kore',
+  openaiVoiceMale: 'onyx',
+  openaiVoiceFemale: 'nova',
+  isCacheEnabled: true,
+  maxCacheSizeMb: 500
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -58,7 +77,7 @@ const isValidAppSettings = (data: unknown): data is AppSettings => {
     return false;
   }
   const candidate = data as Record<string, unknown>;
-  const validProviders = ['edge', 'gemini', 'system'];
+  const validProviders = ['edge', 'gemini', 'openai', 'elevenlabs', 'system'];
   return (
     typeof candidate.provider === 'string' &&
     validProviders.includes(candidate.provider) &&
@@ -291,6 +310,21 @@ const initializeIpcAndShortcuts = (): void => {
     }
     await shell.openExternal(url);
     return true;
+  });
+
+  // 로컬 오디오 캐시 통계 조회
+  ipcMain.handle('ck3:get-cache-stats', () => {
+    return getCacheStats(currentSettings);
+  });
+
+  // 로컬 오디오 캐시 전체 삭제
+  ipcMain.handle('ck3:clear-cache', async (): Promise<boolean> => {
+    return await clearAudioCache();
+  });
+
+  // 로컬 오디오 캐시 폴더 탐색기로 열기
+  ipcMain.handle('ck3:open-cache-dir', async (): Promise<boolean> => {
+    return await openCacheDirectory();
   });
 
   // 전역 단축키 등록 (Windows: Ctrl+Shift+S / macOS: Cmd+Shift+S)

@@ -8,13 +8,13 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\bERROR:\s*/g,                                             // ERROR 접두사
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
-  /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s!]+/gi,  // ONCLICK:CHARACTER,12345 등 비대괄호 태그
+  /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
   /\bEMP\b/gi,                                               // EMP 강조 서식
   /\b[GLEIPBVN];\s*/gi,                                         // G;, L;, E;, I;, P;, B;, V;, N; 링크/게임컨셉/수치/아이콘 마커
   /(?:^|\s)[GIEPLBVN];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B, V, N 마커 (예: "G 강령술사", "V; 3", "L ' 엽사 '", "I 승전")
-  /\b(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
-  /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
+  /(?:^|\s)(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
+  /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /@[a-zA-Z0-9_!]+!/g,                                      // @skill_martial_icon! 등 아이콘
   /\b(?:indent_newline:\d|positive_value|negative_value)\b/g, // 들여쓰기 및 수치 변수
   /\b(?:COLOR_[A-Z0-9_]+)\b/g,                              // 컬러 상수
@@ -23,6 +23,15 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\bAI\s*(?:수준|weight)\s*:\s*[\d.]+/gi,                    // AI 수준: 25.00 디버그 가중치 정보
   /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
   /(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi,       // |||GENDER:F, |||GENDER:M, |||GENDER:LETTER_F 등 성별 메타데이터 태그 잔여물
+  /\bUnknown effect:\s*/gi,                                   // error.log 파서 에러 접두사 잔여물
+  /\(엑스판데드 프롬 필레:[^)]*\)/gi,                         // 음차 변환된 스크립트 확장 메타데이터 잔여물
+  /\(expanded from file:[^)]*\)/gi,                           // (expanded from file: ...) 매크로 확장 메타데이터
+  /,?\s*near line:\s*\d+/gi,                                  // near line: 3 등 라인 정보 잔여물
+  /"?\s*in file:\s*"effect console command".*$/gim,           // in file: "effect console command" 잔여물
+  /\b(?:expanded from file|effect console command)\b[^)]*\)?/gi, // 비괄호 형태 잔여물 방어
+  /\b\d{3,}\s*,\s*[LGVBEIPN]\b/gi,                           // 15301, L 등 파편화된 ID와 링크 마커 결합 잔여물
+  /(?:^|\s)\d{4,}(?=\s|$|[,.])/g,                             // 단위 없는 4자리 이상 고립된 캐릭터/타이틀 고유 ID 숫자열
+  /(?:^|\s)[LGVBEIPN]\s+(?=이|가|은|는|을|를|의|에|와|과)/gi, // L 이가, L을를 등 마커 뒤 조사 파편
   /\s*\|{2,}\s*/g,                                           // 불필요한 연속 파이프(||, |||) 잔여물
   /[_]{2,}/g                                                // 불필요한 연속 언더스코어
 ] as const;
@@ -276,10 +285,11 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = cleaned.replace(/(?:^|\s)[LGV];?\s*(?=['"`‘“「『가-힣\d])/gi, ' ');
   cleaned = cleaned.replace(/^[LGV]\s+/i, '');
 
-  // 4. 단어 뒤에 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
-  cleaned = cleaned.replace(/(?:\s*!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
+  // 4. 단어 뒤에 분리되어 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
+  // 단, 단어에 바로 붙은 정상 감탄 부호("있습니다!", "성공!")는 보존
+  cleaned = cleaned.replace(/(?:\s+!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
   cleaned = cleaned.replace(/\s+!\s+/g, ' ');
-  cleaned = cleaned.replace(/(?:![\s!]*!)/g, ' ');
+  cleaned = cleaned.replace(/(?:![\s!]+!)/g, ' ');
 
   // 5. 줄바꿈(\n)을 단락 간 자연스러운 공백으로 치환
   cleaned = cleaned.replace(/\r?\n+/g, ' ');
@@ -324,6 +334,206 @@ const START_TAG_PATTERNS: readonly StartTagPattern[] = [
 ];
 
 const END_TAG_PATTERNS: readonly string[] = ['##CK3_TTS_END##', '[CK3_TTS_END]'];
+
+/**
+ * error.log 파편에서 정제된 페이로드를 바탕으로 이벤트 객체를 생성합니다.
+ * @param payload - 조합된 에러 로그 페이로드 문자열
+ * @returns 검증된 이벤트 객체 또는 null
+ */
+const parseRecoveredPayload = (
+  payload: string
+): {
+  title: string;
+  content: string;
+  isForceReplay?: boolean;
+  speakerGender?: 'male' | 'female' | 'narrator';
+  eventType?: 'letter' | 'character' | 'default';
+} | null => {
+  let clean = payload
+    .replace(/(?:\[|##)CK3_TTS(?:_FORCE)?(?:\]|##)/gi, '')
+    .trim();
+
+  const endIdx = clean.search(/(?:\[|##)CK3_TTS_END(?:\]|##)/i);
+  if (endIdx !== -1) {
+    clean = clean.slice(0, endIdx).trim();
+  }
+
+  let title = '크루세이더 킹즈 3 사건';
+  let content = '';
+  let speakerGender: 'male' | 'female' | 'narrator' | undefined;
+  let eventType: 'letter' | 'character' | 'default' = 'default';
+
+  if (clean.includes('|||')) {
+    const cleanPayload = clean.replace(/^\|{2,}\s*/, '');
+    const parts = cleanPayload.split('|||');
+    const rawTitle = parts[0]?.trim() ?? '';
+    let rawContent = parts.slice(1).join('|||');
+
+    const lastPartRaw = (parts[parts.length - 1] ?? '').trim().toUpperCase();
+    if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
+      speakerGender = 'female';
+      eventType = 'letter';
+      rawContent = parts.slice(1, -1).join('|||');
+    } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
+      speakerGender = 'male';
+      eventType = 'letter';
+      rawContent = parts.slice(1, -1).join('|||');
+    } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
+      speakerGender = 'female';
+      rawContent = parts.slice(1, -1).join('|||');
+    } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
+      speakerGender = 'male';
+      rawContent = parts.slice(1, -1).join('|||');
+    }
+
+    rawContent = rawContent.replace(/\|{1,3}\s*GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
+
+    const sanitizedTitle = sanitizeCk3Text(rawTitle);
+    const sanitizedContent = sanitizeCk3Text(rawContent);
+    title = sanitizedTitle.length > 0 ? sanitizedTitle : title;
+    content = sanitizedContent.length > 0 ? sanitizedContent : title;
+  } else {
+    const genderMatch = clean.match(/(?:\|{1,3}\s*)?GENDER:([A-Za-z_]+)/i);
+    if (genderMatch && genderMatch[1]) {
+      const g = genderMatch[1].toUpperCase();
+      if (g.includes('FEMALE') || g === 'F' || g.includes('LETTER_F')) {
+        speakerGender = 'female';
+      } else if (g.includes('MALE') || g === 'M' || g.includes('LETTER_M')) {
+        speakerGender = 'male';
+      }
+      clean = clean.replace(/(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
+    }
+    content = sanitizeCk3Text(clean);
+  }
+
+  if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
+    return { title, content, isForceReplay: false, speakerGender, eventType };
+  }
+  return null;
+};
+
+/**
+ * error.log 내 콘솔 명령어 구문 파싱 에러(큰따옴표 조기 종료 등)로 쪼개진 Unknown effect 라인들을 모아
+ * 원래의 온전한 CK3 TTS 이벤트로 복원합니다.
+ * @param chunk - 읽어들인 로그 청크
+ * @returns 복원된 이벤트 목록
+ */
+const recoverEventsFromErrorLog = (
+  chunk: string
+): Array<{
+  title: string;
+  content: string;
+  isForceReplay?: boolean;
+  speakerGender?: 'male' | 'female' | 'narrator';
+  eventType?: 'letter' | 'character' | 'default';
+}> => {
+  const recoveredEvents: Array<{
+    title: string;
+    content: string;
+    isForceReplay?: boolean;
+    speakerGender?: 'male' | 'female' | 'narrator';
+    eventType?: 'letter' | 'character' | 'default';
+  }> = [];
+
+  if (!chunk.includes('effect console command') && !chunk.includes('Unknown effect:')) {
+    return recoveredEvents;
+  }
+
+  const lines = chunk.split(/\r?\n/);
+  let currentTokens: string[] = [];
+  let isCollecting = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Unknown effect 에러 라인 매칭
+    if (trimmed.includes('Unknown effect:')) {
+      isCollecting = true;
+
+      // 1. 접두사 "Unknown effect:" 앞부분(로그 헤더 포함) 제거
+      let lineBody = trimmed.replace(/^.*?Unknown effect:\s*/, '');
+
+      // 2. 뒤쪽의 '" in file: "effect console command"...' 메타데이터 제거
+      lineBody = lineBody.replace(/"?\s*in file:\s*["']?effect console command["']?.*$/i, '');
+
+      // 3. 뒤쪽의 '(expanded from file: ...)' 스크립트 확장 메타데이터 완벽 제거
+      lineBody = lineBody.replace(/\(expanded from file:.*$/i, '');
+      lineBody = lineBody.replace(/\(expanded from file:[^)]*\)/gi, '');
+
+      // 4. 뒤쪽의 ', near line: 3' 또는 'near line: 3' 위치 정보 완벽 제거
+      lineBody = lineBody.replace(/,?\s*near line:\s*\d+.*$/i, '');
+      lineBody = lineBody.replace(/,?\s*near line:\s*\d+/gi, '');
+      lineBody = lineBody.trim();
+
+      // 5. 토큰 정제: 인게임 태그 및 DB 식별자 필터링
+      // - TOOLTIP:FAITH, TOOLTIP:LANDED_TITLE,7232 등 서식 태그 및 ID 파편 제거
+      lineBody = lineBody.replace(/\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, '').trim();
+      lineBody = lineBody.replace(/,\s*\d{3,}\b/g, '').trim();
+
+      // - maitreya_faith, catholic 등 순수 스네이크케이스 영문 DB 키(신앙/특성/문화 식별자) 제거
+      lineBody = lineBody.replace(/\b[a-z0-9]+_[a-z0-9_]+\b/g, '').trim();
+
+      // - 잔여 앞뒤 쉼표 및 느낌표 정리
+      lineBody = lineBody.replace(/^[,!.\s]+/, '').replace(/[,!.\s]+$/, '').trim();
+
+      // 6. 파편화된 무효 토큰 배제 (수집 스킵)
+      // - 3자리 이상의 순수 숫자열 (캐릭터/타이틀 고유 ID 파편: 15301, 7232 등)
+      if (/^\d{3,}$/.test(lineBody)) {
+        continue;
+      }
+      // - 단독 서식/링크 마커 (L, G, V, B, E, I, P, N)
+      if (/^[LGVBEIPN]$/i.test(lineBody)) {
+        continue;
+      }
+      // - 구두점만 남은 토큰
+      if (/^[!,.:;?\s]+$/.test(lineBody)) {
+        continue;
+      }
+
+      if (lineBody.length > 0) {
+        currentTokens.push(lineBody);
+      }
+
+      // 블록 종료 검사: 해당 라인에 닫는 태그나 "in file: effect console command" 가 있으면 블록 완료
+      if (
+        trimmed.includes('##CK3_TTS_END##') ||
+        trimmed.includes('[CK3_TTS_END]') ||
+        trimmed.includes('in file: "effect console command"')
+      ) {
+        const fullPayload = currentTokens.join(' ');
+        currentTokens = [];
+        isCollecting = false;
+
+        const recovered = parseRecoveredPayload(fullPayload);
+        if (recovered) {
+          recoveredEvents.push(recovered);
+        }
+      }
+    } else if (isCollecting && (trimmed.includes('##CK3_TTS_END##') || trimmed.includes('[CK3_TTS_END]'))) {
+      currentTokens.push(trimmed);
+      const fullPayload = currentTokens.join(' ');
+      currentTokens = [];
+      isCollecting = false;
+
+      const recovered = parseRecoveredPayload(fullPayload);
+      if (recovered) {
+        recoveredEvents.push(recovered);
+      }
+    } else if (isCollecting && trimmed.length === 0) {
+      if (currentTokens.length > 0 && currentTokens.some((t) => t.includes('CK3_TTS'))) {
+        const fullPayload = currentTokens.join(' ');
+        const recovered = parseRecoveredPayload(fullPayload);
+        if (recovered) {
+          recoveredEvents.push(recovered);
+        }
+      }
+      currentTokens = [];
+      isCollecting = false;
+    }
+  }
+
+  return recoveredEvents;
+};
 
 /**
  * 로그 텍스트 청크(멀티라인 줄바꿈 포함)에서 ##CK3_TTS## 및 [CK3_TTS] 블록들을 온전하게 추출합니다.
@@ -458,6 +668,12 @@ export const extractCk3EventsFromChunk = (
     }
   }
 
+  // 4. error.log 내 콘솔 커맨드 구문 파싱 에러(큰따옴표 조기 종료 등)로 쪼개진 Unknown effect 라인들 자동 복원
+  const recoveredFromErrors = recoverEventsFromErrorLog(chunk);
+  for (const recovered of recoveredFromErrors) {
+    candidateEvents.push(recovered);
+  }
+
   // 동일한 청크 내 중복 또는 파편이 존재할 경우, 더 완전하고 긴 본문을 우선 채택
   for (const candidate of candidateEvents) {
     const existingIndex = events.findIndex(
@@ -487,7 +703,15 @@ export const extractCk3EventsFromChunk = (
 export const parseCk3LogLine = (
   logLine: string
 ): { title: string; content: string } | null => {
-  const events = extractCk3EventsFromChunk(logLine);
+  let lineToParse = logLine;
+  if (
+    (lineToParse.includes('[CK3_TTS]') || lineToParse.includes('##CK3_TTS##')) &&
+    !lineToParse.includes('[CK3_TTS_END]') &&
+    !lineToParse.includes('##CK3_TTS_END##')
+  ) {
+    lineToParse += lineToParse.includes('##CK3_TTS') ? '##CK3_TTS_END##' : '[CK3_TTS_END]';
+  }
+  const events = extractCk3EventsFromChunk(lineToParse);
   return events[0] ?? null;
 };
 

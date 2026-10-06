@@ -42,7 +42,7 @@
           </div>
 
           <!-- 설정 모달 토글 버튼 -->
-          <button id="btn-open-settings" class="btn-icon" aria-label="설정 열기" title="음성 및 연동 설정">
+          <button id="btn-open-settings" class="btn-icon" aria-label="설정" title="설정">
             ⚙️
           </button>
         </div>
@@ -143,219 +143,473 @@
       <div id="settings-modal" class="modal-backdrop modal-hidden">
         <div class="modal-dialog glass-panel">
           <div class="modal-header">
-            <h3 class="modal-title">⚙️ 나레이션 및 음성 엔진 설정</h3>
+            <h3 class="modal-title">설정</h3>
             <button id="btn-close-settings" class="btn-close" aria-label="닫기">✕</button>
           </div>
 
-          <div class="modal-body">
-            <!-- TTS 엔진 선택 -->
-            <div class="setting-item">
-              <label class="setting-label">TTS 엔진 선택</label>
-              <div class="engine-tabs">
-                <button type="button" class="tab-btn active" data-engine="edge">
-                  무료 Edge-TTS (초고속)
-                </button>
-                <button type="button" class="tab-btn" data-engine="gemini">
-                  ✨ Gemini 3.8 Flash TTS (AI 나레이터)
-                </button>
-              </div>
-            </div>
+          <!-- 상위 카테고리 탭 네비게이션 -->
+          <div class="modal-nav-tabs">
+            <button type="button" class="modal-tab-btn active" data-tab="voice">
+              🎙️ 음성 및 AI 엔진
+            </button>
+            <button type="button" class="modal-tab-btn" data-tab="audio-drama">
+              🎭 오디오 드라마
+            </button>
+            <button type="button" class="modal-tab-btn" data-tab="system">
+              📁 게임 연동 & 시스템
+            </button>
+            <button type="button" class="modal-tab-btn" data-tab="cache">
+              ⚡ 캐시
+            </button>
+          </div>
 
-            <!-- 오디오 드라마 및 성별 목소리 분기 설정 -->
-            <div class="setting-item audio-drama-setting-box">
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-title">🎭 오디오 드라마 모드 (성별 및 지문/대사 분기)</div>
-                  <div class="toggle-desc">
-                    지문(상황 묘사)은 사관 목소리로, 따옴표 대사는 말하는 인물의 성별 목소리로 실감 나게 교차 낭독합니다.
+          <div class="modal-body">
+            <!-- 1. 음성 및 AI 엔진 탭 패널 -->
+            <div id="tab-panel-voice" class="modal-tab-panel active">
+              <!-- AI 엔진 선택 카드 그리드 -->
+              <div class="setting-item">
+                <label class="setting-label">AI 음성 엔진 선택</label>
+                <div class="engine-cards-grid">
+                  <!-- Edge-TTS 카드 -->
+                  <div class="engine-card active" data-engine="edge">
+                    <div class="engine-card-title">Edge-TTS</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-free">무료</span> · 설정 없이 즉시 사용 가능한 초고속 낭독
+                    </div>
+                  </div>
+
+                  <!-- Gemini Flash 카드 -->
+                  <div class="engine-card" data-engine="gemini">
+                    <div class="engine-card-title">Gemini 3.8 Flash</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-paid">유료</span> · 어조 지침 기반 스튜디오급 감정 연출
+                    </div>
+                  </div>
+
+                  <!-- OpenAI TTS 카드 -->
+                  <div class="engine-card" data-engine="openai">
+                    <div class="engine-card-title">OpenAI TTS</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-paid">유료</span> · 묵직한 바리톤 onyx 사관 & 서사극
+                    </div>
+                  </div>
+
+                  <!-- ElevenLabs 카드 -->
+                  <div class="engine-card" data-engine="elevenlabs">
+                    <div class="engine-card-title">ElevenLabs</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-paid">유료</span> · 압도적 감정 연기력 & 글로벌 1위
+                    </div>
                   </div>
                 </div>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chk-audio-drama" checked />
-                  <span class="toggle-slider"></span>
-                </label>
               </div>
 
-              <!-- Edge-TTS 전용 성별 보이스 설정 -->
-              <div id="edge-gender-voices" class="gender-voice-grid">
+              <!-- Edge-TTS 전용 옵션 -->
+              <div id="edge-options" class="engine-options-group">
                 <div class="form-row">
-                  <label for="select-edge-voice-male" class="setting-label">남성 인물 목소리</label>
-                  <select id="select-edge-voice-male" class="form-select">
-                    <option value="ko-KR-InJoonNeural">인준 (중후하고 신뢰감)</option>
-                    <option value="ko-KR-HyunsuNeural">현수 (자연스럽고 부드러움)</option>
-                  </select>
-                </div>
-                <div class="form-row">
-                  <label for="select-edge-voice-female" class="setting-label">여성 인물 목소리</label>
-                  <select id="select-edge-voice-female" class="form-select">
-                    <option value="ko-KR-SunHiNeural">선희 (차분하고 명료함)</option>
+                  <label for="select-edge-voice" class="setting-label">기본 사관/지문 목소리</label>
+                  <select id="select-edge-voice" class="form-select">
+                    <option value="ko-KR-SunHiNeural">선희 (여성 - 차분하고 명료함)</option>
+                    <option value="ko-KR-InJoonNeural">인준 (남성 - 중후하고 신뢰감)</option>
+                    <option value="ko-KR-HyunsuNeural">현수 (남성 - 자연스러움)</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Gemini 전용 성별 보이스 설정 -->
-              <div id="gemini-gender-voices" class="gender-voice-grid option-hidden">
+              <!-- Gemini 옵션 -->
+              <div id="gemini-options" class="engine-options-group option-hidden">
                 <div class="form-row">
-                  <label for="select-gemini-voice-male" class="setting-label">남성 인물 목소리</label>
-                  <select id="select-gemini-voice-male" class="form-select">
-                    <option value="Charon">Charon (깊고 중후한 군주/영주)</option>
-                    <option value="Fenrir">Fenrir (거칠고 박력 있는 성전 기사)</option>
-                    <option value="Puck">Puck (영민하고 날카로운 모략가)</option>
-                    <option value="Algenib">Algenib (스토리텔러)</option>
+                  <label for="select-gemini-model" class="setting-label">Gemini 3.8 모델 버전</label>
+                  <select id="select-gemini-model" class="form-select">
+                    <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS (스튜디오급 캐릭터 나레이션)</option>
+                    <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS (초고속 / 대량 생성 특화)</option>
                   </select>
                 </div>
+
                 <div class="form-row">
-                  <label for="select-gemini-voice-female" class="setting-label">여성 인물 목소리</label>
-                  <select id="select-gemini-voice-female" class="form-select">
-                    <option value="Kore">Kore (기품 있고 엄숙한 왕비)</option>
-                    <option value="Aoede">Aoede (맑고 온화한 공주/외교관)</option>
+                  <label for="input-gemini-key" class="setting-label">
+                    Google AI Studio API 키
+                    <a href="https://aistudio.google.com/apikey" target="_blank" class="link-external">
+                      [키 발급받기 ↗]
+                    </a>
+                  </label>
+                  <input
+                    type="password"
+                    id="input-gemini-key"
+                    class="form-input"
+                    placeholder="AIzaSy... API 키를 입력하세요"
+                  />
+                </div>
+
+                <div class="form-row">
+                  <label for="select-gemini-voice" class="setting-label">Gemini 보이스</label>
+                  <select id="select-gemini-voice" class="form-select">
+                    <option value="Charon">Charon (깊고 중후한 대서사관 / 원로 재상)</option>
+                    <option value="Algenib">Algenib (스튜디오급 역사 스토리텔러 / 사관)</option>
+                    <option value="Fenrir">Fenrir (거칠고 박력 있는 성전 기사 / 군주)</option>
+                    <option value="Kore">Kore (기품 있고 엄숙한 왕비 / 수녀원장)</option>
+                    <option value="Puck">Puck (영민하고 빠른 궁정 첩보관 / 모략가)</option>
+                    <option value="Aoede">Aoede (맑고 온화한 궁정 공주 / 외교관)</option>
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <label for="select-gemini-tone" class="setting-label">나레이터 어조 프리셋</label>
+                  <select id="select-gemini-tone" class="form-select">
+                    <option value="trailer">CK3 공식 트레일러 사관 (차분하고 묵직한 지적 저음)</option>
+                    <option value="narrator">장엄한 역사 대하드라마 궁정 사관</option>
+                    <option value="warrior">비장하고 거친 전장의 성전 기사</option>
+                    <option value="schemer">낮고 은밀한 음흉한 궁정 모략가</option>
+                    <option value="clergy">성스럽고 경건한 대주교의 기도문</option>
+                    <option value="emperor">위엄 있고 당당한 제왕의 칙령</option>
+                    <option value="custom">직접 프롬프트 작성...</option>
+                  </select>
+                </div>
+
+                <div id="custom-prompt-wrapper" class="form-row option-hidden">
+                  <label for="textarea-gemini-prompt" class="setting-label">커스텀 시스템 프롬프트</label>
+                  <textarea
+                    id="textarea-gemini-prompt"
+                    class="form-textarea"
+                    rows="3"
+                    placeholder="Gemini 모델에게 지시할 나레이션 말투 및 억양 지침을 적어주세요."
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- OpenAI 전용 옵션 -->
+              <div id="openai-options" class="engine-options-group option-hidden">
+                <div class="form-row">
+                  <label for="select-openai-model" class="setting-label">OpenAI 모델 버전</label>
+                  <select id="select-openai-model" class="form-select">
+                    <option value="tts-1">tts-1 (고속 표준 / 저지연 낭독 권장)</option>
+                    <option value="tts-1-hd">tts-1-hd (스튜디오 고음질)</option>
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <label for="input-openai-key" class="setting-label">
+                    OpenAI API 키
+                    <a href="https://platform.openai.com/api-keys" target="_blank" class="link-external">
+                      [키 발급받기 ↗]
+                    </a>
+                  </label>
+                  <input
+                    type="password"
+                    id="input-openai-key"
+                    class="form-input"
+                    placeholder="sk-proj-... API 키를 입력하세요"
+                  />
+                </div>
+
+                <div class="form-row">
+                  <label for="select-openai-voice" class="setting-label">OpenAI 기본 사관 보이스</label>
+                  <select id="select-openai-voice" class="form-select">
+                    <option value="onyx">onyx (깊고 묵직한 중저음 바리톤 - 대서사관 / 군주)</option>
+                    <option value="fable">fable (고전적인 서사 스토리텔러 / 낭독가)</option>
+                    <option value="echo">echo (차분하고 신뢰감 있는 남성 목소리)</option>
+                    <option value="alloy">alloy (단정하고 균형 잡힌 중성 목소리)</option>
+                    <option value="nova">nova (생동감 있고 또렷한 여성 목소리)</option>
+                    <option value="shimmer">shimmer (맑고 지적인 여성 목소리)</option>
                   </select>
                 </div>
               </div>
-            </div>
 
-            <!-- Edge-TTS 옵션 -->
-            <div id="edge-options" class="engine-options-group">
-              <div class="form-row">
-                <label for="select-edge-voice" class="setting-label">기본 사관/지문 목소리</label>
-                <select id="select-edge-voice" class="form-select">
-                  <option value="ko-KR-SunHiNeural">선희 (여성 - 차분하고 명료함)</option>
-                  <option value="ko-KR-InJoonNeural">인준 (남성 - 중후하고 신뢰감)</option>
-                  <option value="ko-KR-HyunsuNeural">현수 (남성 - 자연스러움)</option>
-                </select>
+              <!-- ElevenLabs 전용 옵션 -->
+              <div id="elevenlabs-options" class="engine-options-group option-hidden">
+                <div class="form-row">
+                  <label for="select-elevenlabs-model" class="setting-label">ElevenLabs 모델 버전</label>
+                  <select id="select-elevenlabs-model" class="form-select">
+                    <option value="eleven_multilingual_v2">eleven_multilingual_v2 (한국어 최고 음질 & 풍부한 감정선)</option>
+                    <option value="eleven_turbo_v2_5">eleven_turbo_v2_5 (초저지연 초고속 다국어 낭독)</option>
+                    <option value="eleven_flash_v2_5">eleven_flash_v2_5 (초경량 고속 낭독)</option>
+                  </select>
+                </div>
+
+                <div class="form-row">
+                  <label for="input-elevenlabs-key" class="setting-label">
+                    ElevenLabs API 키
+                    <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" class="link-external">
+                      [키 발급받기 ↗]
+                    </a>
+                  </label>
+                  <input
+                    type="password"
+                    id="input-elevenlabs-key"
+                    class="form-input"
+                    placeholder="xi-api-key 를 입력하세요"
+                  />
+                </div>
+
+                <div class="form-row">
+                  <label for="select-elevenlabs-voice-preset" class="setting-label">ElevenLabs 기본 사관 보이스</label>
+                  <select id="select-elevenlabs-voice-preset" class="form-select">
+                    <option value="JBFqnCBsd6RMkjVDRZzb">George (중후한 대서사관 / 역사 낭독 톤)</option>
+                    <option value="pNInz6obpgDQGcFmaJgB">Adam (단단하고 묵직한 중저음 / 군주)</option>
+                    <option value="Xb7hH8MSUJpSbSDYk0k2">Alice (차분하고 기품 있는 낭독 / 여제)</option>
+                    <option value="pFZP5JQG7iQjIQuC4Bku">Lily (부드럽고 온화한 궁정 여인)</option>
+                    <option value="custom">직접 Voice ID 입력...</option>
+                  </select>
+                </div>
+
+                <div id="elevenlabs-custom-voice-row" class="form-row option-hidden">
+                  <label for="input-elevenlabs-voice-id" class="setting-label">커스텀 Voice ID</label>
+                  <input
+                    type="text"
+                    id="input-elevenlabs-voice-id"
+                    class="form-input"
+                    placeholder="ElevenLabs Voice Lab의 Voice ID를 입력하세요"
+                  />
+                </div>
               </div>
 
-              <div class="form-row">
+              <!-- 공통 낭독 속도 슬라이더 -->
+              <div class="form-row speech-rate-row">
                 <label for="range-speech-rate" class="setting-label">낭독 속도</label>
                 <div class="range-wrapper">
                   <input type="range" id="range-speech-rate" min="-30" max="30" step="5" value="0" />
                   <span id="speech-rate-display" class="range-value">+0%</span>
                 </div>
               </div>
-            </div>
 
-            <!-- Gemini 옵션 -->
-            <div id="gemini-options" class="engine-options-group option-hidden">
-              <div class="form-row">
-                <label for="select-gemini-model" class="setting-label">Gemini 3.8 모델 버전</label>
-                <select id="select-gemini-model" class="form-select">
-                  <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS (스튜디오급 캐릭터 나레이션)</option>
-                  <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS (초고속 / 대량 생성 특화)</option>
-                </select>
-              </div>
-
-              <div class="form-row">
-                <label for="input-gemini-key" class="setting-label">
-                  Google AI Studio API 키
-                  <a href="https://aistudio.google.com/apikey" target="_blank" class="link-external">
-                    [키 발급받기]
-                  </a>
-                </label>
-                <input
-                  type="password"
-                  id="input-gemini-key"
-                  class="form-input"
-                  placeholder="AIzaSy... API 키를 입력하세요"
-                />
-              </div>
-
-              <div class="form-row">
-                <label for="select-gemini-voice" class="setting-label">Gemini 보이스</label>
-                <select id="select-gemini-voice" class="form-select">
-                  <option value="Charon">Charon (깊고 중후한 대서사관 / 원로 재상)</option>
-                  <option value="Algenib">Algenib (스튜디오급 역사 스토리텔러 / 사관)</option>
-                  <option value="Fenrir">Fenrir (거칠고 박력 있는 성전 기사 / 군주)</option>
-                  <option value="Kore">Kore (기품 있고 엄숙한 왕비 / 수녀원장)</option>
-                  <option value="Puck">Puck (영민하고 빠른 궁정 첩보관 / 모략가)</option>
-                  <option value="Aoede">Aoede (맑고 온화한 궁정 공주 / 외교관)</option>
-                </select>
-              </div>
-
-              <div class="form-row">
-                <label for="select-gemini-tone" class="setting-label">나레이터 어조 프리셋</label>
-                <select id="select-gemini-tone" class="form-select">
-                  <option value="trailer">CK3 공식 트레일러 사관 (차분하고 묵직한 지적 저음)</option>
-                  <option value="narrator">장엄한 역사 대하드라마 궁정 사관</option>
-                  <option value="warrior">비장하고 거친 전장의 성전 기사</option>
-                  <option value="schemer">낮고 은밀한 음흉한 궁정 모략가</option>
-                  <option value="clergy">성스럽고 경건한 대주교의 기도문</option>
-                  <option value="emperor">위엄 있고 당당한 제왕의 칙령</option>
-                  <option value="custom">직접 프롬프트 작성...</option>
-                </select>
-              </div>
-
-              <div id="custom-prompt-wrapper" class="form-row option-hidden">
-                <label for="textarea-gemini-prompt" class="setting-label">커스텀 시스템 프롬프트</label>
-                <textarea
-                  id="textarea-gemini-prompt"
-                  class="form-textarea"
-                  rows="3"
-                  placeholder="Gemini 모델에게 지시할 나레이션 말투 및 억양 지침을 적어주세요."
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- 테스트 낭독 섹션 (음성 설정 바로 아래에 배치하여 즉각적인 청취 테스트 지원) -->
-            <div class="test-speech-bar">
-              <button type="button" id="btn-test-speech" class="btn btn-gold">
-                🎙️ 현재 설정으로 목소리 테스트
-              </button>
-            </div>
-
-            <!-- CK3 로그 경로 수동 설정 -->
-            <div class="form-row log-path-row">
-              <label class="setting-label">CK3 debug.log 경로</label>
-              <div class="path-input-group">
-                <input
-                  type="text"
-                  id="input-custom-log-path"
-                  class="form-input"
-                  readonly
-                  placeholder="자동 감지됨 (변경을 원하시면 우측 버튼 클릭)"
-                />
-                <button type="button" id="btn-browse-log" class="btn btn-secondary">
-                  찾아보기...
+              <!-- 테스트 낭독 섹션 -->
+              <div class="test-speech-bar">
+                <button type="button" id="btn-test-speech" class="btn btn-gold">
+                  🎙️ 현재 설정으로 목소리 테스트
                 </button>
               </div>
             </div>
 
-            <!-- CK3 모드 썸네일 및 동기화 상태 -->
-            <div class="form-row mod-preview-row">
-              <label class="setting-label">연동 CK3 모드 (패러독스 런처)</label>
-              <div class="mod-preview-box">
-                <img src="./assets/mod-thumbnail.png" alt="Mod Thumbnail" class="mod-thumbnail-img" />
-                <div class="mod-preview-details">
-                  <div class="mod-title">CK3 TTS Companion Bridge</div>
-                  <div class="mod-status-text">✅ 패러독스 게임 모드 폴더 동기화 완료</div>
-                  <div class="mod-subtext">런처 모드 플레이셋에서 본 모드를 활성화해 주세요.</div>
+            <!-- 2. 오디오 드라마 탭 패널 -->
+            <div id="tab-panel-audio-drama" class="modal-tab-panel">
+              <div class="setting-item audio-drama-setting-box">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-title">🎭 오디오 드라마 모드 (성별 및 지문/대사 분기)</div>
+                    <div class="toggle-desc">
+                      지문(상황 묘사)은 사관 목소리로, 따옴표 대사는 말하는 인물의 성별 목소리로 실감 나게 교차 낭독합니다.
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="chk-audio-drama" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Edge-TTS 전용 성별 보이스 설정 -->
+                <div id="edge-gender-voices" class="gender-voice-grid">
+                  <div class="form-row">
+                    <label for="select-edge-voice-male" class="setting-label">남성 인물 목소리</label>
+                    <select id="select-edge-voice-male" class="form-select">
+                      <option value="ko-KR-InJoonNeural">인준 (중후하고 신뢰감)</option>
+                      <option value="ko-KR-HyunsuNeural">현수 (자연스럽고 부드러움)</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label for="select-edge-voice-female" class="setting-label">여성 인물 목소리</label>
+                    <select id="select-edge-voice-female" class="form-select">
+                      <option value="ko-KR-SunHiNeural">선희 (차분하고 명료함)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Gemini 전용 성별 보이스 설정 -->
+                <div id="gemini-gender-voices" class="gender-voice-grid option-hidden">
+                  <div class="form-row">
+                    <label for="select-gemini-voice-male" class="setting-label">남성 인물 목소리</label>
+                    <select id="select-gemini-voice-male" class="form-select">
+                      <option value="Charon">Charon (깊고 중후한 군주/영주)</option>
+                      <option value="Fenrir">Fenrir (거칠고 박력 있는 성전 기사)</option>
+                      <option value="Puck">Puck (영민하고 날카로운 모략가)</option>
+                      <option value="Algenib">Algenib (스토리텔러)</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label for="select-gemini-voice-female" class="setting-label">여성 인물 목소리</label>
+                    <select id="select-gemini-voice-female" class="form-select">
+                      <option value="Kore">Kore (기품 있고 엄숙한 왕비)</option>
+                      <option value="Aoede">Aoede (맑고 온화한 공주/외교관)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- OpenAI 전용 성별 보이스 설정 -->
+                <div id="openai-gender-voices" class="gender-voice-grid option-hidden">
+                  <div class="form-row">
+                    <label for="select-openai-voice-male" class="setting-label">남성 인물 목소리</label>
+                    <select id="select-openai-voice-male" class="form-select">
+                      <option value="onyx">onyx (깊고 묵직한 군주/영주)</option>
+                      <option value="echo">echo (차분하고 부드러운 신하)</option>
+                      <option value="fable">fable (서사적인 방랑 기사)</option>
+                      <option value="alloy">alloy (단정하고 균형 잡힌 청년)</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label for="select-openai-voice-female" class="setting-label">여성 인물 목소리</label>
+                    <select id="select-openai-voice-female" class="form-select">
+                      <option value="nova">nova (생동감 있고 당당한 왕비/여제)</option>
+                      <option value="shimmer">shimmer (맑고 지적인 공주/궁정 부인)</option>
+                      <option value="alloy">alloy (단정한 여성/소녀)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- ElevenLabs 전용 성별 보이스 설정 -->
+                <div id="elevenlabs-gender-voices" class="gender-voice-grid option-hidden">
+                  <div class="form-row">
+                    <label for="select-elevenlabs-voice-male" class="setting-label">남성 인물 목소리</label>
+                    <select id="select-elevenlabs-voice-male" class="form-select">
+                      <option value="JBFqnCBsd6RMkjVDRZzb">George (중후한 대서사관/군주)</option>
+                      <option value="pNInz6obpgDQGcFmaJgB">Adam (단단한 중저음 무장)</option>
+                    </select>
+                  </div>
+                  <div class="form-row">
+                    <label for="select-elevenlabs-voice-female" class="setting-label">여성 인물 목소리</label>
+                    <select id="select-elevenlabs-voice-female" class="form-select">
+                      <option value="Xb7hH8MSUJpSbSDYk0k2">Alice (차분하고 기품 있는 왕비)</option>
+                      <option value="pFZP5JQG7iQjIQuC4Bku">Lily (온화한 공주/귀족 부인)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- 소프트웨어 정보 및 수동 업데이트 확인 -->
-            <div class="form-row software-info-row">
-              <label class="setting-label">소프트웨어 정보 & 업데이트</label>
-              <div class="software-info-card">
-                <div class="software-meta-row">
-                  <span class="meta-item">
-                    <span class="meta-label">현재 버전:</span>
-                    <strong id="modal-app-version" class="meta-val gold-text">v1.4.0</strong>
-                  </span>
-                  <span class="meta-separator">•</span>
-                  <span class="meta-item">
-                    <span class="meta-label">제작자:</span>
-                    <strong id="modal-app-author" class="meta-val">BlackOlf</strong>
-                  </span>
-                </div>
-                <div class="software-actions-row">
-                  <button type="button" id="btn-manual-check-update" class="btn btn-secondary btn-sm">
-                    🔄 최신 버전 확인
+            <!-- 3. 게임 연동 & 시스템 탭 패널 -->
+            <div id="tab-panel-system" class="modal-tab-panel">
+              <!-- CK3 로그 경로 수동 설정 -->
+              <div class="form-row log-path-row">
+                <label class="setting-label">CK3 debug.log 경로</label>
+                <div class="path-input-group">
+                  <input
+                    type="text"
+                    id="input-custom-log-path"
+                    class="form-input"
+                    readonly
+                    placeholder="자동 감지됨 (변경을 원하시면 우측 버튼 클릭)"
+                  />
+                  <button type="button" id="btn-browse-log" class="btn btn-secondary">
+                    찾아보기...
                   </button>
-                  <button type="button" id="btn-open-repo" class="btn btn-secondary btn-sm">
-                    🌐 GitHub 저장소 ↗
-                  </button>
-                  <span id="manual-update-status" class="update-status-msg"></span>
                 </div>
+              </div>
+
+              <!-- CK3 모드 썸네일 및 동기화 상태 -->
+              <div class="form-row mod-preview-row">
+                <label class="setting-label">연동 CK3 모드 (패러독스 런처)</label>
+                <div class="mod-preview-box">
+                  <img src="./assets/mod-thumbnail.png" alt="Mod Thumbnail" class="mod-thumbnail-img" />
+                  <div class="mod-preview-details">
+                    <div class="mod-title">CK3 TTS Companion Bridge</div>
+                    <div class="mod-status-text">✅ 패러독스 게임 모드 폴더 동기화 완료</div>
+                    <div class="mod-subtext">런처 모드 플레이셋에서 본 모드를 활성화해 주세요.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 소프트웨어 정보 및 수동 업데이트 확인 -->
+              <div class="form-row software-info-row">
+                <label class="setting-label">소프트웨어 정보 & 업데이트</label>
+                <div class="software-info-card">
+                  <div class="software-meta-row">
+                    <span class="meta-item">
+                      <span class="meta-label">현재 버전:</span>
+                      <strong id="modal-app-version" class="meta-val gold-text">v1.4.0</strong>
+                    </span>
+                    <span class="meta-separator">•</span>
+                    <span class="meta-item">
+                      <span class="meta-label">제작자:</span>
+                      <strong id="modal-app-author" class="meta-val">BlackOlf</strong>
+                    </span>
+                  </div>
+                  <div class="software-actions-row">
+                    <button type="button" id="btn-manual-check-update" class="btn btn-secondary btn-sm">
+                      🔄 최신 버전 확인
+                    </button>
+                    <button type="button" id="btn-open-repo" class="btn btn-secondary btn-sm">
+                      🌐 GitHub 저장소 ↗
+                    </button>
+                    <span id="manual-update-status" class="update-status-msg"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. 캐시 탭 패널 -->
+            <div id="tab-panel-cache" class="modal-tab-panel">
+              <!-- 캐시 기본 설정 카드 (오디오 드라마 카드와 일치하는 일체형 디자인) -->
+              <div class="setting-item audio-drama-setting-box">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-title">⚡ 로컬 오디오 캐시</div>
+                    <div class="toggle-desc">
+                      동일한 이벤트 낭독 시 외부 API 호출 없이 로컬 오디오에서 즉시 재생합니다.
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="chk-cache-enabled" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <!-- 최대 캐시 용량 슬라이더 (점선 구분선 하단 배치) -->
+                <div class="cache-slider-section">
+                  <div class="slider-header">
+                    <label for="range-cache-size" class="setting-label">최대 캐시 용량</label>
+                    <span id="cache-size-display" class="slider-val gold-text">500 MB</span>
+                  </div>
+                  <input
+                    type="range"
+                    id="range-cache-size"
+                    class="form-range"
+                    min="100"
+                    max="2000"
+                    step="50"
+                    value="500"
+                  />
+                </div>
+              </div>
+
+              <!-- 캐시 통계 대시보드 카드 -->
+              <div class="form-row">
+                <label class="setting-label">캐시 현황</label>
+                <div class="cache-stats-card">
+                  <div class="cache-stats-grid">
+                    <div class="stat-box">
+                      <span class="stat-num" id="cache-stat-files">0개</span>
+                      <span class="stat-label">저장된 오디오</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-num" id="cache-stat-hits">0회</span>
+                      <span class="stat-label">캐시 즉시 재생</span>
+                    </div>
+                    <div class="stat-box">
+                      <span class="stat-num" id="cache-stat-size">0.0 MB</span>
+                      <span class="stat-label">디스크 점유 용량</span>
+                    </div>
+                  </div>
+
+                  <!-- 용량 사용량 프로그레스 바 -->
+                  <div class="cache-progress-container">
+                    <div class="cache-progress-bar" id="cache-usage-bar" style="width: 0%;"></div>
+                  </div>
+                  <div class="cache-progress-labels">
+                    <span id="cache-usage-text">0.0 MB / 500 MB (0.0%)</span>
+                    <span id="cache-dir-preview" class="cache-dir-text">audio_cache</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 캐시 관리 액션 버튼 -->
+              <div class="cache-actions-row">
+                <button type="button" id="btn-refresh-cache-stats" class="btn btn-secondary btn-sm">
+                  🔄 통계 새로고침
+                </button>
+                <button type="button" id="btn-open-cache-dir" class="btn btn-secondary btn-sm">
+                  📂 캐시 폴더 열기
+                </button>
+                <button type="button" id="btn-clear-cache" class="btn btn-danger btn-sm">
+                  🗑️ 캐시 전체 비우기
+                </button>
               </div>
             </div>
           </div>

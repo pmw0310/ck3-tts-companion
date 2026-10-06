@@ -15,7 +15,7 @@ const runVerification = async (): Promise<void> => {
 
    console.log("\n=== [2] 텍스트 정제기(Sanitizer) 검증 ===");
    const sampleRawLine =
-      "[00:15:23][jomini_script_system.cpp:241]: [CK3_TTS] 붉은 늑대의 난|||#bold 폐하#!, 국경의 @skill_martial_icon! 반란군이 [TOOLTIP:MODIFIER,10,morale]진격하고 있습니다!#!";
+      "[00:15:23][jomini_script_system.cpp:241]: [CK3_TTS] 붉은 늑대의 난|||#bold 폐하#!, 국경의 @skill_martial_icon! 반란군이 [TOOLTIP:MODIFIER,10,morale]진격하고 있습니다!#![CK3_TTS_END]";
    const parsed = parseCk3LogLine(sampleRawLine);
    console.log("파싱 결과:", parsed);
 
@@ -48,6 +48,20 @@ const runVerification = async (): Promise<void> => {
       geminiVoiceMale: "Charon",
       geminiVoiceFemale: "Kore",
       geminiModel: "gemini-3.8-flash-lite-tts",
+      openaiApiKey: "",
+      openaiModel: "tts-1",
+      openaiVoice: "onyx",
+      openaiVoiceMale: "onyx",
+      openaiVoiceFemale: "nova",
+      elevenLabsApiKey: "",
+      elevenLabsModel: "eleven_multilingual_v2",
+      elevenLabsVoiceId: "JBFqnCBsd6RMkjVDRZzb",
+      elevenLabsVoiceMale: "JBFqnCBsd6RMkjVDRZzb",
+      elevenLabsVoiceFemale: "Xb7hH8MSUJpSbSDYk0k2",
+      elevenLabsStability: 0.5,
+      elevenLabsSimilarity: 0.75,
+      isCacheEnabled: true,
+      maxCacheSizeMb: 500,
    };
 
    const ttsResult = await synthesizeWithEdgeTts(

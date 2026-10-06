@@ -49,8 +49,19 @@ export const shouldPlayEvent = (
   state: DeduplicationState,
   now: number = Date.now()
 ): boolean => {
-  // 0. 사용자가 인게임 스피커 버튼 또는 F 단축키로 명시적 재낭독을 요청한 경우 즉시 허용
+  // 0. 사용자가 인게임 스피커 버튼 또는 F 단축키로 명시적 재낭독을 요청한 경우
+  // - 방금 닫힌 창(Stop)의 동일 이벤트가 지연 플러시되어 유입된 경우 15초간 완전 차단
+  // - C++ 엔진 콘솔의 3중 에코(console.cpp/jomini_effect)나 분할 청크로 인해 1초 이내 동일 텍스트 재유입 시 차단
   if (event.isForceReplay) {
+    if (event.content === state.lastStoppedText && now - state.lastStoppedTime < 15000) {
+      return false;
+    }
+    if (event.content === state.lastAutoSpokenText && now - state.lastAutoSpokenTime < 1000) {
+      return false;
+    }
+    if (state.isPlaying && state.currentEvent && state.currentEvent.content === event.content && now - state.lastAutoSpokenTime < 1000) {
+      return false;
+    }
     return true;
   }
 

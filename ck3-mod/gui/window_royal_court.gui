@@ -37,6 +37,7 @@ window = {
 		using = Animation_FadeOut_Standard
 		on_finish = "[RoyalCourtWindow.AccessInspirationsWindow.ClearSelectedInspiration]"
 		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
+		on_start = "[ExecuteConsoleCommand('effect debug_log = "##CK3_TTS_STOP##"')]"
 	}
 
 	background = {

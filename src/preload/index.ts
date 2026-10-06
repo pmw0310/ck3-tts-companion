@@ -47,6 +47,18 @@ const electronApi: ElectronApiBridge = {
     return await ipcRenderer.invoke('ck3:open-external', url);
   },
 
+  getCacheStats: async () => {
+    return await ipcRenderer.invoke('ck3:get-cache-stats');
+  },
+
+  clearCache: async (): Promise<boolean> => {
+    return await ipcRenderer.invoke('ck3:clear-cache');
+  },
+
+  openCacheDir: async (): Promise<boolean> => {
+    return await ipcRenderer.invoke('ck3:open-cache-dir');
+  },
+
   onEventDetected: (
     callback: (event: Ck3EventMessage) => void
   ): (() => void) => {
