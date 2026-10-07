@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { ElectronApiBridge } from '@/shared/types';
 
 declare global {
@@ -6,4 +8,3 @@ declare global {
   }
 }
 
-export {};

@@ -39,7 +39,9 @@ test('장시간 실행 시 TTS 안정성 및 리소스 누수 방어 검증', as
     elevenLabsStability: 0.5,
     elevenLabsSimilarity: 0.75,
     isCacheEnabled: false,
-    maxCacheSizeMb: 500
+    maxCacheSizeMb: 500,
+    isExecutionSoundEnabled: true,
+    executionSoundVolume: 0.8
   };
 
   await t.test('1. [결함 재현] synthesizeWithEdgeTts는 합성이 완료되거나 실패해도 반드시 tts.close()를 호출하여 WebSocket 누수를 차단해야 한다', async () => {

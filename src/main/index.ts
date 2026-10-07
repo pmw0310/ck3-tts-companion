@@ -18,6 +18,7 @@ import type {
   AppInfo,
   AppSettings,
   Ck3EventMessage,
+  ExecutionSoundEvent,
   SynthesizeRequest,
   SynthesizeResult,
   UpdateCheckResult
@@ -28,6 +29,7 @@ import type {
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 /** 애플리케이션 기본 설정 값 */
 const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -60,7 +62,9 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   openaiVoiceMale: 'onyx',
   openaiVoiceFemale: 'nova',
   isCacheEnabled: true,
-  maxCacheSizeMb: 500
+  maxCacheSizeMb: 500,
+  isExecutionSoundEnabled: true,
+  executionSoundVolume: 0.8
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -170,6 +174,9 @@ const restartWatcher = (): void => {
     },
     () => {
       sendToRenderer('ck3:stop-speech');
+    },
+    (executionSound: ExecutionSoundEvent) => {
+      sendToRenderer('ck3:execution-sound', executionSound);
     }
   );
 };

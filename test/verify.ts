@@ -62,6 +62,8 @@ const runVerification = async (): Promise<void> => {
       elevenLabsSimilarity: 0.75,
       isCacheEnabled: true,
       maxCacheSizeMb: 500,
+      isExecutionSoundEnabled: true,
+      executionSoundVolume: 0.8
    };
 
    const ttsResult = await synthesizeWithEdgeTts(

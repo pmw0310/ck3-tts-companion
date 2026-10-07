@@ -472,6 +472,39 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 처형 효과음 (Execution Sound FX) 설정 카드 -->
+              <div class="setting-item audio-drama-setting-box" style="margin-top: 16px;">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-title">⚔️ 죄수 처형 효과음 (Execution Sound FX)</div>
+                    <div class="toggle-desc">
+                      인게임 처형 집행 시 사형 방식 및 죄수 성별(남/녀)에 맞춘 고음질 처형 효과음을 실시간으로 재생합니다.
+                    </div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="chk-execution-sound" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <!-- 처형 효과음 볼륨 조절 슬라이더 -->
+                <div class="cache-slider-section" id="execution-volume-wrapper">
+                  <div class="slider-header">
+                    <label for="range-execution-volume" class="setting-label">처형 효과음 볼륨</label>
+                    <span id="execution-volume-display" class="slider-val gold-text">80%</span>
+                  </div>
+                  <input
+                    type="range"
+                    id="range-execution-volume"
+                    class="form-range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value="80"
+                  />
+                </div>
+              </div>
             </div>
 
             <!-- 3. 게임 연동 & 시스템 탭 패널 -->

@@ -50,7 +50,9 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
     openaiVoiceMale: 'onyx',
     openaiVoiceFemale: 'nova',
     isCacheEnabled: true,
-    maxCacheSizeMb: 500
+    maxCacheSizeMb: 500,
+    isExecutionSoundEnabled: true,
+    executionSoundVolume: 0.8
   };
 
   beforeEach(() => {

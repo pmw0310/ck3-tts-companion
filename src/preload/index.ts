@@ -4,6 +4,7 @@ import type {
   AppSettings,
   Ck3EventMessage,
   ElectronApiBridge,
+  ExecutionSoundEvent,
   SynthesizeRequest,
   SynthesizeResult,
   UpdateCheckResult
@@ -72,6 +73,22 @@ const electronApi: ElectronApiBridge = {
     ipcRenderer.on('ck3:event-detected', listener);
     return () => {
       ipcRenderer.removeListener('ck3:event-detected', listener);
+    };
+  },
+
+  onExecutionSound: (
+    callback: (event: ExecutionSoundEvent) => void
+  ): (() => void) => {
+    const listener = (
+      _ipcEvent: Electron.IpcRendererEvent,
+      eventData: ExecutionSoundEvent
+    ): void => {
+      callback(eventData);
+    };
+
+    ipcRenderer.on('ck3:execution-sound', listener);
+    return () => {
+      ipcRenderer.removeListener('ck3:execution-sound', listener);
     };
   },
 

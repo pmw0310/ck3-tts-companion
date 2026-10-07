@@ -41,6 +41,25 @@ export type EdgeVoiceName =
 /** 화자 성별 구분 타입 */
 export type SpeakerGender = 'male' | 'female' | 'narrator';
 
+/** 지원하는 처형 사운드 유형 */
+export type ExecutionSoundType =
+  | 'beheading'
+  | 'burning'
+  | 'sacrifice'
+  | 'kennel'
+  | 'hanging'
+  | 'devour'
+  | 'public'
+  | 'generic';
+
+/** 감지된 처형 효과음 이벤트 */
+export type ExecutionSoundEvent = {
+  readonly type: ExecutionSoundType;
+  readonly gender: 'male' | 'female';
+  readonly rawName: string;
+  readonly timestamp: number;
+};
+
 /** 감지된 CK3 게임 이벤트 데이터 */
 export type Ck3EventMessage = {
   readonly id: string;
@@ -85,6 +104,8 @@ export type AppSettings = {
   readonly openaiVoiceFemale: OpenAiVoiceName;
   readonly isCacheEnabled: boolean;
   readonly maxCacheSizeMb: number;
+  readonly isExecutionSoundEnabled: boolean;
+  readonly executionSoundVolume: number;
 };
 
 /** TTS 합성 요청 매개변수 */
@@ -143,6 +164,7 @@ export type ElectronApiBridge = {
   readonly saveSettings: (newSettings: AppSettings) => Promise<boolean>;
   readonly synthesizeSpeech: (request: SynthesizeRequest) => Promise<SynthesizeResult>;
   readonly onEventDetected: (callback: (event: Ck3EventMessage) => void) => () => void;
+  readonly onExecutionSound: (callback: (event: ExecutionSoundEvent) => void) => () => void;
   readonly onStopSpeech: (callback: () => void) => () => void;
   readonly onLogStatusChange: (callback: (isWatching: boolean, path: string | null) => void) => () => void;
   readonly onToggleSpeech: (callback: () => void) => () => void;

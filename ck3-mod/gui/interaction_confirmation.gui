@@ -438,9 +438,17 @@ window = {
 		}
 
 		## Options
-		vbox_interaction_options = {
-			widgetid = "interaction_options"
+		scrollbox = {
+			name = "interaction_options_scrollbox"
 			visible = "[CharacterInteractionConfirmationWindow.HasOptions]"
+			layoutpolicy_horizontal = expanding
+			maximumsize = { -1 260 }
+			autoresizescrollarea = yes
+
+			blockoverride "scrollbox_content" {
+				vbox_interaction_options = {
+					widgetid = "interaction_options"
+					layoutpolicy_horizontal = expanding
 
 			# add a two column view for incite holy war
 			blockoverride "incite_war_options" {
@@ -459,9 +467,11 @@ window = {
 				}
 			}
 
-			# hide default list if it's incite holy war
-			blockoverride "show_default_options" {
-				visible = "[And3( Not( IsInciteHolyWar ), Not( CharacterInteractionConfirmationWindow.HasExclusiveOptions ), Not( GreaterThan_CFixedPoint( GetPlayer.MakeScope.Var( 'hide_ui_character_info' ).GetValue, '(CFixedPoint)0' ) ) )]"
+					# hide default list if it's incite holy war
+					blockoverride "show_default_options" {
+						visible = "[And3( Not( IsInciteHolyWar ), Not( CharacterInteractionConfirmationWindow.HasExclusiveOptions ), Not( GreaterThan_CFixedPoint( GetPlayer.MakeScope.Var( 'hide_ui_character_info' ).GetValue, '(CFixedPoint)0' ) ) )]"
+					}
+				}
 			}
 		}
 
@@ -503,6 +513,7 @@ window = {
 					visible = "[Not( CharacterInteractionConfirmationWindow.ShouldShowScheme )]"
 					text = "[CharacterInteractionConfirmationWindow.GetSendName]"
 
+					onclick = "[ExecuteConsoleCommand( Concatenate( 'effect debug_log = \"##CK3_EXECUTION## ', Concatenate( CharacterInteractionConfirmationWindow.GetSendName, Concatenate( '|||', Select_CString( CharacterInteractionConfirmationWindow.GetRecipient.IsFemale, 'GENDER:F##\"', 'GENDER:M##\"' ) ) ) ) )]"
 					onclick = "[CharacterInteractionConfirmationWindow.Send]"
 					enabled = "[CharacterInteractionConfirmationWindow.CanSend]"
 					tooltip = "[CharacterInteractionConfirmationWindow.GetCanSendDescription]"
@@ -516,6 +527,7 @@ window = {
 
 					text = "[CharacterInteractionConfirmationWindow.GetSendName]"
 
+					onclick = "[ExecuteConsoleCommand( Concatenate( 'effect debug_log = \"##CK3_EXECUTION## ', Concatenate( CharacterInteractionConfirmationWindow.GetSendName, Concatenate( '|||', Select_CString( CharacterInteractionConfirmationWindow.GetRecipient.IsFemale, 'GENDER:F##\"', 'GENDER:M##\"' ) ) ) ) )]"
 					onclick = "[CharacterInteractionConfirmationWindow.Send]"
 					enabled = "[CharacterInteractionConfirmationWindow.CanSend]"
 

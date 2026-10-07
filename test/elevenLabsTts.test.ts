@@ -38,6 +38,8 @@ const createMockSettings = (overrides?: Partial<AppSettings>): AppSettings => ({
   geminiVoiceFemale: 'Kore',
   isCacheEnabled: true,
   maxCacheSizeMb: 500,
+  isExecutionSoundEnabled: true,
+  executionSoundVolume: 0.8,
   ...overrides
 });
 

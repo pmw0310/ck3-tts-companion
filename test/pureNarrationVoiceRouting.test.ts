@@ -33,7 +33,9 @@ const MOCK_SETTINGS: AppSettings = {
   elevenLabsStability: 0.5,
   elevenLabsSimilarity: 0.75,
   isCacheEnabled: true,
-  maxCacheSizeMb: 500
+  maxCacheSizeMb: 500,
+  isExecutionSoundEnabled: true,
+  executionSoundVolume: 0.8
 };
 
 /** main.ts와 동일한 보이스 및 프롬프트 결정 순수 헬퍼 */

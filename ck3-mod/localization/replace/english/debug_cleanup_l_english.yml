@@ -25,3 +25,5 @@
  switch_adventurer:0 "Switch to Adventurer"
  switch_adventurer_desc:0 "Switch to playing as this adventurer character."
  switch_adventurer_tooltip:0 "Switch to playing as this character as an adventurer."
+ debug:0 "died mysteriously"
+

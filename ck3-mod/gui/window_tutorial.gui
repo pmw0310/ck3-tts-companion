@@ -8,14 +8,23 @@ types TutorialWindow {
 			name = _show
 			using = Animation_FadeIn_Quick
 			using = Sound_WindowShow_Standard
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			on_start = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
 		}
 
 		state = {
 			name = _hide
 			using = Animation_FadeOut_Quick
 			using = Sound_WindowHide_Standard
+			on_start = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
 			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+		}
+
+		# 튜토리얼 스텝 텍스트 변경(다음 버튼 클릭 및 자동 진행) 실시간 감지 낭독기
+		state = {
+			name = tutorial_step_tts_trigger
+			trigger_when = "[And(Not(StringIsEmpty(Tutorial.GetStepText)), Not(GetVariableSystem.HasValue('tutorial_current_step_text', Tutorial.GetStepText)))]"
+			on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
 		}
 
 		button = {
@@ -247,6 +256,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('read_later')]"
 					tooltip = "tutorial_lesson_button_read_later"
 					onclick = "[Tutorial.OnClickTransition('read_later')]"
+					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
 					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 				}
 			}
@@ -342,6 +352,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('repeat')]"
 					text = "[Tutorial.GetTransitionText('repeat')]"
 					onclick = "[Tutorial.OnClickTransition('repeat')]"
+					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
 				}
 				
 				expand = {}
@@ -352,6 +363,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('skip')]"
 					text = "[Tutorial.GetTransitionText('skip')]"
 					onclick = "[Tutorial.OnClickTransition('skip')]"
+					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
 					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 				}
 

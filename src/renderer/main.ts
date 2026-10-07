@@ -5,6 +5,7 @@ import type {
   Ck3EventMessage,
   EdgeVoiceName,
   ElevenLabsModelName,
+  ExecutionSoundEvent,
   GeminiModelName,
   GeminiVoiceName,
   OpenAiModelName,
@@ -18,6 +19,7 @@ import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
 import { splitNarrativeAndDialogue } from '@/shared/narrativeDialogueSplitter';
 import { shouldPlayEvent } from '@/shared/eventDeduplicator';
 import { initAudioVisualizer } from '@/renderer/audioVisualizer';
+import { playExecutionSound } from '@/renderer/executionSoundManager';
 
 // macOS 환경 감지 시 네이티브 신호등(트래픽 라이트) 버튼 안전 여백 클래스 즉시 부여
 if (
@@ -92,7 +94,9 @@ const state: RendererState = {
     elevenLabsStability: 0.5,
     elevenLabsSimilarity: 0.75,
     isCacheEnabled: true,
-    maxCacheSizeMb: 500
+    maxCacheSizeMb: 500,
+    isExecutionSoundEnabled: true,
+    executionSoundVolume: 0.8
   },
   currentEvent: null,
   history: [],
@@ -197,6 +201,12 @@ const selectOpenaiVoiceFemale = document.getElementById('select-openai-voice-fem
 const elevenlabsGenderVoicesGroup = document.getElementById('elevenlabs-gender-voices') as HTMLDivElement;
 const selectElevenlabsVoiceMale = document.getElementById('select-elevenlabs-voice-male') as HTMLSelectElement;
 const selectElevenlabsVoiceFemale = document.getElementById('select-elevenlabs-voice-female') as HTMLSelectElement;
+
+// 처형 효과음 엘리먼트
+const chkExecutionSound = document.getElementById('chk-execution-sound') as HTMLInputElement;
+const rangeExecutionVolume = document.getElementById('range-execution-volume') as HTMLInputElement;
+const executionVolumeDisplay = document.getElementById('execution-volume-display') as HTMLSpanElement;
+const executionVolumeWrapper = document.getElementById('execution-volume-wrapper') as HTMLDivElement;
 
 // 버전 및 제작자 정보 표시 엘리먼트
 const appVersionBadge = document.getElementById('app-version-badge') as HTMLSpanElement;
@@ -1121,6 +1131,22 @@ const syncSettingsForm = (): void => {
   selectElevenlabsVoiceMale.value = state.settings.elevenLabsVoiceMale || 'JBFqnCBsd6RMkjVDRZzb';
   selectElevenlabsVoiceFemale.value = state.settings.elevenLabsVoiceFemale || 'Xb7hH8MSUJpSbSDYk0k2';
 
+  if (chkExecutionSound) {
+    chkExecutionSound.checked = state.settings.isExecutionSoundEnabled ?? true;
+  }
+  if (rangeExecutionVolume) {
+    const execVolumePercent = Math.round((state.settings.executionSoundVolume ?? 0.8) * 100);
+    rangeExecutionVolume.value = execVolumePercent.toString();
+    if (executionVolumeDisplay) {
+      executionVolumeDisplay.textContent = `${execVolumePercent}%`;
+    }
+    updateSliderFillTrack(rangeExecutionVolume);
+    if (executionVolumeWrapper) {
+      executionVolumeWrapper.style.opacity = (state.settings.isExecutionSoundEnabled ?? true) ? '1' : '0.4';
+      executionVolumeWrapper.style.pointerEvents = (state.settings.isExecutionSoundEnabled ?? true) ? 'auto' : 'none';
+    }
+  }
+
   selectEdgeVoice.value = state.settings.edgeVoice;
   const numericRate = parseInt(state.settings.speechRate.replace('%', ''), 10) || 0;
   rangeSpeechRate.value = numericRate.toString();
@@ -1460,7 +1486,9 @@ const bindEventListeners = (): void => {
       customLogPath: inputCustomLogPath.value.trim() || null,
       isAudioDramaEnabled: chkAudioDrama.checked,
       isCacheEnabled: chkCacheEnabled ? chkCacheEnabled.checked : true,
-      maxCacheSizeMb: rangeCacheSize ? parseInt(rangeCacheSize.value, 10) || 500 : 500
+      maxCacheSizeMb: rangeCacheSize ? parseInt(rangeCacheSize.value, 10) || 500 : 500,
+      isExecutionSoundEnabled: chkExecutionSound ? chkExecutionSound.checked : true,
+      executionSoundVolume: rangeExecutionVolume ? (parseInt(rangeExecutionVolume.value, 10) || 80) / 100 : 0.8
     };
 
     const isSaved = await window.electronAPI.saveSettings(updatedSettings);
@@ -1502,6 +1530,26 @@ const bindEventListeners = (): void => {
     syncCacheUsageDisplay(newMaxMb);
     if (target) {
       updateSliderFillTrack(target);
+    }
+  });
+
+  // 처형 효과음 볼륨 슬라이더 입력 시 표시 텍스트 및 트랙 연동
+  rangeExecutionVolume?.addEventListener('input', (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const vol = parseInt(target?.value ?? '80', 10) || 80;
+    if (executionVolumeDisplay) {
+      executionVolumeDisplay.textContent = `${vol}%`;
+    }
+    if (target) {
+      updateSliderFillTrack(target);
+    }
+  });
+
+  // 처형 효과음 토글 체크박스 변경 시 볼륨 컨트롤 활성/비활성 스타일 토글
+  chkExecutionSound?.addEventListener('change', () => {
+    if (executionVolumeWrapper) {
+      executionVolumeWrapper.style.opacity = chkExecutionSound.checked ? '1' : '0.4';
+      executionVolumeWrapper.style.pointerEvents = chkExecutionSound.checked ? 'auto' : 'none';
     }
   });
 
@@ -1595,6 +1643,16 @@ const initializeApp = async (): Promise<void> => {
   // 실시간 CK3 이벤트 수신 구독
   window.electronAPI.onEventDetected((event: Ck3EventMessage) => {
     handleNewEvent(event);
+  });
+
+  // 실시간 CK3 처형 효과음 이벤트 수신 구독
+  window.electronAPI.onExecutionSound((event: ExecutionSoundEvent) => {
+    if (state.settings.isExecutionSoundEnabled) {
+      const volume = state.settings.executionSoundVolume ?? 0.8;
+      playExecutionSound(event, volume);
+    } else {
+      console.info('ℹ️ [ExecutionSound] 처형 효과음 비활성화 상태이므로 재생 건너뜀');
+    }
   });
 
   // 화면에 이미 렌더링되어 있을 수 있는 잔류 마커 즉시 소거

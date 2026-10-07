@@ -12,6 +12,11 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\bEMP\b/gi,                                               // EMP 강조 서식
   /\b[GLEIPBVN];\s*/gi,                                         // G;, L;, E;, I;, P;, B;, V;, N; 링크/게임컨셉/수치/아이콘 마커
   /(?:^|\s)[GIEPLBVN];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B, V, N 마커 (예: "G 강령술사", "V; 3", "L ' 엽사 '", "I 승전")
+  /#+[A-Za-z0-9_]+\s*(?:DEBUG|디버그)\s*#!?/gi,              // #D 디버그#! 등 복합 서식 태그 디버그 문구
+  /(?:^|\s)#?[A-Za-z]\s*(?:DEBUG|디버그)\s*!?/gi,              // D 디버그!, #D 디버그! 등 엔진 콘솔 직렬화 및 포맷 잔여물
+  /\b(?:DEBUG|디버그)\s*!/gi,                                  // 디버그! 단독 잔여물
+  /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
+  /\b(?:DEBUG|디버그)\b/gi,                                    // 디버그 단독 키워드 잔여물
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
   /(?:^|\s)(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
@@ -21,7 +26,6 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\s*\(BUG:.*?\binstead\)/gi,                                // (BUG: ... line: 506 (set_focus), using '...' instead) 엔진 중첩 디버그 경고
   /\s*\(BUG:[^)]*\)/gi,                                       // (BUG: ...) 단일 괄호 엔진 디버그 경고
   /\bAI\s*(?:수준|weight)\s*:\s*[\d.]+/gi,                    // AI 수준: 25.00 디버그 가중치 정보
-  /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
   /(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi,       // |||GENDER:F, |||GENDER:M, |||GENDER:LETTER_F 등 성별 메타데이터 태그 잔여물
   /\bUnknown effect:\s*/gi,                                   // error.log 파서 에러 접두사 잔여물
   /\(엑스판데드 프롬 필레:[^)]*\)/gi,                         // 음차 변환된 스크립트 확장 메타데이터 잔여물
