@@ -54,9 +54,52 @@ export const resolveExecutionSoundUrl = (
 /** 최근 재생된 사운드 키별 타임스탬프 맵 (중복/에코 방어용) */
 const lastPlayedSoundMap = new Map<string, number>();
 
+/** 동시에 겹쳐 재생 가능한 처형음 최대 개수 (연속 처형 시 앞 소리가 잘리지 않도록) */
+const EXECUTION_AUDIO_POOL_SIZE = 3;
+
+/** 모듈 수명 동안 유지되는 처형음 오디오 풀 (GC 회수로 인한 재생 단절 방지) */
+const executionAudioPool: HTMLAudioElement[] = [];
+/** 모두 재생 중일 때 다음으로 재사용할 풀 인덱스 (가장 오래된 것부터 순환) */
+let nextPoolIndex = 0;
+
+/**
+ * 처형음 재생에 사용할 HTMLAudioElement를 반환합니다.
+ * DOM의 #execution-audio-player를 풀의 첫 요소로 사용하고, 재생 중이면 추가 인스턴스를 사용합니다.
+ * @returns 사용 가능한 오디오 엘리먼트, 오디오 API가 없는 환경이면 null
+ */
+const getExecutionAudioElement = (): HTMLAudioElement | null => {
+  if (executionAudioPool.length === 0 && typeof document !== 'undefined') {
+    const domAudio = document.getElementById('execution-audio-player');
+    if (domAudio instanceof HTMLAudioElement) {
+      executionAudioPool.push(domAudio);
+    }
+  }
+
+  // 재생이 끝난(또는 멈춘) 요소를 우선 재사용
+  const idleAudio = executionAudioPool.find((audio) => audio.paused || audio.ended);
+  if (idleAudio) {
+    return idleAudio;
+  }
+
+  if (executionAudioPool.length < EXECUTION_AUDIO_POOL_SIZE && typeof Audio !== 'undefined') {
+    const newAudio = new Audio();
+    executionAudioPool.push(newAudio);
+    return newAudio;
+  }
+
+  if (executionAudioPool.length === 0) {
+    return null;
+  }
+
+  // 풀이 가득 찼고 모두 재생 중이면 가장 오래된 요소부터 순환 재사용
+  const recycledAudio = executionAudioPool[nextPoolIndex % executionAudioPool.length] ?? null;
+  nextPoolIndex = (nextPoolIndex + 1) % executionAudioPool.length;
+  return recycledAudio;
+};
+
 /**
  * 처형 사운드 이벤트를 받아 사운드를 즉시 재생합니다.
- * C++ 콘솔 에코 및 빠른 창 전환으로 인한 중복 재생을 방어합니다.
+ * DOM 영속 엘리먼트를 활용하여 가비지 컬렉션(GC)으로 인한 오디오 단절을 원천 방어합니다.
  * @param event 처형 효과음 이벤트 객체
  * @param volume 볼륨 크기 (0.0 ~ 1.0)
  */
@@ -70,8 +113,8 @@ export const playExecutionSound = (
     const now = Date.now();
     const lastPlayed = lastPlayedSoundMap.get(soundKey);
 
-    // 3초 이내 동일 사운드 중복 재생 차단 (C++ 콘솔 에코 및 창 이벤트 연쇄 방어)
-    if (lastPlayed && now - lastPlayed < 3000) {
+    // 500ms 이내 동일 사운드 중복 실행만 방어 (초고속 연타 클릭 방어 및 연속 처형 보장)
+    if (lastPlayed && now - lastPlayed < 500) {
       console.info(
         `ℹ️ [ExecutionSound] 최근 재생된 사운드 중복 방어로 건너뜀: soundKey=${soundKey}`
       );
@@ -80,30 +123,30 @@ export const playExecutionSound = (
     lastPlayedSoundMap.set(soundKey, now);
 
     const soundUrl = resolveExecutionSoundUrl(event.type, genderKey);
-    const audio = new Audio(soundUrl);
+    const audio = getExecutionAudioElement();
+
+    if (!audio) {
+      console.warn('⚠️ [ExecutionSound] 오디오 엘리먼트를 초기화할 수 없습니다.');
+      return;
+    }
+
+    // 재사용되는 요소는 처음부터 재생되도록 초기화
+    audio.pause();
+    audio.currentTime = 0;
 
     // 볼륨 경계값 보정 (0.0 ~ 1.0)
     const clampedVolume = Math.max(0, Math.min(1, volume));
     audio.volume = clampedVolume;
+    audio.src = soundUrl;
 
     console.info(
-      `⚔️ [ExecutionSound] 사운드 재생 시작: type=${event.type}, gender=${event.gender}, volume=${clampedVolume}`
+      `⚔️ [ExecutionSound] 사운드 재생 시작: type=${event.type}, gender=${event.gender}, soundKey=${soundKey}, volume=${clampedVolume}`
     );
-
-    // 재생 완료 시 메모리 해제
-    audio.onended = () => {
-      audio.src = '';
-    };
-
-    audio.onerror = (e: Event | string) => {
-      console.error('❌ [ExecutionSound] 오디오 재생 오류:', e);
-      audio.src = '';
-    };
 
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch((err: unknown) => {
-        console.warn('⚠️ [ExecutionSound] 자동 재생 방지 또는 I/O 오류:', err);
+        console.warn('⚠️ [ExecutionSound] 오디오 재생 실패 (자동 재생 권한 등):', err);
       });
     }
   } catch (error: unknown) {

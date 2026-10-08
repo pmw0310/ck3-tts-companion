@@ -3,6 +3,7 @@ import type {
   AppSettings,
   CacheStats,
   Ck3EventMessage,
+  Ck3EventType,
   EdgeVoiceName,
   ElevenLabsModelName,
   ExecutionSoundEvent,
@@ -706,7 +707,7 @@ const resolveVoiceAndPromptForSegment = (
 const speakText = async (
   textToRead: string,
   speakerGender?: SpeakerGender,
-  eventType?: 'letter' | 'character' | 'default'
+  eventType?: Ck3EventType
 ): Promise<void> => {
   if (!textToRead || textToRead.trim().length === 0) {
     return;
@@ -952,7 +953,7 @@ const renderHistoryList = (): void => {
 
     const titleEl = document.createElement('span');
     titleEl.className = 'history-title';
-    titleEl.textContent = item.title ?? '크루세이더 킹즈 3 사건';
+    titleEl.textContent = item.title && item.title.trim().length > 0 ? item.title : '이벤트';
 
     const timeEl = document.createElement('span');
     timeEl.className = 'history-time';
@@ -975,7 +976,7 @@ const renderHistoryList = (): void => {
     playBtn.title = '이 사건 다시 낭독하기';
     playBtn.addEventListener('click', () => {
       state.currentEvent = item;
-      currentEventTitle.textContent = item.title ?? '크루세이더 킹즈 3 사건';
+      currentEventTitle.textContent = item.title && item.title.trim().length > 0 ? item.title : '이벤트';
       currentEventContent.textContent = item.content;
       currentEventContent.classList.remove('placeholder-text');
       btnReplay.disabled = false;

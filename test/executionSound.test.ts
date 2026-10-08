@@ -109,20 +109,23 @@ describe('⚔️ 처형 효과음 시스템(성별 분기 및 사형 유형 매�
     assert.equal(resolveExecutionSoundKey('generic', 'UNKNOWN'), 'generic');
   });
 
-  it('4. 모드 interaction_confirmation.gui 파일 내에 처형 로깅 및 성별 조건문이 구현되어 있어야 함', () => {
-    const guiPath = path.resolve(
+  it('4. 모드 scripted_effects(zz_tts_companion_prison_effects.txt) 내에 처형 방식 및 성별 로깅이 구현되어 있어야 함', () => {
+    const scriptPath = path.resolve(
       process.cwd(),
-      'ck3-mod/gui/interaction_confirmation.gui'
+      'ck3-mod/common/scripted_effects/zz_tts_companion_prison_effects.txt'
     );
-    assert.ok(fs.existsSync(guiPath), 'interaction_confirmation.gui 파일이 존재해야 함');
+    assert.ok(fs.existsSync(scriptPath), 'zz_tts_companion_prison_effects.txt 파일이 존재해야 함');
 
-    const content = fs.readFileSync(guiPath, 'utf-8');
+    const content = fs.readFileSync(scriptPath, 'utf-8');
     assert.ok(content.includes('##CK3_EXECUTION##'), '처형 마커가 포함되어 있어야 함');
     assert.ok(
-      content.includes('CharacterInteractionConfirmationWindow.GetRecipient.IsFemale'),
-      '죄수 성별(IsFemale) 판별 코드가 포함되어 있어야 함'
+      content.includes('scope:victim = { is_female = yes }'),
+      '죄수 성별(is_female) 판별 코드가 포함되어 있어야 함'
     );
     assert.ok(content.includes('GENDER:F'), '여성 죄수 태그가 포함되어 있어야 함');
     assert.ok(content.includes('GENDER:M'), '남성 죄수 태그가 포함되어 있어야 함');
+    assert.ok(content.includes('scope:execution_burned'), '화형(burned) 분기가 포함되어 있어야 함');
+    assert.ok(content.includes('scope:execution_kennel'), '사냥개(kennel) 분기가 포함되어 있어야 함');
+    assert.ok(content.includes('scope:executioner = { is_ai = no }'), '플레이어 처형자 한정 필터가 포함되어 있어야 함');
   });
 });

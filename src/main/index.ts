@@ -3,6 +3,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { resolveCk3LogPath } from '@/main/pathResolver';
 import { startWatchingLogFile, type LogWatcherHandle } from '@/main/logWatcher';
+import { createElectronClipboardBridge } from '@/main/clipboardBridge';
 import { processTtsRequest } from '@/main/ttsService';
 import {
   getAppMetadata,
@@ -177,7 +178,9 @@ const restartWatcher = (): void => {
     },
     (executionSound: ExecutionSoundEvent) => {
       sendToRenderer('ck3:execution-sound', executionSound);
-    }
+    },
+    // 따옴표 포함 대사 원문 수신용 클립보드 채널 (이미지/서식 포함 사용자 클립보드 복구)
+    createElectronClipboardBridge()
   );
 };
 

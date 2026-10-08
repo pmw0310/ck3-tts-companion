@@ -37,7 +37,6 @@ window = {
 		using = Animation_FadeOut_Standard
 		on_finish = "[RoyalCourtWindow.AccessInspirationsWindow.ClearSelectedInspiration]"
 		on_start = "[GetVariableSystem.Clear( 'hide_bottom_left_HUD' )]"
-		on_start = "[ExecuteConsoleCommand('effect debug_log = "##CK3_TTS_STOP##"')]"
 	}
 
 	background = {
@@ -202,6 +201,7 @@ window = {
 			tooltip = "CLOSE_TOOLTIP"
 			clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_close"
 			onclick = "[RoyalCourtWindow.Close]"
+			onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
 
 			using = Animation_ShowHide_Quick
 

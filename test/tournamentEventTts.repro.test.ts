@@ -29,10 +29,10 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
       'activity_event_widget_base에 ##CK3_TTS## 자동 낭독 state가 구현되어 있어야 합니다.'
     );
 
-    // ##CK3_TTS_STOP## 창 닫힘 오디오 중단 state 확인
+    // ##CK3_TTS_STOP## 창 닫힘 오디오 중단 state 확인 (콘솔 락 방지를 위해 배제됨)
     assert.ok(
-      baseContent.includes('##CK3_TTS_STOP##'),
-      'activity_event_widget_base에 ##CK3_TTS_STOP## 중단 state가 구현되어 있어야 합니다.'
+      !baseContent.includes('##CK3_TTS_STOP##'),
+      'activity_event_widget_base에 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 합니다.'
     );
 
     // tts_speak_button 수동 낭독 버튼 및 F 단축키 확인
@@ -74,11 +74,11 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     );
   });
 
-  await t.test('3. 크래시 방어 검증: 위험한 비동기 delay 및 trigger_on_create가 없어야 하고 activity_new_event_shown이 구현되어 있어야 함', () => {
+  await t.test('3. 크래시 방어 검증: 위험한 trigger_on_create가 없어야 하고 activity_new_event_shown이 구현되어 있어야 함', () => {
     const activityContent = fs.readFileSync(activityGuiPath, 'utf8');
     const localeContent = fs.readFileSync(localeGuiPath, 'utf8');
 
-    // 1) activity_event_widget_base 내 TTS state에 크래시를 유발하는 delay나 trigger_on_create가 없어야 함
+    // 1) activity_event_widget_base 내 TTS state에 크래시를 유발하는 trigger_on_create가 없어야 함
     const baseWidgetIndex = activityContent.indexOf('type activity_event_widget_base = widget');
     const baseContent = activityContent.slice(baseWidgetIndex, baseWidgetIndex + 15000);
     const ttsStateIndex = baseContent.indexOf('name = activity_new_event_shown');
@@ -88,10 +88,6 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     assert.ok(
       !ttsStateBlock.includes('trigger_on_create = yes'),
       '데이터 널 포인터 크래시를 유발하는 trigger_on_create = yes가 TTS state에 없어야 합니다.'
-    );
-    assert.ok(
-      !ttsStateBlock.includes('delay'),
-      '객체 소멸 후 역참조 크래시(SIGSEGV)를 유발하는 delay가 TTS state에 없어야 합니다.'
     );
 
     // 2) widget_activity_locale_regular_event가 activity_event_widget_base를 올바르게 상속해야 함

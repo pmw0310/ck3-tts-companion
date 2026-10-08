@@ -1,5 +1,6 @@
 import { hasBatchim, josa } from 'es-hangul';
 import { convertLatinPhrasesInText } from '@/main/latinTransliteration';
+import type { Ck3EventType } from '@/shared/types';
 
 /** CK3 내부 서식, 아이콘, 툴팁 명령을 제거하기 위한 정규식 패턴 목록 */
 const CK3_TAG_PATTERNS: readonly RegExp[] = [
@@ -37,6 +38,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /(?:^|\s)\d{4,}(?=\s|$|[,.])/g,                             // 단위 없는 4자리 이상 고립된 캐릭터/타이틀 고유 ID 숫자열
   /(?:^|\s)[LGVBEIPN]\s+(?=이|가|은|는|을|를|의|에|와|과)/gi, // L 이가, L을를 등 마커 뒤 조사 파편
   /\s*\|{2,}\s*/g,                                           // 불필요한 연속 파이프(||, |||) 잔여물
+  /\b[0-9A-Z]+(?:_[0-9A-Z]+){2,}\b/g,                         // 1_CORINTHIANS_1_10_LATIN_GLOSS 등 대문자 용어집(GLOSSARY)/DB 키 유출
   /[_]{2,}/g                                                // 불필요한 연속 언더스코어
 ] as const;
 
@@ -50,8 +52,9 @@ const JOMINI_SCRIPT_GARBAGE_PATTERNS: readonly RegExp[] = [
   /\bActivity\.[a-zA-Z0-9_]+/i,
   /\bPdxGui[a-zA-Z0-9_]*/i,
   /\b(?:GetTitle|GetDescription|GetOpening|GetContextName|GetNotificationText|GetSignature|GetHeader|GetDeadDesc|GetHeirDesc|GetOutcome|GetWarName|GetSimpleDescription|GetMessage)\b/i,
-  /\beffect\s+debug_log\b/i,
-  /\bdebug_log\s*=/i,
+  // 장시간 플레이 시 [D] 로그 중단 대응으로 TTS 채널이 info_log로 전환되어 info/error 로그 이펙트 원문도 함께 차단
+  /\beffect\s+(?:debug|info|error)_log\b/i,
+  /\b(?:debug|info|error)_log\s*=/i,
   /^\s*['"][,\s]/,
   /['"],\s*[a-zA-Z_]+\s*\(/
 ] as const;
@@ -265,7 +268,8 @@ export const sanitizeCk3Text = (rawText: string): string => {
 
   let cleaned = rawText;
 
-  // 0. 패러독스 엔진 내부 서식/색상 구분용 제어 문자(\x15, ASCII 21 등) 제거
+  // 0. 패러독스 엔진 텍스트 서식 닫기 마커 제어문자(\x15!\x15! 등) 및 내부 서식/색상 구분용 제어 문자 제거
+  cleaned = cleaned.replace(/(?:[\x00-\x1F\x7F]+!|![\x00-\x1F\x7F]+)/g, ' ');
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   // 1. 미평가/미치환 스코프 태그를 자연스러운 명사로 치환하거나 제거
@@ -289,8 +293,9 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = cleaned.replace(/(?:^|\s)[LGV];?\s*(?=['"`‘“「『가-힣\d])/gi, ' ');
   cleaned = cleaned.replace(/^[LGV]\s+/i, '');
 
-  // 4. 단어 뒤에 분리되어 붙는 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "소란을 싫어하는 !", " ! !")
-  // 단, 단어에 바로 붙은 정상 감탄 부호("있습니다!", "성공!")는 보존
+  // 4. 단어 뒤에 분리되어 붙거나 결합된 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "성직 지역!! 안에", "수도!!가")
+  // 단, 단어에 바로 붙은 정상 단일 감탄 부호("있습니다!", "성공!")는 보존
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])!{2,}(?=\s|[가-힣a-zA-Z0-9]|$)/g, '$1 ');
   cleaned = cleaned.replace(/(?:\s+!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
   cleaned = cleaned.replace(/\s+!\s+/g, ' ');
   cleaned = cleaned.replace(/(?:![\s!]+!)/g, ' ');
@@ -339,6 +344,29 @@ const START_TAG_PATTERNS: readonly StartTagPattern[] = [
 
 const END_TAG_PATTERNS: readonly string[] = ['##CK3_TTS_END##', '[CK3_TTS_END]'];
 
+/** GUI가 이벤트 유형을 전달하는 메타 토큰 (예: |||TYPE:WAR_RESULTS) */
+const EVENT_TYPE_MARKER_PATTERN = /\|{1,3}\s*TYPE:([A-Za-z_]+)/gi;
+
+/** 메타 토큰 값 → 이벤트 유형 매핑 */
+const EVENT_TYPE_MARKER_MAP: Readonly<Record<string, Ck3EventType>> = {
+  WAR_RESULTS: 'war_results'
+};
+
+/**
+ * 페이로드에서 이벤트 유형 메타 토큰을 분리합니다.
+ * (제목 문자열 하드코딩 대신 GUI가 명시한 유형을 사용하기 위함)
+ * @param payload - 시작/종료 태그 사이 페이로드
+ * @returns 토큰이 제거된 페이로드와 감지된 유형(없으면 undefined)
+ */
+const extractEventTypeMarker = (payload: string): { payload: string; markerType?: Ck3EventType } => {
+  let markerType: Ck3EventType | undefined;
+  const stripped = payload.replace(EVENT_TYPE_MARKER_PATTERN, (_match: string, rawType: string) => {
+    markerType = EVENT_TYPE_MARKER_MAP[rawType.toUpperCase()] ?? markerType;
+    return '';
+  });
+  return { payload: stripped.trim(), markerType };
+};
+
 /**
  * error.log 파편에서 정제된 페이로드를 바탕으로 이벤트 객체를 생성합니다.
  * @param payload - 조합된 에러 로그 페이로드 문자열
@@ -351,7 +379,7 @@ const parseRecoveredPayload = (
   content: string;
   isForceReplay?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
-  eventType?: 'letter' | 'character' | 'default';
+  eventType?: Ck3EventType;
 } | null => {
   let clean = payload
     .replace(/(?:\[|##)CK3_TTS(?:_FORCE)?(?:\]|##)/gi, '')
@@ -362,10 +390,13 @@ const parseRecoveredPayload = (
     clean = clean.slice(0, endIdx).trim();
   }
 
-  let title = '크루세이더 킹즈 3 사건';
+  const typeExtraction = extractEventTypeMarker(clean);
+  clean = typeExtraction.payload;
+
+  let title = '이벤트';
   let content = '';
   let speakerGender: 'male' | 'female' | 'narrator' | undefined;
-  let eventType: 'letter' | 'character' | 'default' = 'default';
+  let eventType: Ck3EventType = 'default';
 
   if (clean.includes('|||')) {
     const cleanPayload = clean.replace(/^\|{2,}\s*/, '');
@@ -374,28 +405,38 @@ const parseRecoveredPayload = (
     let rawContent = parts.slice(1).join('|||');
 
     const lastPartRaw = (parts[parts.length - 1] ?? '').trim().toUpperCase();
-    if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
-      speakerGender = 'female';
-      eventType = 'letter';
-      rawContent = parts.slice(1, -1).join('|||');
-    } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
-      speakerGender = 'male';
-      eventType = 'letter';
-      rawContent = parts.slice(1, -1).join('|||');
-    } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
-      speakerGender = 'female';
-      rawContent = parts.slice(1, -1).join('|||');
-    } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
-      speakerGender = 'male';
-      rawContent = parts.slice(1, -1).join('|||');
+    const isGenderMarker =
+      /^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw) ||
+      /^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw) ||
+      /^GENDER:F\b|^FEMALE\b/.test(lastPartRaw) ||
+      /^GENDER:M\b|^MALE\b/.test(lastPartRaw);
+
+    if (isGenderMarker) {
+      if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
+        speakerGender = 'female';
+        eventType = 'letter';
+      } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
+        speakerGender = 'male';
+        eventType = 'letter';
+      } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
+        speakerGender = 'female';
+      } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
+        speakerGender = 'male';
+      }
+
+      if (parts.length === 2) {
+        rawContent = parts[0] ?? '';
+      } else {
+        rawContent = parts.slice(1, -1).join('|||');
+      }
     }
 
     rawContent = rawContent.replace(/\|{1,3}\s*GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
 
-    const sanitizedTitle = sanitizeCk3Text(rawTitle);
+    const sanitizedTitle = parts.length === 2 && isGenderMarker ? '이벤트' : sanitizeCk3Text(rawTitle);
     const sanitizedContent = sanitizeCk3Text(rawContent);
-    title = sanitizedTitle.length > 0 ? sanitizedTitle : title;
-    content = sanitizedContent.length > 0 ? sanitizedContent : title;
+    title = sanitizedTitle.length > 0 ? sanitizedTitle : '이벤트';
+    content = sanitizedContent;
   } else {
     const genderMatch = clean.match(/(?:\|{1,3}\s*)?GENDER:([A-Za-z_]+)/i);
     if (genderMatch && genderMatch[1]) {
@@ -411,7 +452,7 @@ const parseRecoveredPayload = (
   }
 
   if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
-    return { title, content, isForceReplay: false, speakerGender, eventType };
+    return { title, content, isForceReplay: false, speakerGender, eventType: typeExtraction.markerType ?? eventType };
   }
   return null;
 };
@@ -429,14 +470,14 @@ const recoverEventsFromErrorLog = (
   content: string;
   isForceReplay?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
-  eventType?: 'letter' | 'character' | 'default';
+  eventType?: Ck3EventType;
 }> => {
   const recoveredEvents: Array<{
     title: string;
     content: string;
     isForceReplay?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
-    eventType?: 'letter' | 'character' | 'default';
+    eventType?: Ck3EventType;
   }> = [];
 
   if (!chunk.includes('effect console command') && !chunk.includes('Unknown effect:')) {
@@ -505,8 +546,22 @@ const recoverEventsFromErrorLog = (
         trimmed.includes('in file: "effect console command"')
       ) {
         const fullPayload = currentTokens.join(' ');
+        const hasExplicitTtsMarker =
+          fullPayload.includes('CK3_TTS') ||
+          fullPayload.includes('|||') ||
+          /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
+
+        // 명시적 TTS 마커(CK3_TTS 태그, ||| 구분자, GENDER 성별)가 없는 경우:
+        // 전체 복원 텍스트가 최소 20자 이상이어야만 유효한 복원으로 판정.
+        // (단순 무의미한 극소수 단어 조각 파편은 가짜 이벤트 생성을 방지하기 위해 폐기)
+        const hasSubstantialSentence = fullPayload.length >= 20;
+
         currentTokens = [];
         isCollecting = false;
+
+        if (!hasExplicitTtsMarker && !hasSubstantialSentence) {
+          continue;
+        }
 
         const recovered = parseRecoveredPayload(fullPayload);
         if (recovered) {
@@ -540,6 +595,26 @@ const recoverEventsFromErrorLog = (
 };
 
 /**
+ * 후보 텍스트의 핵심 단어들이 기존 텍스트에 50% 이상 포함되어 있는 파편(Subset)인지 판별합니다.
+ * @param candidateText - 파편 검사 대상 텍스트
+ * @param existingText - 비교 기준 원본 텍스트
+ * @returns 50% 이상 단어가 중복되는 파편이면 true
+ */
+export const isFragmentOf = (candidateText: string, existingText: string): boolean => {
+  const words = candidateText.split(/\s+/).filter((w) => w.length >= 2);
+  if (words.length === 0) {
+    return false;
+  }
+  let matchCount = 0;
+  for (const word of words) {
+    if (existingText.includes(word)) {
+      matchCount++;
+    }
+  }
+  return matchCount / words.length >= 0.5;
+};
+
+/**
  * 로그 텍스트 청크(멀티라인 줄바꿈 포함)에서 ##CK3_TTS## 및 [CK3_TTS] 블록들을 온전하게 추출합니다.
  * 동일한 청크 내 중복 이벤트는 1회만 반환합니다.
  * @param chunk - 새로 읽어들인 debug.log 텍스트 청크
@@ -552,21 +627,21 @@ export const extractCk3EventsFromChunk = (
   content: string;
   isForceReplay?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
-  eventType?: 'letter' | 'character' | 'default';
+  eventType?: Ck3EventType;
 }> => {
   const events: Array<{
     title: string;
     content: string;
     isForceReplay?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
-    eventType?: 'letter' | 'character' | 'default';
+    eventType?: Ck3EventType;
   }> = [];
   const candidateEvents: Array<{
     title: string;
     content: string;
     isForceReplay?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
-    eventType?: 'letter' | 'character' | 'default';
+    eventType?: Ck3EventType;
   }> = [];
 
   let searchIndex = 0;
@@ -612,7 +687,20 @@ export const extractCk3EventsFromChunk = (
       continue;
     }
 
-    const payload = chunk.slice(contentStart, bestEnd.index).trim();
+    // 따옴표로 잘린 시작 태그(END 없음)가 뒤따르는 다른 이벤트의 END와 결합되어
+    // 로그 잡음이 섞인 거대한 가짜 본문이 만들어지는 것을 막기 위해, END 이전에 새 시작 태그가 있으면 현재 시작을 폐기
+    const endIndex = bestEnd.index;
+    const hasNestedStart = START_TAG_PATTERNS.some((pattern) => {
+      const nestedIdx = chunk.indexOf(pattern.tag, contentStart);
+      return nestedIdx !== -1 && nestedIdx < endIndex;
+    });
+    if (hasNestedStart) {
+      searchIndex = contentStart;
+      continue;
+    }
+
+    const typeExtraction = extractEventTypeMarker(chunk.slice(contentStart, bestEnd.index));
+    const payload = typeExtraction.payload;
     searchIndex = bestEnd.index + bestEnd.tag.length;
 
     // 1차: 페이로드 원본 레벨에서 Jomini GUI 스크립트 코드 또는 미평가 표현식 유출 차단
@@ -622,10 +710,10 @@ export const extractCk3EventsFromChunk = (
     }
 
     if (payload.length > 0) {
-      let title = '크루세이더 킹즈 3 사건';
+      let title = '이벤트';
       let content = '';
       let speakerGender: 'male' | 'female' | 'narrator' | undefined;
-      let eventType: 'letter' | 'character' | 'default' = 'default';
+      let eventType: Ck3EventType = 'default';
 
       if (payload.includes('|||')) {
         // 맨 앞에 불필요하게 시작된 파이프 기호(|||) 제거 (예: "[CK3_TTS]|||제목|||내용" 케이스 방어)
@@ -636,36 +724,52 @@ export const extractCk3EventsFromChunk = (
 
         // 마지막 세그먼트가 성별 태그(LETTER_F, LETTER_M, GENDER:F, GENDER:M, FEMALE, MALE)인지 검사
         const lastPartRaw = (parts[parts.length - 1] ?? '').trim().toUpperCase();
-        if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
-          speakerGender = 'female';
-          eventType = 'letter';
-          rawContent = parts.slice(1, -1).join('|||');
-        } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
-          speakerGender = 'male';
-          eventType = 'letter';
-          rawContent = parts.slice(1, -1).join('|||');
-        } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
-          speakerGender = 'female';
-          rawContent = parts.slice(1, -1).join('|||');
-        } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
-          speakerGender = 'male';
-          rawContent = parts.slice(1, -1).join('|||');
+        const isGenderMarker =
+          /^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw) ||
+          /^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw) ||
+          /^GENDER:F\b|^FEMALE\b/.test(lastPartRaw) ||
+          /^GENDER:M\b|^MALE\b/.test(lastPartRaw);
+
+        if (isGenderMarker) {
+          if (/^GENDER:LETTER_F\b|^LETTER:F\b/.test(lastPartRaw)) {
+            speakerGender = 'female';
+            eventType = 'letter';
+          } else if (/^GENDER:LETTER_M\b|^LETTER:M\b/.test(lastPartRaw)) {
+            speakerGender = 'male';
+            eventType = 'letter';
+          } else if (/^GENDER:F\b|^FEMALE\b/.test(lastPartRaw)) {
+            speakerGender = 'female';
+          } else if (/^GENDER:M\b|^MALE\b/.test(lastPartRaw)) {
+            speakerGender = 'male';
+          }
+
+          if (parts.length === 2) {
+            rawContent = parts[0] ?? '';
+          } else {
+            rawContent = parts.slice(1, -1).join('|||');
+          }
         }
 
         // 혹시 분할되지 않고 본문 끝에 잔류한 성별 마커가 있다면 2차 방어로 완전 소멸
         rawContent = rawContent.replace(/\|{1,3}\s*GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
 
-        const sanitizedTitle = sanitizeCk3Text(rawTitle);
+        const sanitizedTitle = parts.length === 2 && isGenderMarker ? '이벤트' : sanitizeCk3Text(rawTitle);
         const sanitizedContent = sanitizeCk3Text(rawContent);
-        title = sanitizedTitle.length > 0 ? sanitizedTitle : title;
-        content = sanitizedContent.length > 0 ? sanitizedContent : title;
+        title = sanitizedTitle.length > 0 ? sanitizedTitle : '이벤트';
+        content = sanitizedContent;
       } else {
         content = sanitizeCk3Text(payload);
       }
 
       // 2차: 정제된 제목 및 본문이 유효한 내러티브 텍스트인지 최종 검증
       if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
-        candidateEvents.push({ title, content, isForceReplay, speakerGender, eventType });
+        candidateEvents.push({
+          title,
+          content,
+          isForceReplay,
+          speakerGender,
+          eventType: typeExtraction.markerType ?? eventType
+        });
       } else {
         console.warn('⚠️ [TextSanitizer] 정제 후 비정상 스크립트/무효 텍스트로 판정되어 차단했습니다:', { title, content });
       }
@@ -684,7 +788,9 @@ export const extractCk3EventsFromChunk = (
       (e) =>
         e.title === candidate.title ||
         candidate.content.includes(e.content) ||
-        e.content.includes(candidate.content)
+        e.content.includes(candidate.content) ||
+        isFragmentOf(candidate.content, e.content) ||
+        isFragmentOf(e.content, candidate.content)
     );
     if (existingIndex === -1) {
       events.push(candidate);

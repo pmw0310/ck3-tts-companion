@@ -46,7 +46,7 @@ test('CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 �
     );
 
     assert.ok(
-      widgetBlock.includes('trigger_when = "[EventWindowViewInsert.HasOpenEvent]"'),
+      widgetBlock.includes('EventWindowViewInsert.HasOpenEvent'),
       'tts_activity_event_auto_play는 EventWindowViewInsert.HasOpenEvent 가드를 통해 데이터 유효 시에만 격발되어야 합니다.'
     );
   });

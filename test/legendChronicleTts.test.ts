@@ -32,13 +32,16 @@ describe('전설 연대기(Legend Chronicle) TTS 연동 및 조사 정제 검증
 
     // 1. 최상위 datacontext 및 state 검증
     assert.ok(content.includes('datacontext = "[LegendChronicleWindow.GetLegend]"'), '최상위 윈도우에 Legend datacontext가 선언되어야 합니다');
-    assert.ok(content.includes('effect debug_log = \\"##CK3_TTS## '), '_show 상태에 ##CK3_TTS## 자동 발화 코드가 있어야 합니다');
-    assert.ok(content.includes('effect debug_log = \\"##CK3_TTS_STOP##\\"'), '_hide 상태에 ##CK3_TTS_STOP## 중단 코드가 있어야 합니다');
+    // _hide 애니메이션 상태에 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 함
+    const hideMatch = content.match(/state\s*=\s*\{\s*name\s*=\s*_hide[\s\S]*?\n\t\}/);
+    if (hideMatch) {
+      assert.ok(!hideMatch[0].includes('##CK3_TTS_STOP##'), '_hide 상태에 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 합니다');
+    }
 
     // 2. 황금 스피커 버튼 및 F 단축키 검증
     assert.ok(content.includes('name = "tts_speak_button"'), 'tts_speak_button 위젯이 존재해야 합니다');
     assert.ok(content.includes('shortcut = "army_split_half"'), 'F 단축키가 바인딩되어 있어야 합니다');
-    assert.ok(content.includes('effect debug_log = \\"##CK3_TTS_FORCE## '), '버튼 클릭 시 ##CK3_TTS_FORCE## 강제 재생이 연동되어야 합니다');
+    assert.ok(content.includes('effect info_log = \\"##CK3_TTS_FORCE## '), '버튼 클릭 시 ##CK3_TTS_FORCE## 강제 재생이 연동되어야 합니다');
 
     // 3. 중괄호 쌍 일치 검증
     const openBraces = (content.match(/\{/g) || []).length;

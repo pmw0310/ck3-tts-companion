@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import chokidar from 'chokidar';
 import type { FSWatcher } from 'chokidar';
-import { extractCk3EventsFromChunk } from '@/main/textSanitizer';
+import { extractCk3EventsFromChunk, isFragmentOf } from '@/main/textSanitizer';
 import type {
   Ck3EventMessage,
   ExecutionSoundEvent,
@@ -19,6 +19,38 @@ export type LogWatcherHandle = {
 const MAX_CACHE_SIZE = 100;
 /** 중복 감시 캐시 유효 시간 (180초 = 3분, 알현실 체류 중 만료 방지) */
 const CACHE_TTL_MS = 180000;
+/** 클립보드 채널 폴링 주기 (ms) */
+const CLIPBOARD_POLL_MS = 150;
+/** 서로 다른 채널(클립보드/debug.log/error.log)로 도착한 동일 이벤트를 중복으로 보는 시간 창 (ms) */
+const CROSS_CHANNEL_DEDUPE_MS = 5000;
+/** error.log 파편을 클립보드 원문 도착 이후에 검사하기 위한 지연 시간 (ms) */
+const ERROR_LOG_DEFER_MS = 600;
+/** 클립보드에 실린 모드 페이로드 식별 마커 */
+const CLIPBOARD_PAYLOAD_MARKER = '##CK3_TTS';
+/** 로그 활동이 없으면(게임 미실행) 클립보드 폴링을 쉬는 기준 시간 (ms) */
+const CLIPBOARD_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
+ * 게임 GUI가 EventWindowData.CopyStringToClipboard로 넘긴 원문을 읽고 사용자 클립보드를 복구하기 위한 추상화
+ * (Electron clipboard 모듈을 주입하여 테스트 가능성을 확보)
+ * - 텍스트뿐 아니라 이미지/서식 등 비텍스트 클립보드도 손실 없이 복구하기 위해 불투명 스냅샷을 사용합니다.
+ */
+export type ClipboardBridge<TSnapshot> = {
+  /** 클립보드 텍스트를 읽습니다. */
+  readonly readText: () => string;
+  /** 변경 감지용 서명(형식 목록 + 텍스트)을 반환합니다. */
+  readonly readSignature: () => string;
+  /** 현재 클립보드 전체 상태를 보관합니다. */
+  readonly takeSnapshot: () => TSnapshot;
+  /** 보관한 상태로 클립보드를 복구합니다. (null이면 비움) */
+  readonly restoreSnapshot: (snapshot: TSnapshot | null) => void;
+};
+
+/** 이벤트 수신 채널 */
+type EventChannel = 'debug' | 'error' | 'clipboard';
+
+/** 텍스트 정제기가 추출한 단일 이벤트 */
+type ParsedCk3Event = ReturnType<typeof extractCk3EventsFromChunk>[number];
 
 /**
  * 최근 이벤트 캐시에 항목을 기록하고 만료되었거나 상한을 초과한 항목을 안전하게 정리합니다.
@@ -171,19 +203,30 @@ export const extractExecutionSoundsFromChunk = (chunk: string): ExecutionSoundEv
  * @param onStatusChange - 파일 감시 상태 변경 시 호출될 콜백 함수
  * @param onStop - 창 닫힘 신호 감지 시 오디오 중단 콜백 함수
  * @param onExecutionSound - 처형 효과음 감지 시 호출될 콜백 함수
+ * @param clipboardBridge - 따옴표 포함 대사를 원문 그대로 받기 위한 클립보드 채널 (선택)
+ * @param clipboardPollMs - 클립보드 폴링 주기 (테스트 주입용, 기본 150ms)
  * @returns 감시 제어 객체 (stop 메서드 포함)
  */
-export const startWatchingLogFile = (
+export const startWatchingLogFile = <TSnapshot>(
   logFilePath: string,
   onEvent: (event: Ck3EventMessage) => void,
   onStatusChange?: (isWatching: boolean, filePath: string) => void,
   onStop?: () => void,
-  onExecutionSound?: (event: ExecutionSoundEvent) => void
+  onExecutionSound?: (event: ExecutionSoundEvent) => void,
+  clipboardBridge?: ClipboardBridge<TSnapshot>,
+  clipboardPollMs: number = CLIPBOARD_POLL_MS
 ): LogWatcherHandle => {
   const filePositions = new Map<string, number>();
   let watcher: FSWatcher | null = null;
+  let isStopped = false;
+  let lastLogActivityTime = Date.now();
+  const deferredEmitTimers = new Set<ReturnType<typeof setTimeout>>();
   const recentEventCache = new Map<string, number>();
   const recentExecutionSoundCache = new Map<string, number>();
+  const pendingBuffers = new Map<string, string>();
+  const activeReadStreams = new Set<string>();
+  const pendingReadRequests = new Set<string>();
+  const crossChannelCache = new Map<string, { channel: EventChannel; time: number }>();
 
   // 감시할 파일 목록 구성 (기본 debug.log 및 파서 구문 에러가 기록되는 error.log 동시 감시)
   const debugLogPath = path.resolve(logFilePath);
@@ -214,12 +257,89 @@ export const startWatchingLogFile = (
   });
 
   /**
+   * 추출된 이벤트를 채널 간 중복/파편/쿨다운 가드를 거쳐 렌더러로 방출합니다.
+   * @param parsedEvents - 정제기가 추출한 이벤트 목록
+   * @param channel - 수신 채널
+   * @param rawText - 원본 텍스트 (디버깅용)
+   */
+  const emitParsedEvents = (
+    parsedEvents: readonly ParsedCk3Event[],
+    channel: EventChannel,
+    rawText: string
+  ): void => {
+    // 감시 중단 이후 지연 방출된 이벤트가 재시작된 감시자와 중복 낭독되지 않도록 차단
+    if (isStopped) {
+      return;
+    }
+    const now = Date.now();
+
+    // 만료된 채널 간 중복 캐시 정리 (메모리 팽창 방지)
+    for (const [cachedContent, entry] of crossChannelCache.entries()) {
+      if (now - entry.time > CROSS_CHANNEL_DEDUPE_MS) {
+        crossChannelCache.delete(cachedContent);
+      }
+    }
+
+    for (const event of parsedEvents) {
+      // ⚠️ [error.log 파편 덮어쓰기 방어]
+      // error.log에서 유입된 이벤트가 최근 다른 채널에서 받은 완전한 원본의 단어 파편이면 무시합니다.
+      if (channel === 'error') {
+        let isDuplicateFragment = false;
+        for (const [cachedContent, cachedTime] of recentEventCache.entries()) {
+          if (now - cachedTime < 10000 && isFragmentOf(event.content, cachedContent)) {
+            isDuplicateFragment = true;
+            break;
+          }
+        }
+        if (isDuplicateFragment) {
+          console.log('ℹ️ [LogWatcher] 완전한 원본이 이미 활성화되어 있어 error.log 파편 덮어쓰기를 차단했습니다.');
+          continue;
+        }
+      }
+
+      // 채널 간 중복: 다른 채널에서 5초 내 동일 본문이 이미 전달되었다면 같은 클릭/표시의 중복 수신으로 판단
+      const crossEntry = crossChannelCache.get(event.content);
+      if (crossEntry && crossEntry.channel !== channel) {
+        continue;
+      }
+
+      // 콘솔 echo 방지: 수동 강제 재낭독은 1초, 자동 감지는 2초 쿨다운 적용
+      const lastSeenTime = recentEventCache.get(event.content);
+      const cooldownMs = event.isForceReplay ? 1000 : 2000;
+      if (lastSeenTime && now - lastSeenTime < cooldownMs) {
+        continue;
+      }
+
+      updateRecentEventCache(recentEventCache, event.content, now);
+      crossChannelCache.set(event.content, { channel, time: now });
+
+      const eventMessage: Ck3EventMessage = {
+        id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
+        timestamp: now,
+        title: event.title,
+        content: event.content,
+        rawText,
+        isForceReplay: event.isForceReplay,
+        speakerGender: event.speakerGender,
+        eventType: event.eventType
+      };
+      onEvent(eventMessage);
+    }
+  };
+
+  /**
    * 지정된 로그 파일에서 새로 추가된 내용을 읽고 이벤트 및 중단 신호를 파싱합니다.
    * @param targetFilePath - 변경된 파일의 절대 경로
    */
   const handleFileChange = (targetFilePath: string): void => {
     const normalizedPath = path.resolve(targetFilePath);
     if (!fs.existsSync(normalizedPath)) {
+      return;
+    }
+
+    // 파일별 스트림 읽기 뮤텍스: 이미 읽기 스트림이 동작 중이면 다음 사이클에 순차 실행되도록 요청 예약
+    if (activeReadStreams.has(normalizedPath)) {
+      pendingReadRequests.add(normalizedPath);
       return;
     }
 
@@ -236,15 +356,18 @@ export const startWatchingLogFile = (
         return;
       }
 
+      lastLogActivityTime = Date.now();
+
+      activeReadStreams.add(normalizedPath);
+      const targetSize = currentStats.size;
+
       // createReadStream의 end는 inclusive(포함)이므로 정확한 바이트 경계를 위해 currentStats.size - 1 지정
-      const readEnd = Math.max(filePosition, currentStats.size - 1);
+      const readEnd = Math.max(filePosition, targetSize - 1);
       const stream = fs.createReadStream(normalizedPath, {
         start: filePosition,
         end: readEnd,
         encoding: 'utf-8'
       });
-
-      filePositions.set(normalizedPath, currentStats.size);
 
       let bufferText = '';
       stream.on('data', (chunk: unknown) => {
@@ -255,107 +378,101 @@ export const startWatchingLogFile = (
 
       stream.on('error', (streamError: unknown) => {
         console.error('❌ [LogWatcher Stream Error]:', streamError);
+        activeReadStreams.delete(normalizedPath);
+        if (pendingReadRequests.delete(normalizedPath)) {
+          setTimeout(() => handleFileChange(normalizedPath), 20);
+        }
       });
 
       stream.on('end', () => {
-        // 처형 효과음 태그(##CK3_EXECUTION##) 감지 시 C++ 콘솔 3중 에코 및 후속 이벤트 분할 플러시 디바운스 적용
-        const executionSounds = extractExecutionSoundsFromChunk(bufferText);
-        const currentExecutionTime = Date.now();
-        for (const sound of executionSounds) {
-          const soundCacheKey = `${sound.type}_${sound.gender}`;
-          const lastSeen = recentExecutionSoundCache.get(soundCacheKey);
-          // C++ 콘솔 3중 에코 및 후속 창 팝업 시점의 분할 플러시 방어 (5초 쿨다운)
-          if (lastSeen && currentExecutionTime - lastSeen < 5000) {
-            continue;
-          }
-          recentExecutionSoundCache.set(soundCacheKey, currentExecutionTime);
-          onExecutionSound?.(sound);
-        }
+        try {
+          // 이전 미완성 청크 버퍼가 있다면 이번 청크 앞에 결합
+          const previousPending = pendingBuffers.get(normalizedPath) ?? '';
+          bufferText = previousPending + bufferText;
+          pendingBuffers.delete(normalizedPath);
 
-        const stopTagHash = '##CK3_TTS_STOP##';
-        const stopTagBracket = '[CK3_TTS_STOP]';
-        const stopIndexHash = bufferText.lastIndexOf(stopTagHash);
-        const stopIndexBracket = bufferText.lastIndexOf(stopTagBracket);
+          // 청크 끝부분에 닫는 태그(END) 없이 열린 태그만 있는 경우, 다음 청크와 결합하도록 보관
+          const lastOpenHash = bufferText.lastIndexOf('##CK3_TTS');
+          const lastOpenBracket = bufferText.lastIndexOf('[CK3_TTS');
+          const lastOpenIndex = Math.max(lastOpenHash, lastOpenBracket);
 
-        let stopIndex = -1;
-        let stopTagLength = 0;
-        if (stopIndexHash > stopIndexBracket) {
-          stopIndex = stopIndexHash;
-          stopTagLength = stopTagHash.length;
-        } else if (stopIndexBracket !== -1) {
-          stopIndex = stopIndexBracket;
-          stopTagLength = stopTagBracket.length;
-        }
+          if (lastOpenIndex !== -1) {
+            const tail = bufferText.slice(lastOpenIndex);
+            const hasClosedEnd = tail.includes('##CK3_TTS_END##') || tail.includes('[CK3_TTS_END]');
+            const isPureStop = tail.startsWith('##CK3_TTS_STOP##') || tail.startsWith('[CK3_TTS_STOP]');
 
-        // 1. 창 닫힘 신호(##CK3_TTS_STOP## 또는 [CK3_TTS_STOP]) 감지 시
-        if (stopIndex !== -1) {
-          // STOP 태그 이전의 텍스트는 닫힌 창의 잔여물이므로 완전히 버림!
-          // 오직 STOP 태그 이후에 연속으로 기록된 진짜 새 이벤트만 파싱
-          const textAfterStop = bufferText.slice(stopIndex + stopTagLength);
-          const newEvents = extractCk3EventsFromChunk(textAfterStop);
-
-          // 뒤에 신규 이벤트가 없는 순수 창 닫힘일 때만 렌더러에 STOP 신호 전송
-          // 뒤에 신규 이벤트가 즉시 이어지는 경우(결투 라운드 전환 등), 새 이벤트가 자연스럽게 이전 오디오를 대체하므로 STOP 미발화
-          if (newEvents.length === 0) {
-            onStop?.();
-            return;
+            if (!hasClosedEnd && !isPureStop) {
+              // 미완성 이벤트 태그를 pendingBuffer에 안전하게 보관하고 이번 청크에서는 제외
+              pendingBuffers.set(normalizedPath, tail);
+              bufferText = bufferText.slice(0, lastOpenIndex);
+            }
           }
 
-          const now = Date.now();
-
-          for (const event of newEvents) {
-            const lastSeenTime = recentEventCache.get(event.content);
-            // 수동 강제 재낭독은 콘솔 에코 방지용 1초 디바운스만 적용하여 사용자의 재청취 편의 보장
-            const cooldownMs = event.isForceReplay ? 1000 : 3000;
-            if (lastSeenTime && now - lastSeenTime < cooldownMs) {
+          // 처형 효과음 태그(##CK3_EXECUTION##) 감지 시 디바운스 (500ms로 빠른 연속 처형 보장)
+          const executionSounds = extractExecutionSoundsFromChunk(bufferText);
+          const currentExecutionTime = Date.now();
+          for (const sound of executionSounds) {
+            const soundCacheKey = `${sound.type}_${sound.gender}`;
+            const lastSeen = recentExecutionSoundCache.get(soundCacheKey);
+            // C++ 콘솔 3중 에코 및 후속 창 팝업 시점의 분할 플러시 방어 (5초 쿨다운)
+            if (lastSeen && currentExecutionTime - lastSeen < 5000) {
               continue;
             }
-
-            updateRecentEventCache(recentEventCache, event.content, now);
-
-            const eventMessage: Ck3EventMessage = {
-              id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
-              timestamp: now,
-              title: event.title,
-              content: event.content,
-              rawText: textAfterStop,
-              isForceReplay: event.isForceReplay,
-              speakerGender: event.speakerGender,
-              eventType: event.eventType
-            };
-            onEvent(eventMessage);
-          }
-          return;
-        }
-
-        // 2. STOP 신호가 없는 정상적인 신규 이벤트 수신
-        const parsedEvents = extractCk3EventsFromChunk(bufferText);
-        const now = Date.now();
-
-        for (const event of parsedEvents) {
-          // 콘솔 echo 방지: 수동 강제 재낭독은 1초, 자동 감지는 2초 쿨다운 적용
-          const lastSeenTime = recentEventCache.get(event.content);
-          const cooldownMs = event.isForceReplay ? 1000 : 2000;
-          if (lastSeenTime && now - lastSeenTime < cooldownMs) {
-            continue;
+            recentExecutionSoundCache.set(soundCacheKey, currentExecutionTime);
+            onExecutionSound?.(sound);
           }
 
-          updateRecentEventCache(recentEventCache, event.content, now);
+          const stopTagHash = '##CK3_TTS_STOP##';
+          const stopTagBracket = '[CK3_TTS_STOP]';
+          const lastStopIndex = Math.max(
+            bufferText.lastIndexOf(stopTagHash),
+            bufferText.lastIndexOf(stopTagBracket)
+          );
+          const hasStopSignal = lastStopIndex !== -1;
 
-          const eventMessage: Ck3EventMessage = {
-            id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
-            timestamp: now,
-            title: event.title,
-            content: event.content,
-            rawText: bufferText,
-            isForceReplay: event.isForceReplay,
-            speakerGender: event.speakerGender,
-            eventType: event.eventType
-          };
-          onEvent(eventMessage);
+          // 1. 청크 내의 모든 유효한 CK3 이벤트 우선 추출
+          const parsedEvents = extractCk3EventsFromChunk(bufferText);
+
+          // 2. 창 닫힘(STOP) 신호 처리:
+          // - 청크 내에 유효한 이벤트가 전혀 없는 순수 STOP이거나,
+          // - 마지막 STOP 신호가 마지막 이벤트(END)보다 뒤에 위치하는 경우 (즉, 이벤트가 뜬 후 플레이어가 옵션을 선택하여 창을 닫음)
+          // -> 재생 중이던 오디오를 즉시 정지하고 불필요한 이벤트 발화를 중단합니다.
+          if (hasStopSignal) {
+            const lastEndHash = bufferText.lastIndexOf('##CK3_TTS_END##');
+            const lastEndBracket = bufferText.lastIndexOf('[CK3_TTS_END]');
+            const lastEndIndex = Math.max(lastEndHash, lastEndBracket);
+
+            if (parsedEvents.length === 0 || lastStopIndex > lastEndIndex) {
+              onStop?.();
+              return;
+            }
+          }
+
+          const isFromErrorLog = normalizedPath === errorLogPath;
+          if (isFromErrorLog) {
+            // 클립보드 채널이 원문을 먼저 등록할 수 있도록 지연 후 파편 여부를 검사 (stop 시 일괄 취소되도록 추적)
+            const deferredText = bufferText;
+            const deferredTimer = setTimeout(() => {
+              deferredEmitTimers.delete(deferredTimer);
+              emitParsedEvents(parsedEvents, 'error', deferredText);
+            }, ERROR_LOG_DEFER_MS);
+            deferredEmitTimers.add(deferredTimer);
+          } else {
+            emitParsedEvents(parsedEvents, 'debug', bufferText);
+          }
+        } finally {
+          // 스트림 읽기 종료 시점에 항상 바이트 포지션 확정 및 뮤텍스 락 해제 (STOP 조기 반환 시에도 데드락 방지)
+          filePositions.set(normalizedPath, targetSize);
+          activeReadStreams.delete(normalizedPath);
+
+          // 스트림 읽기 도중 추가 유입된 변경 요청이 있다면 즉시 1회 순차 소비
+          if (pendingReadRequests.delete(normalizedPath)) {
+            setTimeout(() => handleFileChange(normalizedPath), 20);
+          }
         }
       });
     } catch (readError: unknown) {
+      activeReadStreams.delete(normalizedPath);
       console.error('❌ [LogWatcher Read Error]:', readError);
     }
   };
@@ -422,10 +539,64 @@ export const startWatchingLogFile = (
 
   onStatusChange?.(true, logFilePath);
 
+  // 📋 클립보드 채널: 대사에 큰따옴표가 있으면 콘솔 명령(info_log)이 잘려 원문을 잃으므로,
+  // GUI가 EventWindowData.CopyStringToClipboard로 함께 넘긴 원문을 읽고 즉시 사용자 클립보드를 복구합니다.
+  let clipboardTimer: ReturnType<typeof setInterval> | null = null;
+  if (clipboardBridge) {
+    let lastObservedSignature = '';
+    // 사용자가 마지막으로 복사한 클립보드 전체 상태(이미지/서식 포함). 페이로드 소비 후 이 상태로 복구
+    let lastUserSnapshot: TSnapshot | null = null;
+    try {
+      lastObservedSignature = clipboardBridge.readSignature();
+      if (!clipboardBridge.readText().includes(CLIPBOARD_PAYLOAD_MARKER)) {
+        lastUserSnapshot = clipboardBridge.takeSnapshot();
+      }
+    } catch (initError: unknown) {
+      console.warn('⚠️ [LogWatcher] 초기 클립보드 읽기 실패:', initError);
+    }
+
+    clipboardTimer = setInterval(() => {
+      // 게임 로그 활동이 없으면(게임 미실행) 사용자 클립보드를 불필요하게 읽지 않도록 폴링 중단
+      if (Date.now() - lastLogActivityTime > CLIPBOARD_IDLE_TIMEOUT_MS) {
+        return;
+      }
+      try {
+        const currentSignature = clipboardBridge.readSignature();
+        if (currentSignature === lastObservedSignature) {
+          return;
+        }
+        lastObservedSignature = currentSignature;
+
+        const currentText = clipboardBridge.readText();
+        if (!currentText.includes(CLIPBOARD_PAYLOAD_MARKER)) {
+          // 사용자가 직접 복사한 내용은 형식 그대로 복구 대상으로 보관
+          lastUserSnapshot = clipboardBridge.takeSnapshot();
+          return;
+        }
+
+        emitParsedEvents(extractCk3EventsFromChunk(currentText), 'clipboard', currentText);
+
+        // 모드 페이로드를 소비한 뒤 사용자의 원래 클립보드 상태를 복구
+        clipboardBridge.restoreSnapshot(lastUserSnapshot);
+        lastObservedSignature = clipboardBridge.readSignature();
+      } catch (clipboardError: unknown) {
+        console.warn('⚠️ [LogWatcher] 클립보드 채널 처리 실패:', clipboardError);
+      }
+    }, clipboardPollMs);
+  }
+
   return {
     getPath: () => logFilePath,
     stop: async () => {
+      isStopped = true;
       clearInterval(healIntervalTimer);
+      if (clipboardTimer) {
+        clearInterval(clipboardTimer);
+      }
+      for (const deferredTimer of deferredEmitTimers) {
+        clearTimeout(deferredTimer);
+      }
+      deferredEmitTimers.clear();
       if (watcher) {
         await watcher.close();
         watcher = null;

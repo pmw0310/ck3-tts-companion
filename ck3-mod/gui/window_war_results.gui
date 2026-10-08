@@ -44,22 +44,21 @@ window = {
 	state = {
 		name = _show
 		using = Animation_FadeIn_Quick
+		delay = 0.1
 
 		position = { 0 120 }
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '##CK3_TTS_END##\"')))))))]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##\"')))))))]"
 	}
 	state = {
 		name = _hide
 		using = Animation_FadeOut_Quick
 		position_y = -50
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 	}
 
 	state = {
 		name = dismiss
 		using = Animation_FadeOut_Quick
 		position_y = 50
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 	}
 
 	# CK3 TTS Companion: F 단축키로 다시 낭독
@@ -68,7 +67,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '##CK3_TTS_END##\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##\"')))))))]"
 	}
 
 	vbox = {
@@ -115,7 +114,7 @@ window = {
 					alwaystransparent = yes
 				}
 
-				onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '##CK3_TTS_END##\"')))))))]"
+				onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##\"')))))))]"
 			}
 		}
 
@@ -518,7 +517,7 @@ window = {
 				name = "close_button"
 				text = "WAR_RESULTS_DISMISS"
 				onclick = "[WarResultsWindow.Dismiss]"
-				onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+				onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
 			}
 
 			expand = {}

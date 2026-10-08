@@ -70,9 +70,11 @@ test('튜토리얼 창 스텝 전환(다음 클릭 및 자동 진행) TTS 재발
       /button_standard\s*=\s*\{[\s\S]*?Tutorial\.HasTransition\('repeat'\)[\s\S]*?\}/
     );
     assert.ok(repeatMatch, 'repeat 버튼 블록이 존재해야 합니다.');
+    // 전이 직후 GetStepText가 이전 단계 값을 반환하므로 즉시 FORCE 대신 지연 강제 낭독 플래그를 세워야 함
+    // (실제 FORCE 전송은 tutorial_tts_deferred_force state의 on_finish에서 수행 — tutorialStaleStepText.repro.test.ts)
     assert.ok(
-      repeatMatch[0].includes('##CK3_TTS_FORCE##'),
-      'repeat 버튼 클릭 시 현재 스텝 강제 재낭독(##CK3_TTS_FORCE##) 명령이 바인딩되어 있어야 합니다.'
+      repeatMatch[0].includes("GetVariableSystem.Set('tutorial_tts_pending_force', 'yes')"),
+      'repeat 버튼 클릭 시 지연 강제 재낭독 플래그(tutorial_tts_pending_force)가 바인딩되어 있어야 합니다.'
     );
   });
 });

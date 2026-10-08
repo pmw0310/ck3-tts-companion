@@ -12,26 +12,24 @@ test('궁전 닫기 TTS 정지 신호 및 수동 낭독(isForceReplay) 중복 �
   const royalCourtGuiPath = path.resolve(process.cwd(), 'ck3-mod/gui/window_royal_court.gui');
   const courtGuiPath = path.resolve(process.cwd(), 'ck3-mod/gui/window_court_events.gui');
 
-  await t.test('1. [window_royal_court.gui] 최상위 _hide 상태에 ##CK3_TTS_STOP##이 바인딩되어 알현실 종료 시 오디오가 즉시 중단되어야 함', () => {
+  await t.test('1. [window_royal_court.gui] 최상위 _hide 상태에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 함 (콘솔 잠금 방어)', () => {
     const royalContent = fs.readFileSync(royalCourtGuiPath, 'utf-8');
     // 최상위 state = { name = _hide ... } 블록 추출
     const hideMatch = royalContent.match(/state\s*=\s*\{\s*name\s*=\s*_hide[\s\S]*?\n\t\}/);
     assert.ok(hideMatch, 'window_royal_court.gui에 최상위 _hide 상태 블록이 존재해야 합니다.');
-    assert.match(
-      hideMatch[0],
-      /##CK3_TTS_STOP##/,
-      '알현실이 닫힐 때(name = _hide) ##CK3_TTS_STOP## 콘솔 명령어가 실행되어야 합니다.'
+    assert.ok(
+      !hideMatch[0].includes('##CK3_TTS_STOP##'),
+      '알현실 _hide 애니메이션에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 합니다.'
     );
   });
 
-  await t.test('2. [window_court_events.gui] _hide 상태에 ##CK3_TTS_STOP##이 바인딩되어 궁정 이벤트 창 종료 시 오디오가 즉시 중단되어야 함', () => {
+  await t.test('2. [window_court_events.gui] _hide 상태에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 함 (콘솔 잠금 방어)', () => {
     const courtContent = fs.readFileSync(courtGuiPath, 'utf-8');
     const hideMatch = courtContent.match(/state\s*=\s*\{\s*name\s*=\s*_hide[\s\S]*?\n\t\t\}/);
     assert.ok(hideMatch, 'window_court_events.gui에 _hide 상태 블록이 존재해야 합니다.');
-    assert.match(
-      hideMatch[0],
-      /##CK3_TTS_STOP##/,
-      '궁정 이벤트 창이 닫힐 때(name = _hide) ##CK3_TTS_STOP## 콘솔 명령어가 실행되어야 합니다.'
+    assert.ok(
+      !hideMatch[0].includes('##CK3_TTS_STOP##'),
+      '궁정 이벤트 창 _hide 애니메이션에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 합니다.'
     );
   });
 

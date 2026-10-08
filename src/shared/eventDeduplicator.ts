@@ -1,5 +1,10 @@
 import type { Ck3EventMessage } from '@/shared/types';
 
+/** 일반 이벤트의 동일 본문 재낭독 차단 시간 (ms) */
+const DEFAULT_DUPLICATE_COOLDOWN_MS = 60000;
+/** 전쟁 결과 이벤트의 동일 본문 재낭독 차단 시간 (ms, 콘솔 3중 에코 방어용 최소값) */
+const WAR_RESULT_DUPLICATE_COOLDOWN_MS = 5000;
+
 /**
  * 이벤트 중복 방어를 위한 상태 인터페이스
  */
@@ -76,14 +81,20 @@ export const shouldPlayEvent = (
     return false;
   }
 
-  // 3. [핵심 방어 2] 직전에 자동 낭독한 내용과 완전히 동일한 경우 60초간 재낭독 차단
+  // 전쟁 결과는 영지/반란군 명칭이 동일하여 본문이 같더라도 별개의 전쟁 종결 사건일 수 있으므로
+  // 60초 대신 콘솔 3중 에코 방어용 최소 쿨다운(5초)을 적용합니다.
+  // (유형은 제목 문자열이 아닌 GUI 메타 토큰 |||TYPE:WAR_RESULTS 로부터 파서가 판정)
+  const isWarResultEvent = event.eventType === 'war_results';
+  const duplicateCooldownMs = isWarResultEvent ? WAR_RESULT_DUPLICATE_COOLDOWN_MS : DEFAULT_DUPLICATE_COOLDOWN_MS;
+
+  // 3. [핵심 방어 2] 직전에 자동 낭독한 내용과 완전히 동일한 경우 쿨다운(일반 60초, 전쟁 결과 5초) 적용
   // 창을 닫지 않고 캐릭터 창을 열어보거나 다른 UI를 둘러보는 동안 동일 이벤트 재발화 차단
-  if (event.content === state.lastAutoSpokenText && now - state.lastAutoSpokenTime < 60000) {
+  if (event.content === state.lastAutoSpokenText && now - state.lastAutoSpokenTime < duplicateCooldownMs) {
     return false;
   }
 
-  // 4. [핵심 방어 3] 현재 화면에 표시된 이벤트와 동일하고 다른 사건으로 바뀌지 않은 경우 60초간 차단
-  if (state.currentEvent && state.currentEvent.content === event.content && now - state.lastAutoSpokenTime < 60000) {
+  // 4. [핵심 방어 3] 현재 화면에 표시된 이벤트와 동일하고 다른 사건으로 바뀌지 않은 경우 쿨다운 적용
+  if (state.currentEvent && state.currentEvent.content === event.content && now - state.lastAutoSpokenTime < duplicateCooldownMs) {
     return false;
   }
 

@@ -50,11 +50,12 @@ test('풀스크린 서사 이벤트 창(fullscreen_event.gui) TTS 연동 무결�
     );
   });
 
-  await t.test('3. [오디오 즉시 중단 연동] _hide 상태에서 ##CK3_TTS_STOP##이 호출되어 창이 닫힐 때 이전 음성이 즉시 멈추어야 함', () => {
-    assert.match(
-      content,
-      /state\s*=\s*\{[\s\S]*?name\s*=\s*_hide[\s\S]*?##CK3_TTS_STOP##/,
-      '선택지 클릭 또는 창이 닫힐 때(_hide) 이전 음성 즉시 중단(##CK3_TTS_STOP##)이 트리거되어야 합니다.'
+  await t.test('3. [콘솔 잠금 방어] _hide 애니메이션 상태에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 함', () => {
+    const hideMatch = content.match(/state\s*=\s*\{\s*name\s*=\s*_hide[\s\S]*?\n\t\}/);
+    assert.ok(hideMatch, 'fullscreen_event.gui에 _hide 상태 블록이 존재해야 합니다.');
+    assert.ok(
+      !hideMatch[0].includes('##CK3_TTS_STOP##'),
+      '_hide 애니메이션에 C++ 콘솔 락을 유발하는 ##CK3_TTS_STOP##이 없어야 합니다.'
     );
   });
 

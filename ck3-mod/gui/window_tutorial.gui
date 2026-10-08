@@ -16,15 +16,37 @@ types TutorialWindow {
 			using = Animation_FadeOut_Quick
 			using = Sound_WindowHide_Standard
 			on_start = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
-			on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+			on_start = "[GetVariableSystem.Clear('tutorial_tts_pending_auto')]"
+			on_start = "[GetVariableSystem.Clear('tutorial_tts_pending_force')]"
 		}
 
 		# 튜토리얼 스텝 텍스트 변경(다음 버튼 클릭 및 자동 진행) 실시간 감지 낭독기
 		state = {
 			name = tutorial_step_tts_trigger
 			trigger_when = "[And(Not(StringIsEmpty(Tutorial.GetStepText)), Not(GetVariableSystem.HasValue('tutorial_current_step_text', Tutorial.GetStepText)))]"
+			delay = 0.1
 			on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+		}
+
+		# CK3 TTS Companion: Tutorial.OnClickTransition 직후에는 Tutorial.GetStepText가 아직 이전 단계 문단을 반환하므로,
+		# 클릭 시점에 즉시 평가하지 않고 대기 플래그만 세운 뒤 짧은 지연 후(on_finish) 최신 단계 문단을 평가하여 낭독합니다.
+		# (바닐라 window_barbershop.gui의 delay + trigger_when + on_finish 패턴)
+		state = {
+			name = tutorial_tts_deferred_auto
+			delay = 0.35
+			trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_auto')]"
+			on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_auto')]"
+			on_finish = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
+			on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+		}
+
+		state = {
+			name = tutorial_tts_deferred_force
+			delay = 0.35
+			trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_force')]"
+			on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_force')]"
+			on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
 		}
 
 		button = {
@@ -32,7 +54,7 @@ types TutorialWindow {
 			size = { 0 0 }
 			visible = yes
 			shortcut = "army_split_half"
-			onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			onclick = "[GetVariableSystem.Set('tutorial_tts_pending_force', 'yes')]"
 		}
 
 		icon = {
@@ -185,7 +207,7 @@ types TutorialWindow {
 							name = "tts_speak_button"
 							size = { 32 32 }
 							tooltip = "이 튜토리얼 낭독 다시 듣기 (단축키: F)"
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+							onclick = "[GetVariableSystem.Set('tutorial_tts_pending_force', 'yes')]"
 
 							button_icon = {
 								alwaystransparent = yes
@@ -257,7 +279,7 @@ types TutorialWindow {
 					tooltip = "tutorial_lesson_button_read_later"
 					onclick = "[Tutorial.OnClickTransition('read_later')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
-					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+					onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
 				}
 			}
 
@@ -344,6 +366,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('back')]"
 					text = "[Tutorial.GetTransitionText('back')]"
 					onclick = "[Tutorial.OnClickTransition('back')]"
+					onclick = "[GetVariableSystem.Set('tutorial_tts_pending_auto', 'yes')]"
 				}
 
 				button_standard = {
@@ -352,7 +375,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('repeat')]"
 					text = "[Tutorial.GetTransitionText('repeat')]"
 					onclick = "[Tutorial.OnClickTransition('repeat')]"
-					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+					onclick = "[GetVariableSystem.Set('tutorial_tts_pending_force', 'yes')]"
 				}
 				
 				expand = {}
@@ -364,7 +387,7 @@ types TutorialWindow {
 					text = "[Tutorial.GetTransitionText('skip')]"
 					onclick = "[Tutorial.OnClickTransition('skip')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
-					onclick = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+					onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
 				}
 
 				button_primary = {
@@ -374,6 +397,7 @@ types TutorialWindow {
 					enabled = "[Tutorial.IsTransitionEnabled('next')]"
 					text = "[Tutorial.GetTransitionText('next')]"
 					onclick = "[Tutorial.OnClickTransition('next')]"
+					onclick = "[GetVariableSystem.Set('tutorial_tts_pending_auto', 'yes')]"
 				}
 			}
 		}

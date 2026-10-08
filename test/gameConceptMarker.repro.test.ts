@@ -128,5 +128,28 @@ test('CK3 Game Concept 서식 마커(G;) 및 서술격 조사(임이) 정제 검
       '내 앞에 선 사람들을 세어보니 총 3명의 탄원인이 자기 차례를 기다리고 있었다.'
     );
   });
+
+  await t.test('7. [사용자 실전 제보] 게임 개념 서식 닫기 마커(\\x15!\\x15! 및 !!) 정제 검증', () => {
+    const rawSample =
+      '당신의 영토 일부가 \u0015e;  \u0015TOOLTIP:GAME_CONCEPT,clerical_region 성직 지역\u0015!\u0015! 안에 있습니다. 당신은 \u0015e;  \u0015TOOLTIP:GAME_CONCEPT,capital 수도\u0015!\u0015!가 위치한 성직 지역의 관할에 속합니다. 더 자세히 알아보기 전에 지도를 살펴보겠습니다.';
+    const sanitized = sanitizeCk3Text(rawSample);
+
+    assert.ok(
+      !sanitized.includes('!!'),
+      `정제된 텍스트에 "!!" 마커가 포함되어 있어서는 안 됩니다. 현재 출력: "${sanitized}"`
+    );
+    assert.ok(
+      sanitized.includes('성직 지역 안에'),
+      `"성직 지역 안에"로 자연스럽게 정제되어야 합니다. 현재 출력: "${sanitized}"`
+    );
+    assert.ok(
+      sanitized.includes('수도가 위치한'),
+      `"수도가 위치한"으로 조사와 함께 자연스럽게 결합되어야 합니다. 현재 출력: "${sanitized}"`
+    );
+    assert.equal(
+      sanitized,
+      '당신의 영토 일부가 성직 지역 안에 있습니다. 당신은 수도가 위치한 성직 지역의 관할에 속합니다. 더 자세히 알아보기 전에 지도를 살펴보겠습니다.'
+    );
+  });
 });
 

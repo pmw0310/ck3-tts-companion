@@ -513,7 +513,6 @@ window = {
 					visible = "[Not( CharacterInteractionConfirmationWindow.ShouldShowScheme )]"
 					text = "[CharacterInteractionConfirmationWindow.GetSendName]"
 
-					onclick = "[ExecuteConsoleCommand( Concatenate( 'effect debug_log = \"##CK3_EXECUTION## ', Concatenate( CharacterInteractionConfirmationWindow.GetSendName, Concatenate( '|||', Select_CString( CharacterInteractionConfirmationWindow.GetRecipient.IsFemale, 'GENDER:F##\"', 'GENDER:M##\"' ) ) ) ) )]"
 					onclick = "[CharacterInteractionConfirmationWindow.Send]"
 					enabled = "[CharacterInteractionConfirmationWindow.CanSend]"
 					tooltip = "[CharacterInteractionConfirmationWindow.GetCanSendDescription]"
@@ -527,7 +526,6 @@ window = {
 
 					text = "[CharacterInteractionConfirmationWindow.GetSendName]"
 
-					onclick = "[ExecuteConsoleCommand( Concatenate( 'effect debug_log = \"##CK3_EXECUTION## ', Concatenate( CharacterInteractionConfirmationWindow.GetSendName, Concatenate( '|||', Select_CString( CharacterInteractionConfirmationWindow.GetRecipient.IsFemale, 'GENDER:F##\"', 'GENDER:M##\"' ) ) ) ) )]"
 					onclick = "[CharacterInteractionConfirmationWindow.Send]"
 					enabled = "[CharacterInteractionConfirmationWindow.CanSend]"
 

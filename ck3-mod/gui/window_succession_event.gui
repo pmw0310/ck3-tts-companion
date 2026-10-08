@@ -11,20 +11,14 @@ window = {
 
 	state = {
 		name = _show
-		on_start = "[GetVariableSystem.Clear( 'ruler_transition_remove_fade')]"
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
 		on_finish = "[PdxGuiTriggerAllAnimations('ruler_transition_appear')]"
-	}
-
-	state = {
-		name = _hide
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
+		on_start = "[GetVariableSystem.Clear( 'ruler_transition_remove_fade')]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	state = {
 		name = ruler_transition_reset
 		delay = 0.25
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
 		on_finish = "[SuccessionEventWindow.Close]"
 	}
 
@@ -34,7 +28,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+		onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
 	}
 
 	button = {
@@ -203,7 +197,7 @@ window = {
 						alwaystransparent = yes
 					}
 
-					onclick = "[ExecuteConsoleCommand(Concatenate('effect debug_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+					onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
 				}
 
 				flowcontainer = {
@@ -352,6 +346,7 @@ window = {
 							tooltip = "CLOSE_TOOLTIP"
 							texture = "gfx/interface/icons/flat_icons/window_close.dds"
 							onclick = "[SuccessionEventWindow.Close]"
+							onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
 						}
 					}
 
@@ -1000,10 +995,6 @@ window = {
 	layer = windows_layer
 	datacontext = "[GetVariableSystem]"
 
-	state = {
-		name = _show
-		on_start = "[ExecuteConsoleCommand('effect debug_log = \"##CK3_TTS_STOP##\"')]"
-	}
 
 	widget = {
 		parentanchor = center
