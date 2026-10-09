@@ -91,7 +91,12 @@ export const resolveExecutionSoundType = (name: string): ExecutionSoundType | nu
   const lower = name.toLowerCase();
 
   // 화형
-  if (lower.includes('화형') || lower.includes('burn') || lower.includes('불')) {
+  if (
+    lower.includes('화형') ||
+    lower.includes('burn') ||
+    lower.includes('불태') ||
+    lower.includes('태우')
+  ) {
     return 'burning';
   }
   // 맹견형 / 사냥개 / 거열

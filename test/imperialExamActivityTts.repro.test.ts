@@ -4,11 +4,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * 과거 시험(Imperial Examination) 등 활동 거점(locale) 이벤트 자동 TTS 침묵 재현 테스트
- * - activity_event_widget(_base)는 visible = HasOpenEvent 로 숨김/표시가 전환되는데,
- *   숨김 상태에서는 trigger_when이 평가되지 않고 표시되는 순간 이미 조건이 참이라 엣지가 발생하지 않음
- * - 결과: 첫 이벤트 표시 시 자동 낭독이 발화되지 않고 수동(FORCE) 버튼만 동작
- * - 해결: 위젯 표시 시점(_show)에 자동 낭독 상태로 직접 연결(next)
+ * 과거 시험(Imperial Examination) 등 활동 거점/이벤트 창 수동 낭독(스피커 버튼 및 F키) 전용 무결성 검증
+ * - 정책(Option A): 활동 이벤트는 visible 토글 시 엣지 누락 및 연쇄 이벤트 오디오 충돌을 방지하기 위해
+ *   자동 낭독 대신 100% 안정적인 수동 낭독(황금 스피커 버튼 및 F 단축키) 전용으로 전환
+ * - 검증: 각 활동 이벤트 위젯이 수동 스피커 버튼과 F 단축키를 명확히 보유하고 있는지 검증
  */
 
 const ACTIVITY_GUI = path.resolve(__dirname, '../ck3-mod/gui/window_activity.gui');
@@ -34,14 +33,20 @@ const extractTypeBlock = (content: string, typeHeader: string): string => {
   return content.slice(braceStart);
 };
 
-describe('활동 이벤트 위젯 표시 시점 자동 TTS 발화 검증 (과거 시험)', () => {
+describe('활동 이벤트 위젯 수동 낭독(스피커 버튼 및 F 단축키) 전용 정책 검증', () => {
   const content = fs.readFileSync(ACTIVITY_GUI, 'utf-8');
 
   for (const typeHeader of ['type activity_event_widget = margin_widget', 'type activity_event_widget_base = widget']) {
-    it(`${typeHeader}: _show 상태에서 tts_activity_event_auto_play로 연결되어야 한다`, () => {
+    it(`${typeHeader}: 수동 낭독 버튼(tts_speak_button) 및 F 단축키가 구현되어 있어야 한다`, () => {
       const block = extractTypeBlock(content, typeHeader);
-      const showStateRegex = /state\s*=\s*\{\s*name\s*=\s*_show\b[^}]*next\s*=\s*tts_activity_event_auto_play/;
-      assert.ok(showStateRegex.test(block), '위젯 표시(_show) 시 자동 낭독 상태로 next 연결이 필요합니다');
+      assert.ok(block.includes('name = "tts_speak_button"'), '수동 낭독 버튼이 존재해야 합니다');
+      assert.ok(block.includes('shortcut = "army_split_half"'), 'F 단축키가 바인딩되어 있어야 합니다');
+      assert.ok(block.includes('##CK3_TTS_FORCE##'), '강제 재낭독(FORCE) 신호가 연결되어 있어야 합니다');
+      assert.strictEqual(
+        block.includes('tts_activity_event_auto_play'),
+        false,
+        '자동 낭독 state가 없어야 합니다 (수동 전용 정책)'
+      );
     });
   }
 });

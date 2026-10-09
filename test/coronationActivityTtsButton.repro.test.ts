@@ -66,4 +66,32 @@ test('대관식 및 활동 창(window_activity.gui) TTS 버튼 DataContext 결�
       '화면 중앙의 인물들을 가리지 않도록 지문 텍스트 영역에는 스피커 버튼이 없어야 합니다.'
     );
   });
+
+  await t.test('4. [안내 라벨 및 툴팁] 대형 이벤트 자동 TTS 미지원 및 수동 낭독(F키) 안내 라벨이 로컬라이제이션 키로 존재해야 함', () => {
+    assert.match(
+      content,
+      /flowcontainer\s*=\s*\{[\s\S]*?name\s*=\s*"tts_speak_notice"[\s\S]*?text\s*=\s*"TTS_ACTIVITY_NOTICE_NO_AUTOPLAY"[\s\S]*?text\s*=\s*"TTS_ACTIVITY_NOTICE_MANUAL_SPEAK"/,
+      '대형 이벤트 자동 낭독 미지원 및 수동 낭독 안내 텍스트 라벨이 로컬라이제이션 키로 선언되어 있어야 합니다.'
+    );
+    assert.match(
+      content,
+      /tooltip\s*=\s*"TTS_ACTIVITY_EVENT_TOOLTIP"/,
+      '활동 이벤트 tooltip이 로컬라이제이션 키로 바인딩되어 있어야 합니다.'
+    );
+
+    // 로컬라이제이션 파일에 해당 키들이 정상 등록되어 있는지 교차 검증
+    const korLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/korean/replace/debug_cleanup_l_korean.yml');
+    const engLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/english/replace/debug_cleanup_l_english.yml');
+    assert.ok(fs.existsSync(korLocPath), '한국어 로컬라이제이션 파일이 존재해야 합니다.');
+    assert.ok(fs.existsSync(engLocPath), '영어 로컬라이제이션 파일이 존재해야 합니다.');
+
+    const korLoc = fs.readFileSync(korLocPath, 'utf-8');
+    const engLoc = fs.readFileSync(engLocPath, 'utf-8');
+
+    for (const key of ['TTS_ACTIVITY_EVENT_TOOLTIP', 'TTS_ACTIVITY_NOTICE_NO_AUTOPLAY', 'TTS_ACTIVITY_NOTICE_MANUAL_SPEAK']) {
+      assert.ok(korLoc.includes(`${key}:0 `), `한국어 로컬라이제이션에 ${key}:0 키가 정의되어 있어야 합니다.`);
+      assert.ok(engLoc.includes(`${key}:0 `), `영어 로컬라이제이션에 ${key}:0 키가 정의되어 있어야 합니다.`);
+    }
+  });
 });
+

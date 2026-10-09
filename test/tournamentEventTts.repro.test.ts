@@ -13,7 +13,7 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
   const activityGuiPath = path.join(modGuiDir, 'window_activity.gui');
   const localeGuiPath = path.join(modGuiDir, 'window_activity_locale.gui');
 
-  await t.test('1. window_activity.gui의 activity_event_widget_base에 TTS 자동 낭독 및 스피커 버튼이 있어야 함', () => {
+  await t.test('1. window_activity.gui의 activity_event_widget_base에 수동 낭독 스피커 버튼 및 F 단축키가 온전히 구현되어 있어야 함', () => {
     assert.ok(fs.existsSync(activityGuiPath), 'window_activity.gui 파일이 존재해야 합니다.');
     const content = fs.readFileSync(activityGuiPath, 'utf8');
 
@@ -23,10 +23,11 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     const nextTypeIndex = content.indexOf('type container_tenet_doctrine_conclusion', baseWidgetIndex);
     const baseContent = content.slice(baseWidgetIndex, nextTypeIndex !== -1 ? nextTypeIndex : undefined);
 
-    // ##CK3_TTS## 자동 낭독 state 확인
-    assert.ok(
-      baseContent.includes('##CK3_TTS##'),
-      'activity_event_widget_base에 ##CK3_TTS## 자동 낭독 state가 구현되어 있어야 합니다.'
+    // 대형 활동 수동 전용 정책(Option A): 복합 창 충돌 및 연쇄 팝업 피로도 방지를 위해 자동 낭독 제거
+    assert.strictEqual(
+      baseContent.includes('tts_activity_event_auto_play'),
+      false,
+      'activity_event_widget_base에 자동 낭독 state가 없어야 합니다 (수동 전용 정책).'
     );
 
     // ##CK3_TTS_STOP## 창 닫힘 오디오 중단 state 확인 (콘솔 락 방지를 위해 배제됨)
@@ -39,6 +40,10 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     assert.ok(
       baseContent.includes('name = "tts_speak_button"'),
       'activity_event_widget_base에 tts_speak_button 버튼이 존재해야 합니다.'
+    );
+    assert.ok(
+      baseContent.includes('shortcut = "army_split_half"'),
+      'activity_event_widget_base에 F 단축키가 연결되어 있어야 합니다.'
     );
     assert.ok(
       baseContent.includes('##CK3_TTS_FORCE##'),

@@ -68,19 +68,24 @@ describe('대관식 및 무(無)포트레이트 이벤트 Jomini HasPortraitChar
     );
   });
 
-  it('4. window_activity.gui의 activity_event_widget에 tts_activity_event_auto_play와 HasOpenEvent 바인딩이 무결하게 유지되어야 한다', () => {
+  it('4. window_activity.gui의 activity_event_widget에 수동 낭독 버튼(tts_speak_button) 및 F 단축키가 구현되어 있어야 한다', () => {
     const filePath = path.join(modGuiDir, 'window_activity.gui');
     const content = fs.readFileSync(filePath, 'utf-8');
 
     assert.strictEqual(
-      content.includes('next = tts_activity_event_auto_play'),
+      content.includes('name = "tts_speak_button"'),
       true,
-      'activity_new_event_shown에서 tts_activity_event_auto_play로 상태가 정상 전이되어야 합니다.'
+      '활동 창에 수동 낭독 스피커 버튼이 구현되어 있어야 합니다.'
     );
     assert.strictEqual(
-      content.includes('EventWindowViewInsert.HasOpenEvent'),
+      content.includes('shortcut = "army_split_half"'),
       true,
-      '데이터 바인딩 완료(HasOpenEvent) 후 안전하게 발화되어야 합니다.'
+      '활동 창에 F 단축키가 정상 바인딩되어 있어야 합니다.'
+    );
+    assert.strictEqual(
+      content.includes('##CK3_TTS_FORCE##'),
+      true,
+      '스피커 버튼 및 F키에 FORCE 낭독 신호가 연결되어 있어야 합니다.'
     );
   });
 });

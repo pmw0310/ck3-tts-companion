@@ -1,7 +1,7 @@
 {
   "name": "ck3-tts-companion",
   "productName": "CK3 TTS Companion",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Crusader Kings 3 실시간 음성(TTS) 나레이션 컴패니언 데스크톱 애플리케이션",
   "main": "./out/main/index.js",
   "author": "BlackOlf",

@@ -4,14 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * CK3 활동 이벤트 창(window_activity.gui) 크래시 방어 및 데이터 바인딩 완료 후 자동 낭독 무결성 검증
+ * CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 및 수동 낭독 전용(Option A) 무결성 검증
  * - 최상위 및 activity_new_event_shown에서 PdxGuiTriggerAllAnimations('activity_event_appear')를 호출할 때
  *   임의로 선언된 state = { name = activity_event_appear }에 비동기 콜백이 등록되어
  *   이벤트 창 닫힘 시 CEventWindowData Use-After-Free(SIGSEGV) 크래시를 유발하는 결함 방어
- * - activity_new_event_shown 즉시 호출 시 빈 문자열(|||)이 출력되지 않고,
- *   next = tts_activity_event_auto_play 상태 전이를 통해 데이터 바인딩(HasOpenEvent) 완료 후 안전하게 낭독 격발
+ * - 수동 전용 정책(Option A): 연쇄 팝업 및 창 상주 시 발생하는 자동 낭독 오작동/피로도를 차단하고
+ *   수동 낭독(스피커 버튼 및 F 단축키)을 통해서만 안전하게 발화
  */
-test('CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 및 자동 낭독 무결성 검증', async (t) => {
+test('CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 및 수동 낭독 정책 무결성 검증', async (t) => {
   const filePath = path.resolve(process.cwd(), 'ck3-mod/gui/window_activity.gui');
   assert.ok(fs.existsSync(filePath), 'window_activity.gui 파일이 존재해야 합니다.');
 
@@ -30,24 +30,30 @@ test('CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 �
     );
   });
 
-  await t.test('2. activity_new_event_shown이 next = tts_activity_event_auto_play로 전이되고 HasOpenEvent 가드가 있어야 한다', () => {
-    const widgetMatch = content.match(/type\s+activity_event_widget\s*=\s*margin_widget\s*\{([\s\S]*?)event_window_background_widget/);
+  await t.test('2. activity_event_widget에서 자동 낭독이 제거되고 수동 스피커 버튼 및 F 단축키가 존재해야 한다', () => {
+    const widgetMatch = content.match(/type\s+activity_event_widget\s*=\s*margin_widget\s*\{([\s\S]*?)type\s+activity_event_widget_base/);
     assert.ok(widgetMatch, 'activity_event_widget 블록이 존재해야 합니다.');
     const widgetBlock = widgetMatch[1];
 
-    assert.ok(
-      widgetBlock.includes('next = tts_activity_event_auto_play'),
-      'activity_new_event_shown은 애니메이션 격발 후 tts_activity_event_auto_play로 상태를 전이해야 합니다.'
+    assert.strictEqual(
+      widgetBlock.includes('tts_activity_event_auto_play'),
+      false,
+      '활동 창에는 연쇄 팝업 피로도 방지를 위해 자동 낭독 state가 없어야 합니다.'
     );
 
     assert.ok(
-      widgetBlock.includes('name = tts_activity_event_auto_play'),
-      'tts_activity_event_auto_play state가 정의되어 있어야 합니다.'
+      widgetBlock.includes('name = "tts_speak_button"'),
+      '수동 낭독 버튼(tts_speak_button)이 존재해야 합니다.'
     );
 
     assert.ok(
-      widgetBlock.includes('EventWindowViewInsert.HasOpenEvent'),
-      'tts_activity_event_auto_play는 EventWindowViewInsert.HasOpenEvent 가드를 통해 데이터 유효 시에만 격발되어야 합니다.'
+      widgetBlock.includes('shortcut = "army_split_half"'),
+      'F 단축키가 구현되어 있어야 합니다.'
+    );
+
+    assert.ok(
+      widgetBlock.includes('##CK3_TTS_FORCE##'),
+      '강제 재낭독(FORCE) 신호가 연결되어 있어야 합니다.'
     );
   });
 

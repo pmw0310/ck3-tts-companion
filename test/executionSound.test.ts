@@ -126,6 +126,8 @@ describe('⚔️ 처형 효과음 시스템(성별 분기 및 사형 유형 매�
     assert.ok(content.includes('GENDER:M'), '남성 죄수 태그가 포함되어 있어야 함');
     assert.ok(content.includes('scope:execution_burned'), '화형(burned) 분기가 포함되어 있어야 함');
     assert.ok(content.includes('scope:execution_kennel'), '사냥개(kennel) 분기가 포함되어 있어야 함');
+    assert.ok(content.includes('scope:execution_public'), '공개 처형(public) 분기가 포함되어 있어야 함');
+    assert.ok(content.includes('scope:execution_beheaded'), '참수형(beheading) 분기가 포함되어 있어야 함');
     assert.ok(content.includes('scope:executioner = { is_ai = no }'), '플레이어 처형자 한정 필터가 포함되어 있어야 함');
   });
 });

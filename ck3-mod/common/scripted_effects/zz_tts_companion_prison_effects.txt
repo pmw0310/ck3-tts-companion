@@ -883,12 +883,11 @@ execute_prisoner_effect = {
 			limit = {
 				scope:executioner = { is_ai = no }
 			}
+			# 1. 화형 (선택 옵션)
 			if = {
 				limit = {
-					OR = {
-						always = scope:execution_burned
-						exists = scope:execution_burned
-					}
+					exists = scope:execution_burned
+					scope:execution_burned = yes
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
@@ -898,12 +897,11 @@ execute_prisoner_effect = {
 					info_log = "##CK3_EXECUTION## burned|||GENDER:M##"
 				}
 			}
+			# 2. 사냥개형 / 맹견형 (선택 옵션)
 			else_if = {
 				limit = {
-					OR = {
-						always = scope:execution_kennel
-						exists = scope:execution_kennel
-					}
+					exists = scope:execution_kennel
+					scope:execution_kennel = yes
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
@@ -913,12 +911,11 @@ execute_prisoner_effect = {
 					info_log = "##CK3_EXECUTION## kennel|||GENDER:M##"
 				}
 			}
+			# 3. 식인 포식형 (선택 옵션)
 			else_if = {
 				limit = {
-					OR = {
-						always = scope:execution_devour
-						exists = scope:execution_devour
-					}
+					exists = scope:execution_devour
+					scope:execution_devour = yes
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
@@ -928,11 +925,17 @@ execute_prisoner_effect = {
 					info_log = "##CK3_EXECUTION## devour|||GENDER:M##"
 				}
 			}
+			# 4. 인신공양 / 제물 (선택 옵션 또는 신앙 파라미터)
 			else_if = {
 				limit = {
 					OR = {
-						always = scope:execution_sacrifice
-						exists = scope:execution_sacrifice
+						AND = {
+							exists = scope:execution_sacrifice
+							scope:execution_sacrifice = yes
+						}
+						scope:executioner.rite = {
+							rite_has_parameter = human_sacrifice_active
+						}
 					}
 				}
 				if = {
@@ -943,6 +946,35 @@ execute_prisoner_effect = {
 					info_log = "##CK3_EXECUTION## sacrifice|||GENDER:M##"
 				}
 			}
+			# 5. 공개 처형 / 광장 효수 (선택 옵션)
+			else_if = {
+				limit = {
+					exists = scope:execution_public
+					scope:execution_public = yes
+				}
+				if = {
+					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## public|||GENDER:F##"
+				}
+				else = {
+					info_log = "##CK3_EXECUTION## public|||GENDER:M##"
+				}
+			}
+			# 6. 참수형 (선택 옵션 또는 기본 처형)
+			else_if = {
+				limit = {
+					exists = scope:execution_beheaded
+					scope:execution_beheaded = yes
+				}
+				if = {
+					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:F##"
+				}
+				else = {
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:M##"
+				}
+			}
+			# 7. 기타 기본 처형 (단두대/참수음 기본)
 			else = {
 				if = {
 					limit = { scope:victim = { is_female = yes } }

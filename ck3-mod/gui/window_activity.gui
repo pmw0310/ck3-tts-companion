@@ -1133,27 +1133,6 @@ types ActivityWindowTypes
 		state = {
 			name = activity_new_event_shown
 			on_start = "[PdxGuiTriggerAllAnimations( 'activity_event_appear' )]"
-			next = tts_activity_event_auto_play
-		}
-
-		# CK3 TTS Companion: visible = HasOpenEvent 로 표시되는 순간에는 trigger_when 엣지가 발생하지 않으므로(과거 시험 등) 표시 시점에 자동 낭독으로 직접 연결
-		state = {
-			name = _show
-			next = tts_activity_event_auto_play
-		}
-
-		state = {
-			name = tts_activity_event_auto_play
-			trigger_when = "[And(And(EventWindowViewInsert.HasOpenEvent, Not(StringIsEmpty(EventWindowData.GetDescription))), Not(GetVariableSystem.HasValue('tts_last_activity_event_desc', EventWindowData.GetDescription)))]"
-			delay = 0.1
-			on_start = "[GetVariableSystem.Set('tts_last_activity_event_desc', EventWindowData.GetDescription)]"
-			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
-		}
-
-		state = {
-			name = _hide
-			on_start = "[GetVariableSystem.Clear('tts_last_activity_event_desc')]"
 		}
 
 
@@ -1862,7 +1841,7 @@ types ActivityWindowTypes
 			parentanchor = top|left
 			position = { 35 65 }
 			size = { 42 42 }
-			raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+			tooltip = "TTS_ACTIVITY_EVENT_TOOLTIP"
 			shortcut = "army_split_half"
 
 			button_icon = {
@@ -1874,6 +1853,30 @@ types ActivityWindowTypes
 
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
+		}
+
+		# 수동 낭독 안내 라벨 (버튼 우측 배치)
+		flowcontainer = {
+			name = "tts_speak_notice"
+			parentanchor = top|left
+			position = { 85 70 }
+			direction = vertical
+			ignoreinvisible = yes
+
+			text_single = {
+				autoresize = yes
+				text = "TTS_ACTIVITY_NOTICE_NO_AUTOPLAY"
+				default_format = "#weak"
+				fontsize = 12
+				align = left
+			}
+			text_single = {
+				autoresize = yes
+				text = "TTS_ACTIVITY_NOTICE_MANUAL_SPEAK"
+				default_format = "#weak"
+				fontsize = 12
+				align = left
+			}
 		}
 	}
 
@@ -2042,32 +2045,10 @@ types ActivityWindowTypes
 			expand = {}
 		}
 
-		# CK3 TTS Companion: 토너먼트/활동 이벤트 안전 자동 낭독 트리거
 		state = {
 			name = activity_new_event_shown
 			delay = 0.1
 			on_start = "[PdxGuiWidget.FindChild( 'event_video' ).GfxVideoControl.Restart]"
-			next = tts_activity_event_auto_play
-		}
-
-		# CK3 TTS Companion: 활동 거점(과거 시험 등) 일반 이벤트는 visible 전환 시 trigger_when 엣지가 누락되므로 표시 시점에 자동 낭독으로 직접 연결
-		state = {
-			name = _show
-			next = tts_activity_event_auto_play
-		}
-
-		state = {
-			name = tts_activity_event_auto_play
-			trigger_when = "[And(And(EventWindowViewInsert.HasOpenEvent, Not(StringIsEmpty(EventWindowData.GetDescription))), Not(GetVariableSystem.HasValue('tts_last_activity_event_desc', EventWindowData.GetDescription)))]"
-			delay = 0.1
-			on_start = "[GetVariableSystem.Set('tts_last_activity_event_desc', EventWindowData.GetDescription)]"
-			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
-		}
-
-		state = {
-			name = _hide
-			on_start = "[GetVariableSystem.Clear('tts_last_activity_event_desc')]"
 		}
 
 		vbox = {
@@ -2750,13 +2731,13 @@ types ActivityWindowTypes
 			using = Event_Window_Debug_OptionTooltips
 		}
 
-		# CK3 TTS Companion: 토너먼트/활동 이벤트 상단 좌측 여백 낭독 버튼 및 F 단축키 (우측 캐릭터 초상화 간섭 차단)
+		# CK3 TTS Companion: 토너먼트/활동 이벤트 상단 좌측 여백 수동 낭독 버튼 및 F 단축키 (우측 캐릭터 초상화 간섭 차단)
 		button_round = {
 			name = "tts_speak_button"
 			parentanchor = top|left
 			position = { 35 65 }
 			size = { 42 42 }
-			raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
+			tooltip = "TTS_ACTIVITY_EVENT_TOOLTIP"
 			shortcut = "army_split_half"
 
 			button_icon = {
@@ -2768,6 +2749,30 @@ types ActivityWindowTypes
 
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
+		}
+
+		# 수동 낭독 안내 라벨 (버튼 우측 배치)
+		flowcontainer = {
+			name = "tts_speak_notice"
+			parentanchor = top|left
+			position = { 85 70 }
+			direction = vertical
+			ignoreinvisible = yes
+
+			text_single = {
+				autoresize = yes
+				text = "TTS_ACTIVITY_NOTICE_NO_AUTOPLAY"
+				default_format = "#weak"
+				fontsize = 12
+				align = left
+			}
+			text_single = {
+				autoresize = yes
+				text = "TTS_ACTIVITY_NOTICE_MANUAL_SPEAK"
+				default_format = "#weak"
+				fontsize = 12
+				align = left
+			}
 		}
 	}
 
