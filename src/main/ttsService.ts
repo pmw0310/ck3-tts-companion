@@ -1,3 +1,5 @@
+import https from 'node:https';
+import dns from 'node:dns';
 import { GoogleGenAI } from '@google/genai';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import type {
@@ -11,6 +13,96 @@ import {
   isCacheableProvider,
   saveCachedAudio
 } from '@/main/audioCacheService';
+
+// DNS 해석 캐시 (10분 TTL)
+const dnsCache = new Map<string, { addresses: string[]; expiresAt: number }>();
+
+/**
+ * DNS 해석 실패 또는 연결 단절 시 특정 호스트명의 DNS 캐시를 즉시 무효화합니다.
+ * @param hostname - 무효화할 호스트명 (생략 시 전체 캐시 초기화)
+ */
+export const clearEdgeTtsDnsCache = (hostname?: string): void => {
+  if (hostname) {
+    dnsCache.delete(hostname);
+  } else {
+    dnsCache.clear();
+  }
+};
+
+/**
+ * OS의 getaddrinfo(IPv6/CNAME 체인 지연) 결함을 우회하기 위해
+ * c-ares 기반 dns.resolve4를 우선 사용하는 커스텀 DNS lookup 함수입니다.
+ * @param hostname - 조회할 호스트명
+ * @param options - lookup 옵션 또는 완료 콜백
+ * @param callback - 완료 콜백 (options가 전달된 경우)
+ */
+export const edgeTtsDnsLookup = (
+  hostname: string,
+  options: unknown,
+  callback?: (
+    err: NodeJS.ErrnoException | null,
+    address: string | { address: string; family: number }[],
+    family?: number
+  ) => void
+): void => {
+  const actualCallback =
+    typeof options === 'function'
+      ? (options as (
+          err: NodeJS.ErrnoException | null,
+          address: string | { address: string; family: number }[],
+          family?: number
+        ) => void)
+      : callback;
+  const actualOptions =
+    typeof options === 'object' && options !== null ? options : {};
+
+  if (!actualCallback) return;
+
+  const isAll =
+    'all' in actualOptions && Boolean((actualOptions as { all?: boolean }).all);
+  const now = Date.now();
+  const cached = dnsCache.get(hostname);
+
+  if (cached && cached.expiresAt > now) {
+    if (isAll) {
+      actualCallback(
+        null,
+        cached.addresses.map((addr) => ({ address: addr, family: 4 }))
+      );
+    } else {
+      actualCallback(null, cached.addresses[0], 4);
+    }
+    return;
+  }
+
+  dns.resolve4(hostname, (resolveErr, addresses) => {
+    if (!resolveErr && addresses && addresses.length > 0) {
+      dnsCache.set(hostname, { addresses, expiresAt: now + 10 * 60 * 1000 });
+      if (isAll) {
+        actualCallback(
+          null,
+          addresses.map((addr) => ({ address: addr, family: 4 }))
+        );
+      } else {
+        actualCallback(null, addresses[0], 4);
+      }
+      return;
+    }
+
+    // dns.resolve4 실패 시 기본 dns.lookup으로 안전 폴백
+    // @ts-expect-error Node.js dns.lookup 오버로드 호환
+    dns.lookup(hostname, actualOptions, actualCallback);
+  });
+};
+
+/**
+ * Edge-TTS WebSocket 연결용 커스텀 HTTPS Agent입니다.
+ * getaddrinfo 타임아웃 및 ENOTFOUND를 방지하기 위해 c-ares 기반 리졸버를 주입합니다.
+ */
+export const edgeTtsAgent = new https.Agent({
+  keepAlive: true,
+  lookup: edgeTtsDnsLookup
+});
 
 /**
  * 24kHz 16비트 모노 PCM 데이터에 표준 RIFF WAV 헤더(44바이트)를 덧붙여 브라우저 재생 가능한 WAV 버퍼를 생성합니다.
@@ -66,7 +158,7 @@ export const synthesizeWithEdgeTts = async (
   options?: { timeoutMs?: number }
 ): Promise<{ audioBase64: string; mimeType: string }> => {
   const timeoutMs = options?.timeoutMs ?? 15000;
-  const tts = new MsEdgeTTS();
+  const tts = new MsEdgeTTS({ agent: edgeTtsAgent });
 
   try {
     await tts.setMetadata(
@@ -130,8 +222,12 @@ export const synthesizeWithEdgeTts = async (
           if (isSettled) return;
           isSettled = true;
           cleanup();
-          const errorMsg =
+          let errorMsg =
             err instanceof Error ? err.message : 'Edge-TTS 스트림 중 오류 발생';
+          if (errorMsg.includes('ENOTFOUND') || errorMsg.includes('speech.platform.bing.com')) {
+            clearEdgeTtsDnsCache('speech.platform.bing.com');
+            errorMsg = `인터넷 연결 또는 DNS 설정을 확인하세요 (Edge-TTS 서버 접속 실패: ${errorMsg})`;
+          }
           reject(new Error(errorMsg));
         });
       }
@@ -672,8 +768,12 @@ export const processTtsRequest = async (
       mimeType: result.mimeType
     };
   } catch (error: unknown) {
-    const rawErrorMsg =
+    let rawErrorMsg =
       error instanceof Error ? error.message : '알 수 없는 Edge-TTS 변환 오류';
+    if (rawErrorMsg.includes('ENOTFOUND') || rawErrorMsg.includes('speech.platform.bing.com')) {
+      clearEdgeTtsDnsCache('speech.platform.bing.com');
+      rawErrorMsg = `인터넷 연결 또는 DNS 설정을 확인하세요 (Edge-TTS 서버 접속 실패: ${rawErrorMsg})`;
+    }
     console.error('❌ [TTS Service Error]:', rawErrorMsg);
     return {
       isSuccess: false,

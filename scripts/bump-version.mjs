@@ -81,18 +81,18 @@ const analyzeCommitMessage = (commitMessage) => {
   if (
     commitMessage.includes('BREAKING CHANGE') ||
     commitMessage.includes('BREAKING-CHANGE') ||
-    /^[a-z]+(\([a-z0-9_-]+\))?!:/.test(commitMessage)
+    /^[a-z]+(\([a-z0-9_,-]+\))?!:/.test(commitMessage)
   ) {
     return 'major';
   }
 
   // 2. Minor 범프 조건: feat(새로운 기능 추가)
-  if (/^feat(\([a-z0-9_-]+\))?:/i.test(commitMessage)) {
+  if (/^feat(\([a-z0-9_,-]+\))?:/i.test(commitMessage)) {
     return 'minor';
   }
 
   // 3. Patch 범프 조건: fix, refactor, perf (버그 수정, 성능, 리팩토링)
-  if (/^(fix|refactor|perf)(\([a-z0-9_-]+\))?:/i.test(commitMessage)) {
+  if (/^(fix|refactor|perf)(\([a-z0-9_,-]+\))?:/i.test(commitMessage)) {
     return 'patch';
   }
 
