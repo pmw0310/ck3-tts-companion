@@ -4,9 +4,9 @@ import type { Ck3EventType } from '@/shared/types';
 
 /** CK3 내부 서식, 아이콘, 툴팁 명령을 제거하기 위한 정규식 패턴 목록 */
 const CK3_TAG_PATTERNS: readonly RegExp[] = [
-  /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 등 로그 헤더
+  /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:(?:Error|ERROR):\s*"?|console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 및 Error: " 등 로그 헤더
   /\bconsole_success:\s*/gi,                                  // console_success 접두사
-  /\bERROR:\s*/g,                                             // ERROR 접두사
+  /(?:^|\s)(?:Error|ERROR):\s*"?/gi,                          // Error: 및 ERROR: 접두사 및 따옴표 잔여물 제거
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
@@ -451,6 +451,7 @@ const parseRecoveredPayload = (
     content = sanitizeCk3Text(clean);
   }
 
+  // error.log 단독 또는 스티칭된 파편에서 추출된 본문이 유효한 서사 텍스트인지 검증
   if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
     return { title, content, isForceReplay: false, speakerGender, eventType: typeExtraction.markerType ?? eventType };
   }
@@ -539,11 +540,10 @@ const recoverEventsFromErrorLog = (
         currentTokens.push(lineBody);
       }
 
-      // 블록 종료 검사: 해당 라인에 닫는 태그나 "in file: effect console command" 가 있으면 블록 완료
+      // 블록 종료 검사: 해당 라인에 닫는 태그(END)가 있으면 블록 완료
       if (
         trimmed.includes('##CK3_TTS_END##') ||
-        trimmed.includes('[CK3_TTS_END]') ||
-        trimmed.includes('in file: "effect console command"')
+        trimmed.includes('[CK3_TTS_END]')
       ) {
         const fullPayload = currentTokens.join(' ');
         const hasExplicitTtsMarker =
@@ -578,12 +578,21 @@ const recoverEventsFromErrorLog = (
       if (recovered) {
         recoveredEvents.push(recovered);
       }
-    } else if (isCollecting && trimmed.length === 0) {
-      if (currentTokens.length > 0 && currentTokens.some((t) => t.includes('CK3_TTS'))) {
+    } else if (isCollecting && (!trimmed.includes('Unknown effect:') || trimmed.length === 0)) {
+      // Unknown effect 연속이 끊겼을 때 (빈 줄 또는 다른 로그 헤더 시작)
+      if (currentTokens.length > 0) {
         const fullPayload = currentTokens.join(' ');
-        const recovered = parseRecoveredPayload(fullPayload);
-        if (recovered) {
-          recoveredEvents.push(recovered);
+        const hasExplicitTtsMarker =
+          fullPayload.includes('CK3_TTS') ||
+          fullPayload.includes('|||') ||
+          /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
+        const hasSubstantialSentence = fullPayload.length >= 20;
+
+        if (hasExplicitTtsMarker || hasSubstantialSentence) {
+          const recovered = parseRecoveredPayload(fullPayload);
+          if (recovered) {
+            recoveredEvents.push(recovered);
+          }
         }
       }
       currentTokens = [];
@@ -749,9 +758,6 @@ export const extractCk3EventsFromChunk = (
             rawContent = parts.slice(1, -1).join('|||');
           }
         }
-
-        // 혹시 분할되지 않고 본문 끝에 잔류한 성별 마커가 있다면 2차 방어로 완전 소멸
-        rawContent = rawContent.replace(/\|{1,3}\s*GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
 
         const sanitizedTitle = parts.length === 2 && isGenderMarker ? '이벤트' : sanitizeCk3Text(rawTitle);
         const sanitizedContent = sanitizeCk3Text(rawContent);

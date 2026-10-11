@@ -232,6 +232,7 @@ export const startWatchingLogFile = <TSnapshot>(
   const activeReadStreams = new Set<string>();
   const pendingReadRequests = new Set<string>();
   const crossChannelCache = new Map<string, { channel: EventChannel; time: number }>();
+  const recentTitleCache = new Map<string, { channel: EventChannel; time: number }>();
 
   // 감시할 파일 목록 구성 (기본 debug.log 및 파서 구문 에러가 기록되는 error.log 동시 감시)
   const debugLogPath = path.resolve(logFilePath);
@@ -284,18 +285,30 @@ export const startWatchingLogFile = <TSnapshot>(
         crossChannelCache.delete(cachedContent);
       }
     }
+    for (const [cachedTitle, entry] of recentTitleCache.entries()) {
+      if (now - entry.time > 10000) {
+        recentTitleCache.delete(cachedTitle);
+      }
+    }
 
     for (const event of parsedEvents) {
       // ⚠️ [error.log 파편 덮어쓰기 방어]
-      // error.log에서 유입된 이벤트가 최근 다른 채널에서 받은 완전한 원본의 단어 파편이면 무시합니다.
+      // error.log에서 유입되었거나 스티칭된 이벤트가 최근 다른 채널에서 받은 완전한 원본의 단어 파편이거나 동일 사건이면 무시합니다.
       if (channel === 'error') {
         let isDuplicateFragment = false;
+        // 1. 단어 파편(Subset) 검사
         for (const [cachedContent, cachedTime] of recentEventCache.entries()) {
           if (now - cachedTime < 10000 && isFragmentOf(event.content, cachedContent)) {
             isDuplicateFragment = true;
             break;
           }
         }
+        // 2. 동일 제목 검사 (클립보드 등에서 이미 온전한 원문이 등록된 경우)
+        const titleEntry = recentTitleCache.get(event.title);
+        if (titleEntry && titleEntry.channel !== 'error' && now - titleEntry.time < 10000) {
+          isDuplicateFragment = true;
+        }
+
         if (isDuplicateFragment) {
           console.log('ℹ️ [LogWatcher] 완전한 원본이 이미 활성화되어 있어 error.log 파편 덮어쓰기를 차단했습니다.');
           continue;
@@ -317,6 +330,7 @@ export const startWatchingLogFile = <TSnapshot>(
 
       updateRecentEventCache(recentEventCache, event.content, now);
       crossChannelCache.set(event.content, { channel, time: now });
+      recentTitleCache.set(event.title, { channel, time: now });
 
       const eventMessage: Ck3EventMessage = {
         id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
@@ -434,11 +448,35 @@ export const startWatchingLogFile = <TSnapshot>(
             bufferText.lastIndexOf(stopTagBracket)
           );
           const hasStopSignal = lastStopIndex !== -1;
+          const isFromErrorLog = normalizedPath === errorLogPath;
 
-          // 1. 청크 내의 모든 유효한 CK3 이벤트 우선 추출
-          const parsedEvents = extractCk3EventsFromChunk(bufferText);
+          // 1. debug.log / error.log 간 큰따옴표 등으로 분할된 파편 교차 결합 (Cross-log Stitching)
+          let effectiveText = bufferText;
+          let didStitchDebugPending = false;
+          if (isFromErrorLog && pendingBuffers.has(debugLogPath)) {
+            const debugPending = pendingBuffers.get(debugLogPath) ?? '';
+            if (
+              bufferText.includes('##CK3_TTS_END##') ||
+              bufferText.includes('[CK3_TTS_END]') ||
+              bufferText.includes('Unknown effect:')
+            ) {
+              effectiveText = `${debugPending}\n${bufferText}`;
+              didStitchDebugPending = true;
+            }
+          } else if (!isFromErrorLog && pendingBuffers.has(errorLogPath)) {
+            const errorPending = pendingBuffers.get(errorLogPath) ?? '';
+            effectiveText = `${bufferText}\n${errorPending}`;
+            pendingBuffers.delete(errorLogPath);
+          }
 
-          // 2. 창 닫힘(STOP) 신호 처리:
+          // 2. 청크 내의 모든 유효한 CK3 이벤트 우선 추출
+          const parsedEvents = extractCk3EventsFromChunk(effectiveText);
+          if (didStitchDebugPending && parsedEvents.length > 0) {
+            // debug.log의 미완성 앞부분이 error.log와 결합되어 온전한 이벤트로 복원되었으므로 소비
+            pendingBuffers.delete(debugLogPath);
+          }
+
+          // 3. 창 닫힘(STOP) 신호 처리:
           // - 청크 내에 유효한 이벤트가 전혀 없는 순수 STOP이거나,
           // - 마지막 STOP 신호가 마지막 이벤트(END)보다 뒤에 위치하는 경우 (즉, 이벤트가 뜬 후 플레이어가 옵션을 선택하여 창을 닫음)
           // -> 재생 중이던 오디오를 즉시 정지하고 불필요한 이벤트 발화를 중단합니다.
@@ -453,17 +491,17 @@ export const startWatchingLogFile = <TSnapshot>(
             }
           }
 
-          const isFromErrorLog = normalizedPath === errorLogPath;
-          if (isFromErrorLog) {
+          const isErrorSource = isFromErrorLog || didStitchDebugPending;
+          if (isErrorSource) {
             // 클립보드 채널이 원문을 먼저 등록할 수 있도록 지연 후 파편 여부를 검사 (stop 시 일괄 취소되도록 추적)
-            const deferredText = bufferText;
+            const deferredText = effectiveText;
             const deferredTimer = setTimeout(() => {
               deferredEmitTimers.delete(deferredTimer);
               emitParsedEvents(parsedEvents, 'error', deferredText);
             }, ERROR_LOG_DEFER_MS);
             deferredEmitTimers.add(deferredTimer);
           } else {
-            emitParsedEvents(parsedEvents, 'debug', bufferText);
+            emitParsedEvents(parsedEvents, 'debug', effectiveText);
           }
         } finally {
           // 스트림 읽기 종료 시점에 항상 바이트 포지션 확정 및 뮤텍스 락 해제 (STOP 조기 반환 시에도 데드락 방지)

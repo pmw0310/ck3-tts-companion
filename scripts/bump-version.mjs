@@ -81,7 +81,7 @@ const analyzeCommitMessage = (commitMessage) => {
   if (
     commitMessage.includes('BREAKING CHANGE') ||
     commitMessage.includes('BREAKING-CHANGE') ||
-    /^[a-z]+(\([a-z0-9_,-]+\))?!:/.test(commitMessage)
+    /^[a-z]+(\([a-z0-9_,-]+\))?!:/i.test(commitMessage)
   ) {
     return 'major';
   }

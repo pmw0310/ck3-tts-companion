@@ -20,7 +20,7 @@ window = {
 		trigger_when = "[And(Not(StringIsEmpty(Legend.GetNameNoTooltip)), Not(GetVariableSystem.HasValue('tts_last_legend_name', Legend.GetNameNoTooltip)))]"
 		delay = 0.1
 		on_start = "[GetVariableSystem.Set('tts_last_legend_name', Legend.GetNameNoTooltip)]"
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) )))))))))))))]"
+		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) )))))))))))))]"
 	}
 
 	state = {
@@ -237,7 +237,7 @@ window = {
 							alwaystransparent = yes
 						}
 
-						onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ) )))))))))))))]"
+						onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) )))))))))))))]"
 					}
 				}
 
