@@ -38,6 +38,21 @@ export type EdgeVoiceName =
   | 'ko-KR-InJoonNeural'
   | 'ko-KR-HyunsuNeural';
 
+/** 지원하는 시스템(로컬 OS) 내장 음성 식별자 */
+export type SystemVoiceName =
+  | 'default'
+  | 'Yuna'
+  | 'Reed'
+  | 'Eddy'
+  | 'Flo'
+  | 'Grandma'
+  | 'Grandpa'
+  | 'Rocko'
+  | 'Sandy'
+  | 'Shelley'
+  | 'Microsoft Heami'
+  | (string & {});
+
 /** 화자 성별 구분 타입 */
 export type SpeakerGender = 'male' | 'female' | 'narrator';
 
@@ -108,6 +123,7 @@ export type AppSettings = {
   readonly geminiVoiceFemale: GeminiVoiceName;
   readonly openaiVoiceMale: OpenAiVoiceName;
   readonly openaiVoiceFemale: OpenAiVoiceName;
+  readonly systemVoice: SystemVoiceName;
   readonly isCacheEnabled: boolean;
   readonly maxCacheSizeMb: number;
   readonly isExecutionSoundEnabled: boolean;

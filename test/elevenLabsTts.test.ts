@@ -36,6 +36,7 @@ const createMockSettings = (overrides?: Partial<AppSettings>): AppSettings => ({
   edgeVoiceFemale: 'ko-KR-SunHiNeural',
   geminiVoiceMale: 'Charon',
   geminiVoiceFemale: 'Kore',
+  systemVoice: 'default',
   isCacheEnabled: true,
   maxCacheSizeMb: 500,
   isExecutionSoundEnabled: true,

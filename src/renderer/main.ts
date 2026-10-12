@@ -13,6 +13,7 @@ import type {
   OpenAiVoiceName,
   SpeakerGender,
   SynthesizeResult,
+  SystemVoiceName,
   TtsProviderType,
   UpdateCheckResult
 } from '@/shared/types';
@@ -92,6 +93,7 @@ const state: RendererState = {
     elevenLabsVoiceId: 'JBFqnCBsd6RMkjVDRZzb',
     elevenLabsVoiceMale: 'JBFqnCBsd6RMkjVDRZzb',
     elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
+    systemVoice: 'default',
     elevenLabsStability: 0.5,
     elevenLabsSimilarity: 0.75,
     isCacheEnabled: true,
@@ -187,6 +189,12 @@ const inputElevenlabsKey = document.getElementById('input-elevenlabs-key') as HT
 const selectElevenlabsVoicePreset = document.getElementById('select-elevenlabs-voice-preset') as HTMLSelectElement;
 const elevenlabsCustomVoiceRow = document.getElementById('elevenlabs-custom-voice-row') as HTMLDivElement;
 const inputElevenlabsVoiceId = document.getElementById('input-elevenlabs-voice-id') as HTMLInputElement;
+
+// System TTS 설정 폼 엘리먼트
+const systemOptionsGroup = document.getElementById('system-options') as HTMLDivElement;
+const selectSystemVoice = document.getElementById('select-system-voice') as HTMLSelectElement;
+const systemAudioDramaNotice = document.getElementById('system-audio-drama-disabled-notice') as HTMLDivElement;
+const audioDramaSettingBox = document.querySelector('.audio-drama-setting-box') as HTMLDivElement;
 
 // 오디오 드라마 모드 엘리먼트
 const chkAudioDrama = document.getElementById('chk-audio-drama') as HTMLInputElement;
@@ -745,7 +753,8 @@ const speakText = async (
     }));
   }
   // [일반 이벤트 - 오디오 드라마 모드]: 본문 내 지문(나레이션)과 따옴표 대사를 분리하여 각각 사관 및 인물 목소리 매핑
-  else if (state.settings.isAudioDramaEnabled) {
+  // 단, 시스템(로컬) TTS는 사용자의 요구에 따라 오디오 드라마 모드를 배제하고 단일 나레이터로 낭독
+  else if (state.settings.isAudioDramaEnabled && state.settings.provider !== 'system') {
     const segments = splitNarrativeAndDialogue(textToRead, speakerGender);
     if (segments.length > 0) {
       for (const seg of segments) {
@@ -1076,7 +1085,30 @@ const syncSettingsForm = (): void => {
   });
 
   // 엔진별 세부 설정 및 성별 보이스 그룹 토글
-  if (currentProvider === 'gemini') {
+  if (currentProvider === 'system') {
+    edgeOptionsGroup.classList.add('option-hidden');
+    geminiOptionsGroup.classList.add('option-hidden');
+    openaiOptionsGroup.classList.add('option-hidden');
+    elevenlabsOptionsGroup.classList.add('option-hidden');
+    systemOptionsGroup.classList.remove('option-hidden');
+
+    edgeGenderVoicesGroup.classList.add('option-hidden');
+    geminiGenderVoicesGroup.classList.add('option-hidden');
+    openaiGenderVoicesGroup.classList.add('option-hidden');
+    elevenlabsGenderVoicesGroup.classList.add('option-hidden');
+
+    systemAudioDramaNotice.classList.remove('option-hidden');
+    audioDramaSettingBox.classList.add('is-disabled');
+    chkAudioDrama.disabled = true;
+
+    providerBadge.textContent = `시스템 로컬 TTS (${state.settings.systemVoice || '기본'})`;
+  } else {
+    systemOptionsGroup.classList.add('option-hidden');
+    systemAudioDramaNotice.classList.add('option-hidden');
+    audioDramaSettingBox.classList.remove('is-disabled');
+    chkAudioDrama.disabled = false;
+
+    if (currentProvider === 'gemini') {
     edgeOptionsGroup.classList.add('option-hidden');
     geminiOptionsGroup.classList.remove('option-hidden');
     openaiOptionsGroup.classList.add('option-hidden');
@@ -1121,7 +1153,9 @@ const syncSettingsForm = (): void => {
     elevenlabsGenderVoicesGroup.classList.add('option-hidden');
     providerBadge.textContent = 'Edge-TTS';
   }
+}
 
+  selectSystemVoice.value = state.settings.systemVoice || 'default';
   chkAudioDrama.checked = state.settings.isAudioDramaEnabled;
   selectEdgeVoiceMale.value = state.settings.edgeVoiceMale;
   selectEdgeVoiceFemale.value = state.settings.edgeVoiceFemale;
@@ -1389,6 +1423,7 @@ const bindEventListeners = (): void => {
       elevenLabsVoiceId,
       elevenLabsVoiceMale: selectElevenlabsVoiceMale.value || 'JBFqnCBsd6RMkjVDRZzb',
       elevenLabsVoiceFemale: selectElevenlabsVoiceFemale.value || 'Xb7hH8MSUJpSbSDYk0k2',
+      systemVoice: (selectSystemVoice.value as SystemVoiceName) || 'default',
       isAudioDramaEnabled: chkAudioDrama.checked
     };
 
@@ -1424,6 +1459,11 @@ const bindEventListeners = (): void => {
 
   // 오디오 드라마 모드 토글 즉시 반영
   chkAudioDrama.addEventListener('change', () => {
+    if (state.settings.provider === 'system') {
+      chkAudioDrama.checked = false;
+      showToast('⚠️ 시스템(로컬) TTS는 오디오 드라마 모드를 지원하지 않습니다.', 'warning');
+      return;
+    }
     state.settings = { ...state.settings, isAudioDramaEnabled: chkAudioDrama.checked };
     window.electronAPI.saveSettings(state.settings);
     showToast(
@@ -1484,6 +1524,7 @@ const bindEventListeners = (): void => {
       elevenLabsVoiceId,
       elevenLabsVoiceMale: selectElevenlabsVoiceMale.value || 'JBFqnCBsd6RMkjVDRZzb',
       elevenLabsVoiceFemale: selectElevenlabsVoiceFemale.value || 'Xb7hH8MSUJpSbSDYk0k2',
+      systemVoice: (selectSystemVoice.value as SystemVoiceName) || 'default',
       customLogPath: inputCustomLogPath.value.trim() || null,
       isAudioDramaEnabled: chkAudioDrama.checked,
       isCacheEnabled: chkCacheEnabled ? chkCacheEnabled.checked : true,

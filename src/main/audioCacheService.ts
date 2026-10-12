@@ -265,12 +265,18 @@ export const convertWavToMp3 = async (
 
 /**
  * 캐싱 지원 대상 프로바이더인지 판별합니다.
- * 무료인 Edge-TTS 및 시스템 TTS는 캐싱하지 않으며, 토큰 소모가 발생하는 Gemini, OpenAI, ElevenLabs만 캐싱합니다.
+ * 토큰 소모가 발생하는 유료 AI 엔진(Gemini, OpenAI, ElevenLabs) 및
+ * 엔드포인트 차단 방지 및 무지연 재생을 위한 Edge-TTS를 캐싱합니다. (시스템 TTS는 실시간 로컬 합성이므로 제외)
  * @param provider - TTS 제공자 식별자
  * @returns 캐시 대상 여부
  */
 export const isCacheableProvider = (provider?: string): boolean => {
-  return provider === 'gemini' || provider === 'openai' || provider === 'elevenlabs';
+  return (
+    provider === 'edge' ||
+    provider === 'gemini' ||
+    provider === 'openai' ||
+    provider === 'elevenlabs'
+  );
 };
 
 /**

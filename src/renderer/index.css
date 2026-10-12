@@ -21,6 +21,10 @@
   --text-label: #cbd5e1;
   --text-highlight: #ffffff;
   --text-danger: #f87171;
+  --text-warning: #fbbf24;
+
+  --bg-warning-subtle: rgba(245, 158, 11, 0.12);
+  --border-warning-subtle: rgba(245, 158, 11, 0.35);
 
   --bg-input: #0d1118;
   --bg-btn-primary-text: #0c0f17;
@@ -1061,6 +1065,17 @@ input[type="range"]::-moz-range-track,
 }
 
 /* === 오디오 드라마 모드 & 성별 보이스 설정 === */
+.audio-drama-disabled-banner {
+  background: var(--bg-warning-subtle);
+  border: 1px solid var(--border-warning-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-warning);
+  margin-bottom: 12px;
+}
+
 .audio-drama-setting-box {
   background: rgba(212, 175, 55, 0.05);
   border: 1px solid rgba(212, 175, 55, 0.25);
@@ -1069,6 +1084,13 @@ input[type="range"]::-moz-range-track,
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: opacity var(--transition-fast);
+}
+
+.audio-drama-setting-box.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  filter: grayscale(0.5);
 }
 
 .toggle-row {

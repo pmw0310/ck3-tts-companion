@@ -7,6 +7,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:(?:Error|ERROR):\s*"?|console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 및 Error: " 등 로그 헤더
   /\bconsole_success:\s*/gi,                                  // console_success 접두사
   /(?:^|\s)(?:Error|ERROR):\s*"?/gi,                          // Error: 및 ERROR: 접두사 및 따옴표 잔여물 제거
+  /\b(?:Error|ERROR):\s*\[[^\]]+\]/gi,                        // ERROR:[target_character.GetFirstNameNoTooltip] 등 Jomini 스코프 런타임 결함 태그 제거
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거

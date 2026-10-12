@@ -201,6 +201,14 @@
                       <span class="engine-pricing is-paid">유료</span> · 압도적 감정 연기력 & 글로벌 1위
                     </div>
                   </div>
+
+                  <!-- System 로컬 TTS 카드 -->
+                  <div class="engine-card" data-engine="system">
+                    <div class="engine-card-title">시스템 (로컬 TTS)</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-free">오프라인</span> · 100% 로컬 / 차단 없음 / 즉시 재생
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -363,6 +371,29 @@
                 </div>
               </div>
 
+              <!-- System TTS 전용 옵션 -->
+              <div id="system-options" class="engine-options-group option-hidden">
+                <div class="form-row">
+                  <label for="select-system-voice" class="setting-label">기본 시스템 목소리</label>
+                  <select id="select-system-voice" class="form-select">
+                    <option value="default">기본값 (운영체제 기본 설정 음성)</option>
+                    <option value="Yuna">유나 (macOS 한국어 여성)</option>
+                    <option value="Reed">Reed (macOS 한국어 남성)</option>
+                    <option value="Eddy">Eddy (macOS 한국어 남성)</option>
+                    <option value="Flo">Flo (macOS 한국어 여성)</option>
+                    <option value="Grandpa">할아버지 (macOS 한국어 남성)</option>
+                    <option value="Grandma">할머니 (macOS 한국어 여성)</option>
+                    <option value="Rocko">Rocko (macOS 한국어)</option>
+                    <option value="Sandy">Sandy (macOS 한국어)</option>
+                    <option value="Shelley">Shelley (macOS 한국어)</option>
+                    <option value="Microsoft Heami">혜미 (Windows 한국어 여성)</option>
+                  </select>
+                </div>
+                <div class="setting-hint">
+                  ℹ️ 외부 인터넷 연결이나 API 키가 전혀 필요 없으며, Microsoft 403 차단 없이 100% 로컬에서 동작합니다. (로컬 TTS는 오디오 드라마 모드를 지원하지 않습니다)
+                </div>
+              </div>
+
               <!-- 공통 낭독 속도 슬라이더 -->
               <div class="form-row speech-rate-row">
                 <label for="range-speech-rate" class="setting-label">낭독 속도</label>
@@ -382,6 +413,11 @@
 
             <!-- 2. 오디오 드라마 탭 패널 -->
             <div id="tab-panel-audio-drama" class="modal-tab-panel">
+              <!-- 로컬 TTS 선택 시 오디오 드라마 비활성화 안내 박스 -->
+              <div id="system-audio-drama-disabled-notice" class="audio-drama-disabled-banner option-hidden">
+                ⚠️ 현재 선택된 <strong>시스템(로컬) TTS</strong>는 오디오 드라마 모드를 지원하지 않으며, 단일 나레이터 낭독으로만 작동합니다. 성별 분기 낭독을 원하시면 Edge-TTS, Gemini, OpenAI 또는 ElevenLabs 엔진을 선택해 주세요.
+              </div>
+
               <div class="setting-item audio-drama-setting-box">
                 <div class="toggle-row">
                   <div class="toggle-info">

@@ -14,8 +14,7 @@ test('전설 연대기(Legend Chronicle) TTS 미작동 및 따옴표 결함 재�
     '망치 운반자의 대장 카트린(은)는 충직한 추종자들과 함께 곳곳을 떠돌며 악당들과 싸우고 위험에 빠진 이들을 구했다. ' +
     '어느 날 아침, 안개 낀 숲에 들어간 그녀는 도움을 청하는 소리를 들었다. 그리고 언제나처럼 이번에도 그 외침을 무시하지 않았다. ' +
     '아리따운 여인이 사악한 기사에게 위협받고 있었다. 카트린(은)는 결투를 벌여 상대를 물리쳤고, 피가 고인 웅덩이 속에서 새하얀 swan(이)가 탄생했다. ' +
-    '그녀가 여인에게 남긴 말은 다음과 같다. ';
-  const legendQuote = '"제 이름은 묻지 마십시오. 그건 제가 드릴 수 있는 게 아닙니다."';
+    '그녀가 여인에게 남긴 말은 다음과 같다. "제 이름은 묻지 마십시오. 그건 제가 드릴 수 있는 게 아닙니다."';
 
   await t.test('1. [GUI 검증] window_legend_chronicle.gui에 주인공 유효성 안전 가드(IsValid)가 구현되어 있어야 함', () => {
     const guiPath = path.resolve('ck3-mod/gui/window_legend_chronicle.gui');
@@ -57,6 +56,7 @@ Unknown effect: 아닙니다."|||GENDER:F##CK3_TTS_END##, near line: 1" in file:
 
     // error 로그 단독으로도 복원 파서가 "in file: effect console command"에 걸려 0개로 실패하거나 불완전함
     const errorEvents = extractCk3EventsFromChunk(errorLogChunk);
+    assert.equal(errorEvents.length, 0, 'error 로그 단독으로는 0개 추출');
 
     // [요구사항]: errorLogChunk와 truncatedDebugChunk가 결합되거나,
     // 또는 error.log 청크 내에 쪼개진 토큰들이 온전하게 복원되어 전체 텍스트가 정상 추출되어야 함!
@@ -86,7 +86,7 @@ Unknown effect: 아닙니다."|||GENDER:F##CK3_TTS_END##, near line: 1" in file:
     fs.writeFileSync(tempDebugLog, '', 'utf8');
     fs.writeFileSync(tempErrorLog, '', 'utf8');
 
-    const receivedEvents: Array<{ title: string; content: string; speakerGender?: string }> = [];
+    const receivedEvents: Array<{ title?: string; content: string; speakerGender?: string }> = [];
 
     const watcher = startWatchingLogFile(
       tempDebugLog,

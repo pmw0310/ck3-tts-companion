@@ -36,6 +36,7 @@ const createMockSettings = (overrides?: Partial<AppSettings>): AppSettings => ({
   elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
   elevenLabsStability: 0.5,
   elevenLabsSimilarity: 0.75,
+  systemVoice: 'default',
   isCacheEnabled: true,
   maxCacheSizeMb: 500,
   isExecutionSoundEnabled: true,

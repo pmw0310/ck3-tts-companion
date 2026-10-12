@@ -38,6 +38,7 @@ test('장시간 실행 시 TTS 안정성 및 리소스 누수 방어 검증', as
     elevenLabsVoiceFemale: 'Xb7hH8MSUJpSbSDYk0k2',
     elevenLabsStability: 0.5,
     elevenLabsSimilarity: 0.75,
+    systemVoice: 'default',
     isCacheEnabled: false,
     maxCacheSizeMb: 500,
     isExecutionSoundEnabled: true,

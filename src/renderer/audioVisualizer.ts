@@ -10,6 +10,8 @@
 export interface AudioVisualizerController {
   /** 비주얼라이저 실시간 애니메이션 루프를 시작합니다. */
   start: () => void;
+  /** Web Speech API 등 외부 오디오 스트림 시 가상 파형 애니메이션을 가동합니다. */
+  startSimulated: () => void;
   /** 비주얼라이저 루프를 멈추고 막대 높이를 대기 상태로 초기화합니다. */
   stop: () => void;
   /** AudioContext가 suspended 상태일 때 resume을 호출합니다. */
@@ -68,6 +70,9 @@ export const initAudioVisualizer = (
 ): AudioVisualizerController => {
   const barElements = Array.from(containerEl.querySelectorAll<HTMLElement>('.bar'));
 
+  let simulatedFrameId: number | null = null;
+  let simulatedStartTime = 0;
+
   /**
    * 렌더 루프를 멈추고 막대 스타일을 기본 대기 높이로 리셋합니다.
    */
@@ -86,6 +91,11 @@ export const initAudioVisualizer = (
     if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
+    }
+
+    if (simulatedFrameId !== null) {
+      cancelAnimationFrame(simulatedFrameId);
+      simulatedFrameId = null;
     }
 
     for (const bar of barElements) {
@@ -208,6 +218,28 @@ export const initAudioVisualizer = (
     }
   };
 
+  /**
+   * Web Speech API 등 브라우저 내장 음성 합성 시 가상 파형 애니메이션을 가동합니다.
+   */
+  const startSimulated = (): void => {
+    stop();
+    simulatedStartTime = Date.now();
+    const simulatedLoop = (): void => {
+      const elapsed = (Date.now() - simulatedStartTime) / 1000;
+      for (let i = 0; i < barElements.length; i++) {
+        const bar = barElements[i];
+        if (!bar) continue;
+        const wave =
+          Math.sin(elapsed * 7.5 + i * 1.3) * 0.35 + Math.sin(elapsed * 13.2 + i * 0.7) * 0.25;
+        const normalizedValue = Math.max(0, Math.min(1, 0.45 + wave));
+        const scaleY = MIN_SCALE + normalizedValue * (MAX_SCALE - MIN_SCALE);
+        bar.style.transform = `scaleY(${scaleY.toFixed(3)})`;
+      }
+      simulatedFrameId = requestAnimationFrame(simulatedLoop);
+    };
+    simulatedFrameId = requestAnimationFrame(simulatedLoop);
+  };
+
   // HTMLAudioElement 이벤트에 자동 바인딩하여 안전성 보장
   audioEl.addEventListener('play', () => {
     start();
@@ -223,6 +255,7 @@ export const initAudioVisualizer = (
 
   return {
     start,
+    startSimulated,
     stop,
     resumeAudioContext
   };

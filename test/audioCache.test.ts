@@ -49,6 +49,7 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
     geminiVoiceFemale: 'Kore',
     openaiVoiceMale: 'onyx',
     openaiVoiceFemale: 'nova',
+    systemVoice: 'default',
     isCacheEnabled: true,
     maxCacheSizeMb: 500,
     isExecutionSoundEnabled: true,
@@ -131,15 +132,15 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
     });
   });
 
-  describe('2. 캐싱 프로바이더 필터링 검증 (사용자 규칙: Edge 제외)', () => {
-    it('유료 AI 음성 엔진(gemini, openai, elevenlabs)은 캐싱 대상이어야 함', () => {
+  describe('2. 캐싱 프로바이더 필터링 검증 (Edge-TTS 포함 및 시스템 TTS 제외)', () => {
+    it('AI 음성 엔진(edge, gemini, openai, elevenlabs)은 캐싱 대상이어야 함', () => {
+      assert.strictEqual(isCacheableProvider('edge'), true);
       assert.strictEqual(isCacheableProvider('gemini'), true);
       assert.strictEqual(isCacheableProvider('openai'), true);
       assert.strictEqual(isCacheableProvider('elevenlabs'), true);
     });
 
-    it('무료인 Edge-TTS 및 시스템 TTS는 반드시 캐싱 대상에서 제외되어야 함', () => {
-      assert.strictEqual(isCacheableProvider('edge'), false);
+    it('실시간 로컬 생성인 시스템 TTS는 캐싱 대상에서 제외되어야 함', () => {
       assert.strictEqual(isCacheableProvider('system'), false);
       assert.strictEqual(isCacheableProvider(undefined), false);
     });
@@ -200,7 +201,7 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
       assert.ok(stats.totalSizeBytes > 0);
     });
 
-    it('무료인 Edge-TTS 요청은 saveCachedAudio를 호출해도 디스크에 저장되지 않아야 함', async () => {
+    it('Edge-TTS 요청도 saveCachedAudio를 호출하면 정상적으로 디스크에 캐시되어야 함', async () => {
       const edgeSettings: AppSettings = {
         ...mockSettings,
         provider: 'edge'
@@ -215,12 +216,30 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
       // 저장 시도
       await saveCachedAudio(hash, fakeMp3, 'audio/mp3', req, edgeSettings);
 
-      // 캐시 파일이 저장되지 않았는지 검증
+      // 캐시 파일이 정상 저장되었는지 검증
       const cached = await getCachedAudio(hash);
-      assert.strictEqual(cached, null);
+      assert.ok(cached !== null);
+      assert.strictEqual(cached.fromCache, true);
 
       const stats = getCacheStats(edgeSettings);
-      assert.strictEqual(stats.totalFiles, 0);
+      assert.strictEqual(stats.totalFiles, 1);
+    });
+
+    it('실시간 로컬 생성인 시스템(system) TTS는 saveCachedAudio를 호출해도 캐시 저장되지 않아야 함', async () => {
+      const systemSettings: AppSettings = {
+        ...mockSettings,
+        provider: 'system'
+      };
+      const req: SynthesizeRequest = {
+        text: '로컬 시스템 음성입니다.',
+        settings: systemSettings
+      };
+      const hash = calculateCacheKey(req);
+      const fakeWav = Buffer.from('fake-wav-data');
+
+      await saveCachedAudio(hash, fakeWav, 'audio/wav', req, systemSettings);
+      const cached = await getCachedAudio(hash);
+      assert.strictEqual(cached, null);
     });
 
     it('isCacheEnabled: false 설정 시 캐시가 저장되지 않아야 함', async () => {

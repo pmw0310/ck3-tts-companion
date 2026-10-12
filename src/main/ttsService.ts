@@ -13,6 +13,7 @@ import {
   isCacheableProvider,
   saveCachedAudio
 } from '@/main/audioCacheService';
+import { synthesizeWithSystemTts } from '@/main/systemTtsService';
 
 // DNS 해석 캐시 (10분 TTL)
 const dnsCache = new Map<string, { addresses: string[]; expiresAt: number }>();
@@ -90,7 +91,6 @@ export const edgeTtsDnsLookup = (
     }
 
     // dns.resolve4 실패 시 기본 dns.lookup으로 안전 폴백
-    // @ts-expect-error Node.js dns.lookup 오버로드 호환
     dns.lookup(hostname, actualOptions, actualCallback);
   });
 };
@@ -103,6 +103,33 @@ export const edgeTtsAgent = new https.Agent({
   keepAlive: true,
   lookup: edgeTtsDnsLookup
 });
+
+/**
+ * Edge-TTS 및 각종 음성 합성 서비스 오류 문자열을 분석하여
+ * 사용자에게 조치 방법을 직관적으로 안내하는 친절한 한국어 에러 메시지로 변환합니다.
+ * @param rawError - 원본 에러 객체 또는 오류 문자열
+ * @returns 사용자 친화적으로 정제된 오류 메시지
+ */
+export const formatTtsErrorMessage = (rawError: unknown): string => {
+  const errorMsg =
+    rawError instanceof Error ? rawError.message : String(rawError ?? '');
+
+  // 1. 403 Forbidden (Microsoft 비공식 API 차단 / 요청 급증)
+  if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+    return `[Microsoft Edge-TTS 서비스 일시 차단 (403 Forbidden)] 마이크로소프트의 비공식 TTS 엔드포인트 차단 또는 요청 급증이 감지되었습니다. 인터넷 공유기 재부팅(IP 변경)을 하거나, 설정 화면에서 안정적인 무료 API인 'Google Gemini TTS'로 엔진을 전환해 주시기 바랍니다. (원문: ${errorMsg})`;
+  }
+
+  // 2. ENOTFOUND / DNS 실패
+  if (
+    errorMsg.includes('ENOTFOUND') ||
+    errorMsg.includes('speech.platform.bing.com')
+  ) {
+    clearEdgeTtsDnsCache('speech.platform.bing.com');
+    return `인터넷 연결 또는 DNS 설정을 확인하세요 (Edge-TTS 서버 접속 실패: ${errorMsg})`;
+  }
+
+  return errorMsg;
+};
 
 /**
  * 24kHz 16비트 모노 PCM 데이터에 표준 RIFF WAV 헤더(44바이트)를 덧붙여 브라우저 재생 가능한 WAV 버퍼를 생성합니다.
@@ -222,12 +249,7 @@ export const synthesizeWithEdgeTts = async (
           if (isSettled) return;
           isSettled = true;
           cleanup();
-          let errorMsg =
-            err instanceof Error ? err.message : 'Edge-TTS 스트림 중 오류 발생';
-          if (errorMsg.includes('ENOTFOUND') || errorMsg.includes('speech.platform.bing.com')) {
-            clearEdgeTtsDnsCache('speech.platform.bing.com');
-            errorMsg = `인터넷 연결 또는 DNS 설정을 확인하세요 (Edge-TTS 서버 접속 실패: ${errorMsg})`;
-          }
+          const errorMsg = formatTtsErrorMessage(err);
           reject(new Error(errorMsg));
         });
       }
@@ -585,7 +607,9 @@ export const processTtsRequest = async (
           ? { openaiVoice: voiceOverride as AppSettings['openaiVoice'] }
           : rawSettings.provider === 'elevenlabs'
             ? { elevenLabsVoiceId: voiceOverride }
-            : { edgeVoice: voiceOverride as AppSettings['edgeVoice'] }
+            : rawSettings.provider === 'system'
+              ? { systemVoice: voiceOverride as AppSettings['systemVoice'] }
+              : { edgeVoice: voiceOverride as AppSettings['edgeVoice'] }
       : {}),
     ...(promptOverride ? { geminiSystemPrompt: promptOverride } : {})
   };
@@ -649,13 +673,25 @@ export const processTtsRequest = async (
           fallbackReason: maskedError
         };
       } catch (fallbackError: unknown) {
-        const rawFallbackMsg =
-          fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
-        console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
-        return {
-          isSuccess: false,
-          errorMessage: `ElevenLabs 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
-        };
+        try {
+          const sysFallback = await synthesizeWithSystemTts(text, settings);
+          console.log('✅ [TTS Service]: Edge-TTS 차단 후 로컬 시스템 TTS 2차 대체 재생 성공');
+          return {
+            isSuccess: true,
+            audioBase64: sysFallback.audioBase64,
+            mimeType: sysFallback.mimeType,
+            isFallback: true,
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+          };
+        } catch {
+          const rawFallbackMsg =
+            fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
+          console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
+          return {
+            isSuccess: false,
+            errorMessage: `ElevenLabs 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
+          };
+        }
       }
     }
   }
@@ -698,13 +734,25 @@ export const processTtsRequest = async (
           fallbackReason: maskedError
         };
       } catch (fallbackError: unknown) {
-        const rawFallbackMsg =
-          fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
-        console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
-        return {
-          isSuccess: false,
-          errorMessage: `OpenAI 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
-        };
+        try {
+          const sysFallback = await synthesizeWithSystemTts(text, settings);
+          console.log('✅ [TTS Service]: Edge-TTS 차단 후 로컬 시스템 TTS 2차 대체 재생 성공');
+          return {
+            isSuccess: true,
+            audioBase64: sysFallback.audioBase64,
+            mimeType: sysFallback.mimeType,
+            isFallback: true,
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+          };
+        } catch {
+          const rawFallbackMsg =
+            fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
+          console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
+          return {
+            isSuccess: false,
+            errorMessage: `OpenAI 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
+          };
+        }
       }
     }
   }
@@ -748,36 +796,87 @@ export const processTtsRequest = async (
           fallbackReason: maskedError
         };
       } catch (fallbackError: unknown) {
-        const rawFallbackMsg =
-          fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
-        console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
-        return {
-          isSuccess: false,
-          errorMessage: `Gemini 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
-        };
+        try {
+          const sysFallback = await synthesizeWithSystemTts(text, settings);
+          console.log('✅ [TTS Service]: Edge-TTS 차단 후 로컬 시스템 TTS 2차 대체 재생 성공');
+          return {
+            isSuccess: true,
+            audioBase64: sysFallback.audioBase64,
+            mimeType: sysFallback.mimeType,
+            isFallback: true,
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+          };
+        } catch {
+          const rawFallbackMsg =
+            fallbackError instanceof Error ? fallbackError.message : 'Edge-TTS 폴백 실패';
+          console.error('❌ [TTS Service Error]: Edge-TTS 폴백도 실패함:', rawFallbackMsg);
+          return {
+            isSuccess: false,
+            errorMessage: `Gemini 실패 (${maskedError}) 후 Edge-TTS 대체 합성 실패: ${rawFallbackMsg}`
+          };
+        }
       }
+    }
+  }
+
+  // 4. 시스템(로컬 OS) TTS 엔진
+  if (settings.provider === 'system') {
+    try {
+      const result = await synthesizeWithSystemTts(text, settings);
+      return {
+        isSuccess: true,
+        audioBase64: result.audioBase64,
+        mimeType: result.mimeType
+      };
+    } catch (sysError: unknown) {
+      const rawErrorMsg =
+        sysError instanceof Error ? sysError.message : '시스템 로컬 TTS 오류 발생';
+      console.error('❌ [TTS Service Error]: 시스템 TTS 실패:', rawErrorMsg);
+      return {
+        isSuccess: false,
+        errorMessage: `시스템(로컬) TTS 합성 실패: ${rawErrorMsg}`
+      };
     }
   }
 
   // 기본값: Edge-TTS
   try {
     const result = await synthesizeWithEdgeTts(text, settings);
+
+    // 성공 시 백그라운드 캐시 비동기 저장 (Edge-TTS 캐싱 활성화)
+    if (cacheKey && result.audioBase64) {
+      const audioBuf = Buffer.from(result.audioBase64, 'base64');
+      saveCachedAudio(cacheKey, audioBuf, result.mimeType, effectiveRequest, settings).catch(
+        (err: unknown) => console.warn('⚠️ [AudioCache] Edge-TTS 캐시 저장 실패:', err)
+      );
+    }
+
     return {
       isSuccess: true,
       audioBase64: result.audioBase64,
       mimeType: result.mimeType
     };
   } catch (error: unknown) {
-    let rawErrorMsg =
-      error instanceof Error ? error.message : '알 수 없는 Edge-TTS 변환 오류';
-    if (rawErrorMsg.includes('ENOTFOUND') || rawErrorMsg.includes('speech.platform.bing.com')) {
-      clearEdgeTtsDnsCache('speech.platform.bing.com');
-      rawErrorMsg = `인터넷 연결 또는 DNS 설정을 확인하세요 (Edge-TTS 서버 접속 실패: ${rawErrorMsg})`;
+    const rawErrorMsg = formatTtsErrorMessage(error);
+    console.warn('⚠️ [TTS Service]: Edge-TTS 합성 실패, 로컬 시스템 TTS로 자동 대체 시도:', rawErrorMsg);
+
+    try {
+      // Edge-TTS 403 차단 또는 네트워크 실패 시 로컬 시스템 TTS로 무중단 자동 폴백
+      const fallbackResult = await synthesizeWithSystemTts(text, settings);
+      console.log('✅ [TTS Service]: Edge-TTS 실패 후 로컬 시스템 TTS 자동 대체 재생 성공');
+      return {
+        isSuccess: true,
+        audioBase64: fallbackResult.audioBase64,
+        mimeType: fallbackResult.mimeType,
+        isFallback: true,
+        fallbackReason: rawErrorMsg
+      };
+    } catch (fallbackError: unknown) {
+      console.error('❌ [TTS Service Error]: 로컬 시스템 TTS 폴백도 실패함:', fallbackError);
+      return {
+        isSuccess: false,
+        errorMessage: rawErrorMsg
+      };
     }
-    console.error('❌ [TTS Service Error]:', rawErrorMsg);
-    return {
-      isSuccess: false,
-      errorMessage: rawErrorMsg
-    };
   }
 };

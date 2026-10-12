@@ -62,6 +62,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   geminiVoiceFemale: 'Kore',
   openaiVoiceMale: 'onyx',
   openaiVoiceFemale: 'nova',
+  systemVoice: 'default',
   isCacheEnabled: true,
   maxCacheSizeMb: 500,
   isExecutionSoundEnabled: true,

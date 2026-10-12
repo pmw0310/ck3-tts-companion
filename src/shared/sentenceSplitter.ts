@@ -60,6 +60,12 @@ export const splitIntoPlaybackChunks = (
     return sentences;
   }
 
+  // 시스템(로컬 OS) TTS는 문장을 쪼개면 프로세스 기동 오버헤드로 인해 문장 간 침묵이 발생하므로,
+  // 본문 전체를 단 1개의 통 청크로 처리하여 끊김 없는 일괄 완독 및 프로세스 실행 1회화를 보장합니다.
+  if (provider === 'system') {
+    return [text.trim()];
+  }
+
   // Edge-TTS는 응답 속도가 매우 빠르므로 기존 문장 단위 분할 유지
   if (provider === 'edge') {
     return sentences;

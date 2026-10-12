@@ -6086,6 +6086,26 @@ types InventoryTooltips
 			alwaystransparent = no
 		}
 
+		state = {
+			name = _show
+			using = Animation_FadeIn_Quick
+		}
+
+		state = {
+			name = _hide
+			using = Animation_FadeOut_Quick
+			on_start = "[GetVariableSystem.Clear('tts_last_artifact_name')]"
+		}
+
+		# CK3 TTS Companion: 유물 툴팁 호버 시 0.45초 안정 체류 후 자동 낭독
+		state = {
+			name = tts_artifact_auto_play
+			trigger_when = "[And(Not(StringIsEmpty(Artifact.GetNameNoTooltip)), And(Not(StringIsEmpty(Artifact.GetDesc)), Not(GetVariableSystem.HasValue('tts_last_artifact_name', Artifact.GetNameNoTooltip))))]"
+			delay = 0.45
+			on_start = "[GetVariableSystem.Set('tts_last_artifact_name', Artifact.GetNameNoTooltip)]"
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##\"')))))]"
+		}
+
 		vbox = {
 			set_parent_size_to_minimum = yes
 			margin = { 20 10 }
@@ -6144,10 +6164,9 @@ types InventoryTooltips
 
 					expand = {}
 
-					vbox = {
+					hbox = {
 						layoutpolicy_vertical = expanding
-
-						expand = {}
+						spacing = 8
 
 						text_single = {
 							name = "artifact_category"
@@ -6156,7 +6175,21 @@ types InventoryTooltips
 							fonttintcolor = "[TooltipInfo.GetTintColor]"
 						}
 
-						expand = {}
+						button_round = {
+							name = "tts_artifact_speak_button"
+							size = { 30 30 }
+							raw_tooltip = "TTS 유물 설명 낭독 (단축키: F)"
+							shortcut = "army_split_half"
+
+							button_icon = {
+								texture = "gfx/interface/icons/flat_icons/play_sound.dds"
+								size = { 18 18 }
+								parentanchor = center
+								alwaystransparent = yes
+							}
+
+							onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##\"')))))]"
+						}
 					}
 				}
 			}
