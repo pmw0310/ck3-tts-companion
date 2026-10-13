@@ -266,7 +266,8 @@ export const convertWavToMp3 = async (
 /**
  * 캐싱 지원 대상 프로바이더인지 판별합니다.
  * 토큰 소모가 발생하는 유료 AI 엔진(Gemini, OpenAI, ElevenLabs) 및
- * 엔드포인트 차단 방지 및 무지연 재생을 위한 Edge-TTS를 캐싱합니다. (시스템 TTS는 실시간 로컬 합성이므로 제외)
+ * 엔드포인트 차단 방지 및 0ms 무지연 재생을 위한 Edge-TTS,
+ * 그리고 OS 프로세스 기동 오버헤드를 0ms로 박멸하기 위한 시스템 로컬 TTS(system)를 캐싱합니다.
  * @param provider - TTS 제공자 식별자
  * @returns 캐시 대상 여부
  */
@@ -275,7 +276,8 @@ export const isCacheableProvider = (provider?: string): boolean => {
     provider === 'edge' ||
     provider === 'gemini' ||
     provider === 'openai' ||
-    provider === 'elevenlabs'
+    provider === 'elevenlabs' ||
+    provider === 'system'
   );
 };
 
@@ -300,6 +302,9 @@ export const calculateCacheKey = (request: SynthesizeRequest): string => {
       case 'elevenlabs':
         effectiveVoice = settings.elevenLabsVoiceId;
         break;
+      case 'system':
+        effectiveVoice = settings.systemVoice ?? 'default';
+        break;
       default:
         effectiveVoice = settings.edgeVoice;
         break;
@@ -317,6 +322,9 @@ export const calculateCacheKey = (request: SynthesizeRequest): string => {
       break;
     case 'elevenlabs':
       effectiveModel = settings.elevenLabsModel;
+      break;
+    case 'system':
+      effectiveModel = process.platform === 'win32' ? 'windows-sapi' : 'mac-say';
       break;
     default:
       effectiveModel = 'edge-tts';

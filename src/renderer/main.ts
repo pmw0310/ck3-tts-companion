@@ -835,8 +835,11 @@ const speakText = async (
   // 첫 번째 청크 즉시 단일 요청 (빠른 1초 Fast-Start)
   startFetchChunk(0);
 
-  // Edge-TTS의 경우 동시성 제한이 없으므로 다음 청크도 미리 선행 요청 가능
-  if (state.settings.provider === 'edge' && playbackItems.length > 1) {
+  // Edge-TTS 및 시스템 로컬 TTS의 경우 클라우드 동시성 제한이 없으므로 다음 청크도 미리 선행 요청(Pre-warm)
+  if (
+    (state.settings.provider === 'edge' || state.settings.provider === 'system') &&
+    playbackItems.length > 1
+  ) {
     startFetchChunk(1);
   }
 

@@ -1,6 +1,95 @@
 import type { TtsProviderType } from '@/shared/types';
 
 /**
+ * 띄어쓰기(단어) 경계를 보존하며 지정된 최대 길이 이내로 분할합니다.
+ * @param text - 분할할 텍스트
+ * @param maxLength - 최대 허용 글자 수
+ * @returns 분할된 단어 묶음 배열
+ */
+const splitByWords = (text: string, maxLength: number): string[] => {
+  const words = text.split(/\s+/).filter((w) => w.length > 0);
+  if (words.length <= 1) {
+    return [text];
+  }
+
+  const result: string[] = [];
+  let current = '';
+
+  for (const word of words) {
+    if (current.length === 0) {
+      current = word;
+    } else if (current.length + word.length + 1 <= maxLength) {
+      current = `${current} ${word}`;
+    } else {
+      result.push(current);
+      current = word;
+    }
+  }
+
+  if (current.length > 0) {
+    result.push(current);
+  }
+
+  return result;
+};
+
+/**
+ * 55자 이상의 긴 문장을 쉼표, 세미콜론, 따옴표 또는 자연스러운 띄어쓰기 기준으로
+ * 자연스러운 호흡 단위(Clause)로 분할합니다.
+ * @param sentence - 분할할 단일 문장
+ * @param maxClauseLength - 한 구절의 최대 권장 길이 (기본: 55자)
+ * @returns 호흡 단위 구절들의 배열
+ */
+export const splitLongSentenceIntoClauses = (
+  sentence: string,
+  maxClauseLength = 55
+): string[] => {
+  const trimmed = sentence.trim();
+  if (trimmed.length <= maxClauseLength) {
+    return [trimmed];
+  }
+
+  // 1. 쉼표(,), 세미콜론(;), 콜론(:), 닫는 따옴표/괄호 등 문장 내 휴지(pause) 부호 기준 1차 분할
+  const clauseParts = trimmed
+    .split(/(?<=[,，、;；:：])\s+|(?<=[”"’'」』\)])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  if (clauseParts.length > 1) {
+    const result: string[] = [];
+    let current = '';
+
+    for (const part of clauseParts) {
+      if (current.length === 0) {
+        current = part;
+      } else if (current.length + part.length + 1 <= maxClauseLength) {
+        current = `${current} ${part}`;
+      } else {
+        result.push(current);
+        current = part;
+      }
+    }
+    if (current.length > 0) {
+      result.push(current);
+    }
+
+    // 만약 분할된 결과 중 여전히 maxClauseLength * 1.3을 넘는 긴 구절이 있다면 단어 단위로 2차 분할
+    const refined: string[] = [];
+    for (const res of result) {
+      if (res.length > maxClauseLength * 1.3) {
+        refined.push(...splitByWords(res, maxClauseLength));
+      } else {
+        refined.push(res);
+      }
+    }
+    return refined;
+  }
+
+  // 2. 쉼표나 휴지 부호가 없는데도 긴 문장인 경우: 자연스러운 띄어쓰기(공백) 기준으로 분할
+  return splitByWords(trimmed, maxClauseLength);
+};
+
+/**
  * 긴 텍스트를 자연스러운 낭독 호흡 단위의 문장 배열로 분할합니다.
  * 마침표, 느낌표, 물음표, 줄바꿈을 기준으로 분리하며, 지나치게 짧은 구절은 병합하여 매끄러운 낭독을 보장합니다.
  * @param text - 원본 텍스트
@@ -45,55 +134,80 @@ export const splitIntoSentences = (text: string): string[] => {
 
 /**
  * TTS 제공자에 맞추어 첫 음성 재생 레이턴시를 최소화(Fast-Start)하도록 최적 크기의 낭독 청크 배열로 분할합니다.
- * - 첫 번째 청크는 1~1.5초 내에 즉시 합성되도록 짧은 첫 문장(40~80자)을 배정합니다.
- * - 이후 청크는 재생 시간 동안 백그라운드에서 완료될 수 있도록 적절한 길이(100~150자)로 묶어 API 호출 횟수를 최소화합니다.
+ * - 본문 전체의 길이에 상관없이(100자든 1,000자든), 첫 번째 청크는 항상 25~50자 내외로 엄격히 제한하여
+ *   어떤 장문이든 1초 내외로 첫 오디오 재생이 즉시 시작되도록 보장합니다.
+ * - 긴 문장이나 쉼표 복합문은 자연스러운 호흡 단위(Clause)로 2단계 분할하여 긴 한 문장으로 인한 지연을 차단합니다.
+ * - 이후 청크는 첫 구절이 재생되는 동안 백그라운드에서 완료될 수 있도록 최적 길이로 묶어 연속 재생을 지원합니다.
  * @param text - 원본 낭독 텍스트
- * @param provider - TTS 제공자 ('edge' | 'gemini')
+ * @param provider - TTS 제공자 ('edge' | 'system' | 'gemini')
  * @returns 재생용 청크 배열
  */
 export const splitIntoPlaybackChunks = (
   text: string,
   provider: TtsProviderType
 ): string[] => {
-  const sentences = splitIntoSentences(text);
-  if (sentences.length <= 1) {
-    return sentences;
+  if (!text || text.trim().length === 0) {
+    return [];
   }
 
-  // 시스템(로컬 OS) TTS는 문장을 쪼개면 프로세스 기동 오버헤드로 인해 문장 간 침묵이 발생하므로,
-  // 본문 전체를 단 1개의 통 청크로 처리하여 끊김 없는 일괄 완독 및 프로세스 실행 1회화를 보장합니다.
-  if (provider === 'system') {
-    return [text.trim()];
+  const trimmed = text.trim();
+  // 45자 이하의 짧은 단문은 분할 오버헤드 없이 즉시 단일 청크 반환
+  if (trimmed.length <= 45) {
+    return [trimmed];
   }
 
-  // Edge-TTS는 응답 속도가 매우 빠르므로 기존 문장 단위 분할 유지
+  // 1단계: 마침표, 느낌표, 물음표, 줄바꿈 기준 1차 문장 분할
+  const rawSentences = splitIntoSentences(trimmed);
+
+  // 2단계: 55자 이상의 긴 문장들을 호흡 단위 구절(Clauses)로 세부 분할
+  const allClauses: string[] = [];
+  for (const s of rawSentences) {
+    if (s.length > 55) {
+      const clauses = splitLongSentenceIntoClauses(s, 55);
+      allClauses.push(...clauses);
+    } else {
+      allClauses.push(s);
+    }
+  }
+
+  if (allClauses.length <= 1) {
+    return allClauses;
+  }
+
+  // Edge-TTS는 웹소켓 스트리밍 및 응답 속도가 매우 빠르므로, 불필요한 문장 병합 없이
+  // 자연스러운 개별 문장/구절(Clause) 단위를 그대로 반환하여 문장별 호흡과 음질을 극대화합니다.
+  // (단, 55자를 초과하는 긴 장문은 이미 allClauses에서 25~50자 구절로 쪼개져 1초 내 즉각 발화 보장!)
   if (provider === 'edge') {
-    return sentences;
+    return allClauses;
   }
 
-  // Gemini는 API 왕복 지연시간(RTT) 및 Rate Limit을 최적화하기 위해 스마트 청킹 적용:
-  // 청크 1: 첫 문장(또는 35자 미만 시 2문장) -> 1~1.5초 내 즉각 낭독 시작!
-  // 청크 2 이후: 120~180자 단위로 묶어 낭독 중 백그라운드 사전 합성
+  // 3단계: Fast-Start 전략 - 첫 청크 크기 25~50자 엄격 고정!
   const chunks: string[] = [];
-
-  let firstChunk = sentences[0]!;
+  let firstChunk = allClauses[0]!;
   let startIndex = 1;
-  if (sentences.length > 2 && firstChunk.length < 35 && sentences[1]!.length < 45) {
-    firstChunk = `${firstChunk} ${sentences[1]!}`;
+
+  // 첫 구절이 18자 미만으로 지나치게 짧고 다음 구절과 합쳐도 45자 이하라면 1개로 합쳐서 어색한 단절 방지
+  if (allClauses.length > 2 && firstChunk.length < 18 && allClauses[1]!.length < 28) {
+    firstChunk = `${firstChunk} ${allClauses[1]!}`;
     startIndex = 2;
   }
   chunks.push(firstChunk);
 
+  // 4단계: 후속 청크들을 프로바이더별 백그라운드 합성 효율에 맞춰 묶음
+  // - 시스템(로컬) TTS: 재생 중 백그라운드 선행 합성을 위해 80~100자 단위로 배치
+  // - Gemini TTS: Rate Limit 절약을 위해 100~140자 단위로 배치
+  const maxFollowupChunkLength = provider === 'gemini' ? 140 : 95;
+
   let buffer = '';
-  for (let i = startIndex; i < sentences.length; i++) {
-    const s = sentences[i]!;
+  for (let i = startIndex; i < allClauses.length; i++) {
+    const clause = allClauses[i]!;
     if (buffer.length === 0) {
-      buffer = s;
-    } else if (buffer.length + s.length < 150) {
-      buffer = `${buffer} ${s}`;
+      buffer = clause;
+    } else if (buffer.length + clause.length + 1 <= maxFollowupChunkLength) {
+      buffer = `${buffer} ${clause}`;
     } else {
       chunks.push(buffer);
-      buffer = s;
+      buffer = clause;
     }
   }
   if (buffer.length > 0) {

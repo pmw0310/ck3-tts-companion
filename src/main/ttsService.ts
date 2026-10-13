@@ -823,6 +823,15 @@ export const processTtsRequest = async (
   if (settings.provider === 'system') {
     try {
       const result = await synthesizeWithSystemTts(text, settings);
+
+      // 성공 시 백그라운드 캐시 비동기 저장 (WAV -> MP3 변환 포함)
+      if (cacheKey && result.audioBase64) {
+        const audioBuf = Buffer.from(result.audioBase64, 'base64');
+        saveCachedAudio(cacheKey, audioBuf, result.mimeType, effectiveRequest, settings).catch(
+          (err: unknown) => console.warn('⚠️ [AudioCache] 시스템 TTS 캐시 저장 실패:', err)
+        );
+      }
+
       return {
         isSuccess: true,
         audioBase64: result.audioBase64,

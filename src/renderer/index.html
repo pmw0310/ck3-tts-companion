@@ -170,8 +170,16 @@
               <div class="setting-item">
                 <label class="setting-label">AI 음성 엔진 선택</label>
                 <div class="engine-cards-grid">
+                  <!-- System 로컬 TTS 카드 -->
+                  <div class="engine-card active" data-engine="system">
+                    <div class="engine-card-title">시스템 (로컬 TTS)</div>
+                    <div class="engine-card-desc">
+                      <span class="engine-pricing is-free">오프라인</span> · 100% 로컬 / 차단 없음 / 즉시 재생
+                    </div>
+                  </div>
+
                   <!-- Edge-TTS 카드 -->
-                  <div class="engine-card active" data-engine="edge">
+                  <div class="engine-card" data-engine="edge">
                     <div class="engine-card-title">Edge-TTS</div>
                     <div class="engine-card-desc">
                       <span class="engine-pricing is-free">무료</span> · 설정 없이 즉시 사용 가능한 초고속 낭독
@@ -201,19 +209,34 @@
                       <span class="engine-pricing is-paid">유료</span> · 압도적 감정 연기력 & 글로벌 1위
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <!-- System 로컬 TTS 카드 -->
-                  <div class="engine-card" data-engine="system">
-                    <div class="engine-card-title">시스템 (로컬 TTS)</div>
-                    <div class="engine-card-desc">
-                      <span class="engine-pricing is-free">오프라인</span> · 100% 로컬 / 차단 없음 / 즉시 재생
-                    </div>
-                  </div>
+              <!-- System TTS 전용 옵션 -->
+              <div id="system-options" class="engine-options-group">
+                <div class="form-row">
+                  <label for="select-system-voice" class="setting-label">기본 시스템 목소리</label>
+                  <select id="select-system-voice" class="form-select">
+                    <option value="default">기본값 (운영체제 기본 설정 음성 - 권장)</option>
+                    <option value="Flo">Flo (macOS 여성 - 초고속 권장 ⚡)</option>
+                    <option value="Eddy">Eddy (macOS 남성 - 고속 권장 ⚡)</option>
+                    <option value="Reed">Reed (macOS 남성)</option>
+                    <option value="Microsoft Heami">혜미 (Windows 여성 - 초고속 SAPI ⚡)</option>
+                    <option value="Yuna">유나 (macOS 여성 - 고음질 / 모델 로딩 지연 주의)</option>
+                    <option value="Grandpa">할아버지 (macOS 남성)</option>
+                    <option value="Grandma">할머니 (macOS 여성)</option>
+                    <option value="Rocko">Rocko (macOS)</option>
+                    <option value="Sandy">Sandy (macOS)</option>
+                    <option value="Shelley">Shelley (macOS)</option>
+                  </select>
+                </div>
+                <div class="setting-hint">
+                  ⚡ 100% 오프라인 무지연 동작: Fast-Start 첫 문장 즉시 발화 및 로컬 캐시(0ms)가 적용됩니다. (로컬 TTS는 오디오 드라마 모드를 지원하지 않습니다)
                 </div>
               </div>
 
               <!-- Edge-TTS 전용 옵션 -->
-              <div id="edge-options" class="engine-options-group">
+              <div id="edge-options" class="engine-options-group option-hidden">
                 <div class="form-row">
                   <label for="select-edge-voice" class="setting-label">기본 사관/지문 목소리</label>
                   <select id="select-edge-voice" class="form-select">
@@ -371,28 +394,7 @@
                 </div>
               </div>
 
-              <!-- System TTS 전용 옵션 -->
-              <div id="system-options" class="engine-options-group option-hidden">
-                <div class="form-row">
-                  <label for="select-system-voice" class="setting-label">기본 시스템 목소리</label>
-                  <select id="select-system-voice" class="form-select">
-                    <option value="default">기본값 (운영체제 기본 설정 음성)</option>
-                    <option value="Yuna">유나 (macOS 한국어 여성)</option>
-                    <option value="Reed">Reed (macOS 한국어 남성)</option>
-                    <option value="Eddy">Eddy (macOS 한국어 남성)</option>
-                    <option value="Flo">Flo (macOS 한국어 여성)</option>
-                    <option value="Grandpa">할아버지 (macOS 한국어 남성)</option>
-                    <option value="Grandma">할머니 (macOS 한국어 여성)</option>
-                    <option value="Rocko">Rocko (macOS 한국어)</option>
-                    <option value="Sandy">Sandy (macOS 한국어)</option>
-                    <option value="Shelley">Shelley (macOS 한국어)</option>
-                    <option value="Microsoft Heami">혜미 (Windows 한국어 여성)</option>
-                  </select>
-                </div>
-                <div class="setting-hint">
-                  ℹ️ 외부 인터넷 연결이나 API 키가 전혀 필요 없으며, Microsoft 403 차단 없이 100% 로컬에서 동작합니다. (로컬 TTS는 오디오 드라마 모드를 지원하지 않습니다)
-                </div>
-              </div>
+
 
               <!-- 공통 낭독 속도 슬라이더 -->
               <div class="form-row speech-rate-row">

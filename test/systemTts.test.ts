@@ -81,5 +81,29 @@ describe('시스템(로컬) TTS 서비스 무결성 검증', () => {
       assert.ok(result.audioBase64 && result.audioBase64.length > 0);
       assert.strictEqual(result.mimeType, 'audio/wav');
     });
+
+    it('5. [캐시 통합] isCacheEnabled: true일 때 시스템 TTS 오디오가 캐시되고 2회차에 0ms 즉시 반환되어야 함', async () => {
+      const cacheSettings: AppSettings = {
+        ...dummySettings,
+        isCacheEnabled: true
+      };
+      const req: SynthesizeRequest = {
+        text: '이벤트가 캐시되어 딜레이 없이 즉시 재생됩니다.',
+        settings: cacheSettings
+      };
+
+      // 1회차: 실제 합성 및 캐시 저장
+      const res1 = await processTtsRequest(req);
+      assert.strictEqual(res1.isSuccess, true);
+
+      // 캐시 디스크 저장이 비동기로 진행되므로 잠시 대기
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // 2회차: 캐시에서 즉시 반환 (0ms)
+      const res2 = await processTtsRequest(req);
+      assert.strictEqual(res2.isSuccess, true);
+      assert.strictEqual(res2.fromCache, true);
+      assert.strictEqual(res2.audioBase64, res1.audioBase64);
+    });
   }
 });

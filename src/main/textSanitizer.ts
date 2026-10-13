@@ -6,8 +6,8 @@ import type { Ck3EventType } from '@/shared/types';
 const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:(?:Error|ERROR):\s*"?|console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 및 Error: " 등 로그 헤더
   /\bconsole_success:\s*/gi,                                  // console_success 접두사
-  /(?:^|\s)(?:Error|ERROR):\s*"?/gi,                          // Error: 및 ERROR: 접두사 및 따옴표 잔여물 제거
-  /\b(?:Error|ERROR):\s*\[[^\]]+\]/gi,                        // ERROR:[target_character.GetFirstNameNoTooltip] 등 Jomini 스코프 런타임 결함 태그 제거
+  /(?:^|\s)(?:(?:Error|ERROR):\s*)+"?/gi,                          // Error: 및 ERROR:ERROR: 접두사 및 따옴표 잔여물 제거
+  /(?:(?:Error|ERROR):\s*)+\[[^\]]+\]/gi,                        // ERROR:ERROR:[target_character...] 등 Jomini 스코프 런타임 결함 태그 제거
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
@@ -253,6 +253,11 @@ const resolveKoreanParticles = (text: string): string => {
     .replace(/\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/g, '로서')
     .replace(/\((?:으\s*[/]\s*로|로\s*[/]\s*으|으|로)\)(?:으|로)?/g, '로')
     .replace(/\((?:아\s*[/]\s*야|야\s*[/]\s*아|아|야)\)(?:아|야)?/g, '야');
+
+  // 3. 인게임 스코프 결함(ERROR:[...]) 제거 후 붕 뜬 관형사/조사 결합 자연 복원 (예: "나의 (은)는" -> "나의 신하는")
+  resolved = resolved
+    .replace(/(?:^|\s)나의\s+(?:은|는)(?=\s|$)/g, ' 나의 신하는')
+    .replace(/(?:^|\s)나의\s+(?:이|가)(?=\s|$)/g, ' 나의 신하가');
 
   return resolved;
 };

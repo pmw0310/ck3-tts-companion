@@ -132,17 +132,41 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
     });
   });
 
-  describe('2. 캐싱 프로바이더 필터링 검증 (Edge-TTS 포함 및 시스템 TTS 제외)', () => {
-    it('AI 음성 엔진(edge, gemini, openai, elevenlabs)은 캐싱 대상이어야 함', () => {
+  describe('2. 캐싱 프로바이더 필터링 검증 (Edge-TTS 및 시스템 로컬 TTS 포함)', () => {
+    it('AI 음성 엔진(edge, gemini, openai, elevenlabs) 및 시스템 로컬 TTS(system)는 캐싱 대상이어야 함', () => {
       assert.strictEqual(isCacheableProvider('edge'), true);
       assert.strictEqual(isCacheableProvider('gemini'), true);
       assert.strictEqual(isCacheableProvider('openai'), true);
       assert.strictEqual(isCacheableProvider('elevenlabs'), true);
+      assert.strictEqual(isCacheableProvider('system'), true);
     });
 
-    it('실시간 로컬 생성인 시스템 TTS는 캐싱 대상에서 제외되어야 함', () => {
-      assert.strictEqual(isCacheableProvider('system'), false);
+    it('미정의(undefined) 프로바이더는 캐싱 대상에서 제외되어야 함', () => {
       assert.strictEqual(isCacheableProvider(undefined), false);
+      assert.strictEqual(isCacheableProvider('unknown-engine'), false);
+    });
+
+    it('시스템 TTS(system) 요청 시 고유한 해시 키가 정상 산출되어야 함', () => {
+      const sysReq: SynthesizeRequest = {
+        text: '폐하, 긴급한 전령이 도착했습니다.',
+        settings: {
+          ...mockSettings,
+          provider: 'system',
+          systemVoice: 'Flo'
+        }
+      };
+      const hash = calculateCacheKey(sysReq);
+      assert.strictEqual(hash.length, 64);
+
+      // 보이스가 다르면 해시가 달라져야 함
+      const sysReq2: SynthesizeRequest = {
+        ...sysReq,
+        settings: {
+          ...sysReq.settings,
+          systemVoice: 'Eddy'
+        }
+      };
+      assert.notStrictEqual(hash, calculateCacheKey(sysReq2));
     });
   });
 
@@ -225,21 +249,25 @@ describe('로컬 오디오 캐싱 시스템 및 WAV to MP3 트랜스코딩 무�
       assert.strictEqual(stats.totalFiles, 1);
     });
 
-    it('실시간 로컬 생성인 시스템(system) TTS는 saveCachedAudio를 호출해도 캐시 저장되지 않아야 함', async () => {
+    it('시스템(system) TTS는 saveCachedAudio를 호출하면 정상 캐시 저장되고 조회되어야 함', async () => {
       const systemSettings: AppSettings = {
         ...mockSettings,
-        provider: 'system'
+        provider: 'system',
+        systemVoice: 'Flo'
       };
       const req: SynthesizeRequest = {
         text: '로컬 시스템 음성입니다.',
         settings: systemSettings
       };
       const hash = calculateCacheKey(req);
-      const fakeWav = Buffer.from('fake-wav-data');
+      const fakeWav = wrapPcmWithWavHeader(Buffer.alloc(48000), 24000);
 
       await saveCachedAudio(hash, fakeWav, 'audio/wav', req, systemSettings);
+      await waitForPendingCacheWrites();
+
       const cached = await getCachedAudio(hash);
-      assert.strictEqual(cached, null);
+      assert.ok(cached !== null, '시스템 TTS 캐시가 조회되어야 합니다.');
+      assert.strictEqual(cached.fromCache, true);
     });
 
     it('isCacheEnabled: false 설정 시 캐시가 저장되지 않아야 함', async () => {
