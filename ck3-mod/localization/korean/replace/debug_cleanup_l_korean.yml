@@ -1,4 +1,4 @@
-﻿l_korean:
+l_korean:
  DEBUG_TITLE_ID:0 ""
  DEBUG_TITLE_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
  DEBUG_REGION_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
@@ -25,7 +25,7 @@
  COPY_EVENT_CONTENTS:0 ""
  rite_growth.0010.desc.differing.doctrine:0 "그중에서도 가장 눈에 띄는 차이는 [differing_doctrine.GetDescriptiveName( source_rite.GetFaith.Self )](이)다."
  faith_creation.1021.desc.differing.doctrine:0 "가장 큰 차이는 [differing_doctrine.GetName](이)다."
- TTS_ACTIVITY_EVENT_TOOLTIP:0 "TTS 이벤트 낭독 (단축키: F)\n#weak ※ 대형 활동(대관식, 대규모 결혼식 등) 이벤트는 안정성을 위해 자동 재생이 지원되지 않으며, F 키 또는 스피커 버튼을 눌러 수동으로 낭독합니다.#!"
+ TTS_ACTIVITY_EVENT_TOOLTIP:0 "TTS 이벤트 다시 듣기 (단축키: F)\n#weak ※ 대형 활동(대관식, 대규모 결혼식, 사냥, 연회, 순례, 토너먼트 등) 이벤트는 자동으로 낭독되며, F 키 또는 스피커 버튼을 눌러 언제든 다시 들을 수 있습니다.#!"
  TTS_COURT_EVENT_TOOLTIP:0 "TTS 이벤트 낭독 (단축키: F)\n#weak ※ 궁정(알현실) 이벤트는 안정성을 위해 자동 재생이 지원되지 않으며, F 키 또는 스피커 버튼을 눌러 수동으로 낭독합니다.#!"
  TTS_ACTIVITY_NOTICE_NO_AUTOPLAY:0 "대형 이벤트 자동 재생 불가"
  TTS_ACTIVITY_NOTICE_MANUAL_SPEAK:0 "수동 낭독 (단축키: F)"
@@ -46,3 +46,7 @@
  ep3_emperor_yearly.8000.desc:0 "\n\n최근 벌어진 갈등으로 상당한 피해가 발생했다. 신병 모집관은 할당량을 채우기 힘들어하고, 도시 전역에서 노동력 부족으로 인한 문제가 빈번히 나타난다.\n\n나의 [Select_CString( SCOPE.sC('suggestor').IsValid, ROOT.Char.Custom2('RelationToMeShort', SCOPE.sC('suggestor')), '충성스러운' )] [Select_CString( SCOPE.sC('suggestor').IsValid, suggestor.GetTitledFirstName, '궁정 신하' )](은)는 힘든 시기에 수도를 지원할 수 있는 부유한 지방의 목록을 작성했다."
  ep3_emperor_yearly.8020.desc:0 "\n\n믿음직한 후원의 혜택에 대해 수많은 명백한 암시와 필요성을 넌지시 언급한 후, 나의 [Select_CString( SCOPE.sC('suggestor').IsValid, ROOT.Char.Custom2('RelationToMeShort', SCOPE.sC('suggestor')), '충성스러운' )] [Select_CString( SCOPE.sC('suggestor').IsValid, suggestor.GetTitledFirstName, '궁정 신하' )](은)는 마침내 솔직히 말했다.\n\n\"폐하... [Glossary( '포르피라', 'PORPHURA_GLOSS' )]는 황실만의 특권이지만, 그것을 #EMP 헌신적인#! 신하들에게... 임대하는 경우는 드물지 않았습니다.\""
  holy_order.2050.desc:0 "\"[target_order.GetName](은)는 사막의 은둔자가 그러했듯... 아직 고통받고 있는가?\" [Select_CString( SCOPE.sC('clerical_helper').IsValid, clerical_helper.GetNamePossessive, '보내온' )] 열렬한 서신은 모두 이런 식으로 시작되었다.\n\n\"[target_lessee.GetTitledFirstName](이)가 몸에 황금을 두르고 있는가?\" [barony.GetNameNoTier]에서 개혁가들의 설교를 들어보면 이런 식으로 끝난다. #EMP \"새로운 길! 새로운 규율!\"#!\n\n수도원은 경건한 개혁과 반대 의견이 공존하는 온상이 되어가고 있다. 거주자들은 더 이상 [target_lessee.GetPrimaryTitle.GetAdjectiveNoTooltip](이)라 하기도 힘들며, 진부한 [target_order_tenet.GetName( founder.GetRite )] 대화로는 거의 만족하지도 않는다. 그러나 이들의 개혁 정신은 여전히 하나의 새로운 원칙과 하나의 정신으로 향해야만 한다."
+ duke_landless_adventurer_camp_wanderers:0 "수장"
+ duchess_landless_adventurer_camp_wanderers:0 "수장"
+ duke_landless_adventurer_camp_scholars:0 "수장"
+ duchess_landless_adventurer_camp_scholars:0 "수장"

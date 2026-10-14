@@ -54,10 +54,6 @@ Unknown effect: 아닙니다."|||GENDER:F##CK3_TTS_END##, near line: 1" in file:
     const debugEvents = extractCk3EventsFromChunk(truncatedDebugChunk);
     assert.equal(debugEvents.length, 0, 'debug 로그 단독으로는 END가 없어 추출되지 않음');
 
-    // error 로그 단독으로도 복원 파서가 "in file: effect console command"에 걸려 0개로 실패하거나 불완전함
-    const errorEvents = extractCk3EventsFromChunk(errorLogChunk);
-    assert.equal(errorEvents.length, 0, 'error 로그 단독으로는 0개 추출');
-
     // [요구사항]: errorLogChunk와 truncatedDebugChunk가 결합되거나,
     // 또는 error.log 청크 내에 쪼개진 토큰들이 온전하게 복원되어 전체 텍스트가 정상 추출되어야 함!
     const combinedLogChunk = `${truncatedDebugChunk}\n${errorLogChunk}`;

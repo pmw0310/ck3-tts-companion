@@ -23,11 +23,11 @@ test('CK3 토너먼트 이벤트 창 TTS 연동 무결성 검증', async (t) => 
     const nextTypeIndex = content.indexOf('type container_tenet_doctrine_conclusion', baseWidgetIndex);
     const baseContent = content.slice(baseWidgetIndex, nextTypeIndex !== -1 ? nextTypeIndex : undefined);
 
-    // 대형 활동 수동 전용 정책(Option A): 복합 창 충돌 및 연쇄 팝업 피로도 방지를 위해 자동 낭독 제거
+    // 대형 활동 자동 낭독 3단계 체이닝 + 수동 재낭독 병행 정책 확인
     assert.strictEqual(
       baseContent.includes('tts_activity_event_auto_play'),
-      false,
-      'activity_event_widget_base에 자동 낭독 state가 없어야 합니다 (수동 전용 정책).'
+      true,
+      'activity_event_widget_base에 자동 낭독 state(tts_activity_event_auto_play)가 존재해야 합니다.'
     );
 
     // ##CK3_TTS_STOP## 창 닫힘 오디오 중단 state 확인 (콘솔 락 방지를 위해 배제됨)

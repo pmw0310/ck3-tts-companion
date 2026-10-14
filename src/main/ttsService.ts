@@ -13,6 +13,7 @@ import {
   isCacheableProvider,
   saveCachedAudio
 } from '@/main/audioCacheService';
+import { applyEdgeTtsDrmPatch } from '@/main/edgeTtsDrm';
 import { synthesizeWithSystemTts } from '@/main/systemTtsService';
 
 // DNS 해석 캐시 (10분 TTL)
@@ -104,6 +105,9 @@ export const edgeTtsAgent = new https.Agent({
   lookup: edgeTtsDnsLookup
 });
 
+// 모듈 로드 시점에 MsEdgeTTS의 Sec-MS-GEC v2 토큰 생성기 및 MUID 쿠키 헤더 주입 패치를 적용합니다.
+applyEdgeTtsDrmPatch(MsEdgeTTS, edgeTtsAgent);
+
 /**
  * Edge-TTS 및 각종 음성 합성 서비스 오류 문자열을 분석하여
  * 사용자에게 조치 방법을 직관적으로 안내하는 친절한 한국어 에러 메시지로 변환합니다.
@@ -184,84 +188,91 @@ export const synthesizeWithEdgeTts = async (
   settings: AppSettings,
   options?: { timeoutMs?: number }
 ): Promise<{ audioBase64: string; mimeType: string }> => {
+  applyEdgeTtsDrmPatch(MsEdgeTTS, edgeTtsAgent);
   const timeoutMs = options?.timeoutMs ?? 15000;
   const tts = new MsEdgeTTS({ agent: edgeTtsAgent });
 
-  try {
-    await tts.setMetadata(
-      settings.edgeVoice,
-      OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3
-    );
+  return await new Promise<{ audioBase64: string; mimeType: string }>(
+    (resolve, reject) => {
+      let isSettled = false;
+      let readableStream: { destroy: () => void } | null = null;
 
-    const streamResult = tts.toStream(text, {
-      rate: settings.speechRate,
-      volume: settings.speechVolume
-    });
+      const cleanup = (): void => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+        }
+        try {
+          tts.close();
+        } catch (closeErr: unknown) {
+          console.warn('⚠️ [Edge-TTS] 소켓 close 정리 중 경고:', closeErr);
+        }
+      };
 
-    const readable = streamResult.audioStream;
-    const chunks: Buffer[] = [];
+      const timeoutTimer = setTimeout(() => {
+        if (isSettled) return;
+        isSettled = true;
+        cleanup();
+        try {
+          readableStream?.destroy();
+        } catch {
+          // 안전 무시
+        }
+        reject(new Error(`Edge-TTS 합성 시간 초과 (${timeoutMs}ms 타임아웃)`));
+      }, timeoutMs);
 
-    return await new Promise<{ audioBase64: string; mimeType: string }>(
-      (resolve, reject) => {
-        let isSettled = false;
-
-        const cleanup = (): void => {
-          if (timeoutTimer) {
-            clearTimeout(timeoutTimer);
+      void (async () => {
+        try {
+          await tts.setMetadata(
+            settings.edgeVoice,
+            OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3
+          );
+          if (isSettled) {
+            return;
           }
-          try {
-            tts.close();
-          } catch (closeErr: unknown) {
-            console.warn('⚠️ [Edge-TTS] 소켓 close 정리 중 경고:', closeErr);
-          }
-        };
 
-        const timeoutTimer = setTimeout(() => {
-          if (isSettled) return;
-          isSettled = true;
-          cleanup();
-          try {
-            readable.destroy();
-          } catch {
-            // 안전 무시
-          }
-          reject(new Error(`Edge-TTS 합성 시간 초과 (${timeoutMs}ms 타임아웃)`));
-        }, timeoutMs);
-
-        readable.on('data', (chunk: unknown) => {
-          if (Buffer.isBuffer(chunk)) {
-            chunks.push(chunk);
-          }
-        });
-
-        readable.on('end', () => {
-          if (isSettled) return;
-          isSettled = true;
-          cleanup();
-          const fullBuffer = Buffer.concat(chunks);
-          resolve({
-            audioBase64: fullBuffer.toString('base64'),
-            mimeType: 'audio/mp3'
+          const streamResult = tts.toStream(text, {
+            rate: settings.speechRate,
+            volume: settings.speechVolume
           });
-        });
 
-        readable.on('error', (err: unknown) => {
+          const readable = streamResult.audioStream;
+          readableStream = readable;
+          const chunks: Buffer[] = [];
+
+          readable.on('data', (chunk: unknown) => {
+            if (Buffer.isBuffer(chunk)) {
+              chunks.push(chunk);
+            }
+          });
+
+          readable.on('end', () => {
+            if (isSettled) return;
+            isSettled = true;
+            cleanup();
+            const fullBuffer = Buffer.concat(chunks);
+            resolve({
+              audioBase64: fullBuffer.toString('base64'),
+              mimeType: 'audio/mp3'
+            });
+          });
+
+          readable.on('error', (err: unknown) => {
+            if (isSettled) return;
+            isSettled = true;
+            cleanup();
+            const errorMsg = formatTtsErrorMessage(err);
+            reject(new Error(errorMsg));
+          });
+        } catch (err: unknown) {
           if (isSettled) return;
           isSettled = true;
           cleanup();
           const errorMsg = formatTtsErrorMessage(err);
           reject(new Error(errorMsg));
-        });
-      }
-    );
-  } catch (error: unknown) {
-    try {
-      tts.close();
-    } catch {
-      // 안전 무시
+        }
+      })();
     }
-    throw error;
-  }
+  );
 };
 
 /**
@@ -670,7 +681,9 @@ export const processTtsRequest = async (
           audioBase64: fallbackResult.audioBase64,
           mimeType: fallbackResult.mimeType,
           isFallback: true,
-          fallbackReason: maskedError
+          fallbackReason: maskedError,
+          fallbackFromProvider: 'elevenlabs',
+          fallbackToProvider: 'edge'
         };
       } catch (fallbackError: unknown) {
         try {
@@ -681,7 +694,9 @@ export const processTtsRequest = async (
             audioBase64: sysFallback.audioBase64,
             mimeType: sysFallback.mimeType,
             isFallback: true,
-            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`,
+            fallbackFromProvider: 'elevenlabs',
+            fallbackToProvider: 'system'
           };
         } catch {
           const rawFallbackMsg =
@@ -731,7 +746,9 @@ export const processTtsRequest = async (
           audioBase64: fallbackResult.audioBase64,
           mimeType: fallbackResult.mimeType,
           isFallback: true,
-          fallbackReason: maskedError
+          fallbackReason: maskedError,
+          fallbackFromProvider: 'openai',
+          fallbackToProvider: 'edge'
         };
       } catch (fallbackError: unknown) {
         try {
@@ -742,7 +759,9 @@ export const processTtsRequest = async (
             audioBase64: sysFallback.audioBase64,
             mimeType: sysFallback.mimeType,
             isFallback: true,
-            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`,
+            fallbackFromProvider: 'openai',
+            fallbackToProvider: 'system'
           };
         } catch {
           const rawFallbackMsg =
@@ -793,7 +812,9 @@ export const processTtsRequest = async (
           audioBase64: fallbackResult.audioBase64,
           mimeType: fallbackResult.mimeType,
           isFallback: true,
-          fallbackReason: maskedError
+          fallbackReason: maskedError,
+          fallbackFromProvider: 'gemini',
+          fallbackToProvider: 'edge'
         };
       } catch (fallbackError: unknown) {
         try {
@@ -804,7 +825,9 @@ export const processTtsRequest = async (
             audioBase64: sysFallback.audioBase64,
             mimeType: sysFallback.mimeType,
             isFallback: true,
-            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`
+            fallbackReason: `${maskedError} (로컬 시스템 TTS 대체)`,
+            fallbackFromProvider: 'gemini',
+            fallbackToProvider: 'system'
           };
         } catch {
           const rawFallbackMsg =
@@ -878,7 +901,9 @@ export const processTtsRequest = async (
         audioBase64: fallbackResult.audioBase64,
         mimeType: fallbackResult.mimeType,
         isFallback: true,
-        fallbackReason: rawErrorMsg
+        fallbackReason: rawErrorMsg,
+        fallbackFromProvider: 'edge',
+        fallbackToProvider: 'system'
       };
     } catch (fallbackError: unknown) {
       console.error('❌ [TTS Service Error]: 로컬 시스템 TTS 폴백도 실패함:', fallbackError);

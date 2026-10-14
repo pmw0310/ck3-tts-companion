@@ -414,6 +414,7 @@ export const startWatchingLogFile = <TSnapshot>(
           const lastOpenHash = bufferText.lastIndexOf('##CK3_TTS');
           const lastOpenBracket = bufferText.lastIndexOf('[CK3_TTS');
           const lastOpenIndex = Math.max(lastOpenHash, lastOpenBracket);
+          let pendingOpenIndex = -1;
 
           if (lastOpenIndex !== -1) {
             const tail = bufferText.slice(lastOpenIndex);
@@ -423,6 +424,7 @@ export const startWatchingLogFile = <TSnapshot>(
             if (!hasClosedEnd && !isPureStop) {
               // 미완성 이벤트 태그를 pendingBuffer에 안전하게 보관하고 이번 청크에서는 제외
               pendingBuffers.set(normalizedPath, tail);
+              pendingOpenIndex = lastOpenIndex;
               bufferText = bufferText.slice(0, lastOpenIndex);
             }
           }
@@ -448,6 +450,8 @@ export const startWatchingLogFile = <TSnapshot>(
             bufferText.lastIndexOf(stopTagBracket)
           );
           const hasStopSignal = lastStopIndex !== -1;
+          // STOP 신호 뒤에 큰따옴표 절단 등으로 미완성된 신규 이벤트(##CK3_TTS##)가 시작되었는지 확인
+          const hasNewerPendingEvent = pendingOpenIndex > lastStopIndex;
           const isFromErrorLog = normalizedPath === errorLogPath;
 
           // 1. debug.log / error.log 간 큰따옴표 등으로 분할된 파편 교차 결합 (Cross-log Stitching)
@@ -460,7 +464,18 @@ export const startWatchingLogFile = <TSnapshot>(
               bufferText.includes('[CK3_TTS_END]') ||
               bufferText.includes('Unknown effect:')
             ) {
-              effectiveText = `${debugPending}\n${bufferText}`;
+              // 엔진 에러(console.cpp, ai_activity 등)를 걸러내고 Unknown effect 및 TTS 태그 라인만 선별 결합
+              const cleanErrorLines = bufferText
+                .split(/\r?\n/)
+                .filter(
+                  (line) =>
+                    line.includes('Unknown effect:') ||
+                    line.includes('##CK3_TTS_END##') ||
+                    line.includes('[CK3_TTS_END]') ||
+                    line.includes('|||')
+                )
+                .join('\n');
+              effectiveText = `${debugPending}\n${cleanErrorLines}`;
               didStitchDebugPending = true;
             }
           } else if (!isFromErrorLog && pendingBuffers.has(errorLogPath)) {
@@ -479,8 +494,8 @@ export const startWatchingLogFile = <TSnapshot>(
           // 3. 창 닫힘(STOP) 신호 처리:
           // - 청크 내에 유효한 이벤트가 전혀 없는 순수 STOP이거나,
           // - 마지막 STOP 신호가 마지막 이벤트(END)보다 뒤에 위치하는 경우 (즉, 이벤트가 뜬 후 플레이어가 옵션을 선택하여 창을 닫음)
-          // -> 재생 중이던 오디오를 즉시 정지하고 불필요한 이벤트 발화를 중단합니다.
-          if (hasStopSignal) {
+          // - 단, STOP 신호 이후에 새로운 미완성 이벤트(hasNewerPendingEvent)가 이미 시작된 경우에는 클립보드 채널로 이미 시작된 신규 오디오를 끊지 않도록 onStop 호출을 생략합니다.
+          if (hasStopSignal && !hasNewerPendingEvent) {
             const lastEndHash = bufferText.lastIndexOf('##CK3_TTS_END##');
             const lastEndBracket = bufferText.lastIndexOf('[CK3_TTS_END]');
             const lastEndIndex = Math.max(lastEndHash, lastEndBracket);

@@ -18,15 +18,15 @@ test('대규모 결혼식 및 활동 이벤트 수동 낭독 전용 정책 무�
   assert.ok(fs.existsSync(activityGuiPath), 'window_activity.gui 파일이 존재해야 합니다.');
   const content = fs.readFileSync(activityGuiPath, 'utf-8');
 
-  await t.test('1. activity_event_widget에서 자동 낭독 state가 제거되고 수동 스피커 버튼이 존재해야 한다', () => {
+  await t.test('1. activity_event_widget에 자동 낭독 3단계 체이닝 및 수동 스피커 버튼이 모두 존재해야 한다', () => {
     const widgetMatch = content.match(/type\s+activity_event_widget\s*=\s*margin_widget\s*\{([\s\S]*?)type\s+activity_event_widget_base/);
     assert.ok(widgetMatch, 'activity_event_widget 정의가 존재해야 합니다.');
     const block = widgetMatch[1];
 
     assert.strictEqual(
       block.includes('tts_activity_event_auto_play'),
-      false,
-      'activity_event_widget에 자동 낭독 state(tts_activity_event_auto_play)가 없어야 합니다.'
+      true,
+      'activity_event_widget에 자동 낭독 state(tts_activity_event_auto_play)가 존재해야 합니다.'
     );
     assert.ok(
       block.includes('name = "tts_speak_button"'),
@@ -42,15 +42,15 @@ test('대규모 결혼식 및 활동 이벤트 수동 낭독 전용 정책 무�
     );
   });
 
-  await t.test('2. activity_event_widget_base에서 자동 낭독 state가 제거되고 수동 스피커 버튼이 존재해야 한다', () => {
+  await t.test('2. activity_event_widget_base에 자동 낭독 3단계 체이닝 및 수동 스피커 버튼이 모두 존재해야 한다', () => {
     const widgetMatch = content.match(/type\s+activity_event_widget_base\s*=\s*widget\s*\{([\s\S]*?)type\s+container_tenet_doctrine_conclusion/);
     assert.ok(widgetMatch, 'activity_event_widget_base 정의가 존재해야 합니다.');
     const block = widgetMatch[1];
 
     assert.strictEqual(
       block.includes('tts_activity_event_auto_play'),
-      false,
-      'activity_event_widget_base에 자동 낭독 state가 없어야 합니다.'
+      true,
+      'activity_event_widget_base에 자동 낭독 state가 존재해야 합니다.'
     );
     assert.ok(
       block.includes('name = "tts_speak_button"'),

@@ -89,7 +89,7 @@ const waitFor = async (predicate: () => boolean, timeoutMs = 5000): Promise<void
 };
 
 describe('따옴표 포함 이벤트 클립보드 채널 검증', () => {
-  it('EventWindowData 기반 TTS 콘솔 명령마다 직전에 CopyStringToClipboard 원문 전송 라인이 있어야 한다', () => {
+  it('EventWindowData 기반 TTS 콘솔 명령마다 직전 또는 선행 state에 CopyStringToClipboard 원문 전송이 구현되어 있어야 한다', () => {
     const violations: string[] = [];
     for (const filePath of collectGuiFiles(GUI_ROOT)) {
       const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
@@ -97,8 +97,9 @@ describe('따옴표 포함 이벤트 클립보드 채널 검증', () => {
         if (!/ExecuteConsoleCommand/.test(line) || !/EventWindowData\./.test(line) || !/CK3_TTS(?:_FORCE)?##/.test(line)) {
           return;
         }
-        const prevLine = lines[index - 1] ?? '';
-        if (!/EventWindowData\.CopyStringToClipboard/.test(prevLine)) {
+        // 버튼 onclick 직전 라인 또는 선행 state 블록(최대 25줄 이내)에 CopyStringToClipboard가 존재하는지 검사
+        const precedingChunk = lines.slice(Math.max(0, index - 25), index).join('\n');
+        if (!/EventWindowData\.CopyStringToClipboard/.test(precedingChunk)) {
           violations.push(`${path.relative(GUI_ROOT, filePath)}:${index + 1}`);
         }
       });

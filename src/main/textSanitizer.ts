@@ -40,7 +40,16 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /(?:^|\s)[LGVBEIPN]\s+(?=이|가|은|는|을|를|의|에|와|과)/gi, // L 이가, L을를 등 마커 뒤 조사 파편
   /\s*\|{2,}\s*/g,                                           // 불필요한 연속 파이프(||, |||) 잔여물
   /\b[0-9A-Z]+(?:_[0-9A-Z]+){2,}\b/g,                         // 1_CORINTHIANS_1_10_LATIN_GLOSS 등 대문자 용어집(GLOSSARY)/DB 키 유출
-  /[_]{2,}/g                                                // 불필요한 연속 언더스코어
+  /[_]{2,}/g,                                                // 불필요한 연속 언더스코어
+  // 콘솔 락/비지 엔진 에러 잔여물 차단 (원문 및 라틴어 음차 변환 후 형태 모두 방어)
+  /(?:^|\s)(?:You\s+)?can't\s+add\s+new\s+commands\s+while\s+the\s+console\s+is\s+still\s+running\s+commands\.?/gi,
+  /(?:^|\s)(?:이오우\s+)?(?:칸'?t|캔트|캔'트)\s+(?:add|애드)\s+new\s+commands[^\n.]*\.?/gi,
+  // 인게임 엔진 AI 활동/스크립트 에러 잔여물 차단
+  /(?:^|\s)(?:AI\s+tried\s+to\s+create\s+an\s+invalid[^\n.]*\.?)/gi,
+  /(?:^|\s)(?:아이\s+트리에드\s+토\s+크레아테\s+안\s+인발리드[^\n.]*\.?)/gi,
+  /(?:^|\s)(?:Script\s+system\s+error!?)/gi,
+  /(?:^|\s)(?:스크립트\s+시스템\s+에러!?)/gi,
+  /(?:^|\s)(?:Variable\s+'[^']+'\s+is\s+(?:used|set)[^\n.]*\.?)/gi
 ] as const;
 
 /** Jomini GUI 스크립트 키워드, 함수 호출 및 파싱되지 않은 엔진 코드 패턴 목록 */

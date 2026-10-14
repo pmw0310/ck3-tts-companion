@@ -132,7 +132,6 @@ window = {
 			using = Animation_FadeIn_Standard
 
 			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##')))))]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 
 			animation = {
 				size = { 675 530 }           ############ SIZES NEED TO MATCH
@@ -144,6 +143,12 @@ window = {
 				alpha = 1
 				bezier = { 0.7 0 0.7 1 }
 			}
+		}
+
+		state = {
+			name = tts_console_fallback
+			delay = 0.85
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 		}
 
 		state = {

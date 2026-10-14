@@ -30,15 +30,15 @@ test('CK3 활동 이벤트 창(window_activity.gui) 비동기 크래시 방어 �
     );
   });
 
-  await t.test('2. activity_event_widget에서 자동 낭독이 제거되고 수동 스피커 버튼 및 F 단축키가 존재해야 한다', () => {
+  await t.test('2. activity_event_widget에 안전한 자동 낭독 3단계 체이닝 및 수동 스피커 버튼(F 단축키)이 함께 존재해야 한다', () => {
     const widgetMatch = content.match(/type\s+activity_event_widget\s*=\s*margin_widget\s*\{([\s\S]*?)type\s+activity_event_widget_base/);
     assert.ok(widgetMatch, 'activity_event_widget 블록이 존재해야 합니다.');
     const widgetBlock = widgetMatch[1];
 
     assert.strictEqual(
       widgetBlock.includes('tts_activity_event_auto_play'),
-      false,
-      '활동 창에는 연쇄 팝업 피로도 방지를 위해 자동 낭독 state가 없어야 합니다.'
+      true,
+      '활동 창에는 안전한 3단계 체이닝 자동 낭독 state(tts_activity_event_auto_play)가 존재해야 합니다.'
     );
 
     assert.ok(

@@ -20,6 +20,7 @@ import type {
 import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
 import { splitNarrativeAndDialogue } from '@/shared/narrativeDialogueSplitter';
 import { shouldPlayEvent } from '@/shared/eventDeduplicator';
+import { buildFallbackToastMessage } from '@/shared/fallbackMessageFormatter';
 import { initAudioVisualizer } from '@/renderer/audioVisualizer';
 import { playExecutionSound } from '@/renderer/executionSoundManager';
 
@@ -578,41 +579,24 @@ let lastFallbackToastTime = 0;
 const FALLBACK_TOAST_COOLDOWN_MS = 6000;
 
 /**
- * Gemini 음성 합성 오류 사유를 분석하여 사용자가 즉시 조치할 수 있는 안내 문구를 생성합니다.
- * @param reason - 원시 오류 메시지
- * @returns 사용자 친화적인 요약 사유
- */
-const formatFallbackReason = (reason?: string): string => {
-  if (!reason) return '오류 발생';
-  if (reason.includes('API_KEY_INVALID') || reason.includes('API key not valid')) {
-    return 'API 키 무효/오류';
-  }
-  if (reason.includes('RESOURCE_EXHAUSTED') || reason.includes('429')) {
-    if (reason.includes('FreeTier') || reason.includes('DEFAULT_TIER') || reason.includes('free tier')) {
-      return '무료 프로젝트 키로 인식됨 (AI Studio 결제 프로젝트 연결 확인 필요)';
-    }
-    return '일시적 요청 속도 제한 (429 Rate Limit)';
-  }
-  if (reason.includes('PERMISSION_DENIED') || reason.includes('403')) {
-    return '결제 계정/권한 확인 필요 (403)';
-  }
-  return reason.length > 60 ? `${reason.slice(0, 60)}...` : reason;
-};
-
-/**
- * Gemini 음성 합성 실패 시 Edge-TTS 자동 대체 재생 안내 토스트를 표시합니다.
+ * TTS 음성 합성 실패로 인해 대체 엔진으로 폴백된 경우,
+ * 실제 실패한 원본 엔진과 대체된 대상 엔진(Edge-TTS 또는 시스템 로컬 TTS)을 정확히 안내하는 토스트를 표시합니다.
  * @param result - 음성 합성 결과 객체
+ * @param requestedProvider - 요청 시점에 선택된 TTS 엔진 식별자
  */
-const notifyFallbackIfNeeded = (result: SynthesizeResult): void => {
+const notifyFallbackIfNeeded = (
+  result: SynthesizeResult,
+  requestedProvider?: TtsProviderType
+): void => {
   if (result.isFallback) {
     const now = Date.now();
     if (now - lastFallbackToastTime > FALLBACK_TOAST_COOLDOWN_MS) {
       lastFallbackToastTime = now;
-      const reasonText = formatFallbackReason(result.fallbackReason);
-      showToast(
-        `⚠️ Gemini 호출 실패 [${reasonText}]로 인해 Edge-TTS로 대체 재생되었습니다.`,
-        'warning'
+      const toastMessage = buildFallbackToastMessage(
+        result,
+        requestedProvider ?? state.settings.provider
       );
+      showToast(toastMessage, 'warning');
     }
   }
 };
@@ -1440,7 +1424,7 @@ const bindEventListeners = (): void => {
       });
 
       if (result.isSuccess && result.audioBase64) {
-        notifyFallbackIfNeeded(result);
+        notifyFallbackIfNeeded(result, tempSettings.provider);
         const mime = result.mimeType ?? 'audio/mp3';
         const blobUrl = base64ToBlobUrl(result.audioBase64, mime);
         if (currentAudioBlobUrl) {

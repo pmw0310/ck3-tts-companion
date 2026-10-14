@@ -146,6 +146,8 @@ export type SynthesizeResult = {
   readonly errorMessage?: string;
   readonly isFallback?: boolean;
   readonly fallbackReason?: string;
+  readonly fallbackFromProvider?: TtsProviderType;
+  readonly fallbackToProvider?: TtsProviderType;
   readonly fromCache?: boolean;
 };
 

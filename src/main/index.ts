@@ -209,8 +209,8 @@ const getAppIconPath = (): string => {
 const createMainWindow = (): void => {
   const iconPath = getAppIconPath();
   mainWindow = new BrowserWindow({
-    width: 780,
-    height: 620,
+    width: 800,
+    height: 680,
     minWidth: 600,
     minHeight: 460,
     title: 'CK3 TTS Companion',

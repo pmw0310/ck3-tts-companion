@@ -44,8 +44,8 @@ describe('활동 이벤트 위젯 수동 낭독(스피커 버튼 및 F 단축키
       assert.ok(block.includes('##CK3_TTS_FORCE##'), '강제 재낭독(FORCE) 신호가 연결되어 있어야 합니다');
       assert.strictEqual(
         block.includes('tts_activity_event_auto_play'),
-        false,
-        '자동 낭독 state가 없어야 합니다 (수동 전용 정책)'
+        true,
+        '자동 낭독 3단계 체이닝 state가 존재해야 합니다'
       );
     });
   }

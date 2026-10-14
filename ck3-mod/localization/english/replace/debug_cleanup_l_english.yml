@@ -1,4 +1,4 @@
-﻿l_english:
+l_english:
  DEBUG_TITLE_ID:0 ""
  DEBUG_TITLE_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
  DEBUG_REGION_KEYS:0 "#color:{0,0,0,0};glow_color:{0,0,0,0};size:0 "
@@ -23,7 +23,7 @@
  REGENERATE_EVENT_CONTENTS:0 ""
  TOGGLE_DATA_SYSTEM:0 ""
  COPY_EVENT_CONTENTS:0 ""
- TTS_ACTIVITY_EVENT_TOOLTIP:0 "Read Event via TTS (Shortcut: F)\n#weak ※ For stability, activity events (coronations, grand weddings, etc.) do not support auto-play. Press F or click the speaker button to read manually.#!"
+ TTS_ACTIVITY_EVENT_TOOLTIP:0 "Replay Event via TTS (Shortcut: F)\n#weak ※ Activity events (coronations, grand weddings, hunts, feasts, pilgrimages, tournaments, etc.) play automatically. Press F or click the speaker button to replay anytime.#!"
  TTS_COURT_EVENT_TOOLTIP:0 "Read Event via TTS (Shortcut: F)\n#weak ※ For stability, court events do not support auto-play. Press F or click the speaker button to read manually.#!"
  TTS_ACTIVITY_NOTICE_NO_AUTOPLAY:0 "Large events do not auto-play"
  TTS_ACTIVITY_NOTICE_MANUAL_SPEAK:0 "Manual TTS (Shortcut: F)"

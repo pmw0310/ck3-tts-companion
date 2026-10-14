@@ -725,6 +725,9 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
   z-index: 100;
   transition: opacity 0.25s ease, visibility 0.25s ease;
   -webkit-app-region: no-drag;
@@ -739,17 +742,21 @@ kbd {
 .modal-dialog {
   width: 90%;
   max-width: 640px;
+  max-height: min(640px, calc(100vh - 40px));
+  height: auto;
   background: var(--bg-modal);
   border: 1px solid var(--gold-border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), var(--shadow-glow);
   -webkit-app-region: no-drag;
   position: relative;
   z-index: 101;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -757,7 +764,8 @@ kbd {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 12px;
+  padding-bottom: 10px;
+  flex-shrink: 0;
   -webkit-app-region: no-drag;
 }
 
@@ -800,9 +808,27 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 520px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
+}
+
+/* 모달 바디 전용 골드 스크롤바 */
+.modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-body::-webkit-scrollbar-track {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-border);
 }
 
 /* === 상위 카테고리 탭 네비게이션 === */
@@ -1235,6 +1261,27 @@ input[type="range"]::-moz-range-track,
   justify-content: flex-end;
   border-top: 1px solid var(--border-subtle);
   padding-top: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-height: 620px) {
+  .modal-dialog {
+    padding: 14px 18px;
+    gap: 10px;
+    max-height: calc(100vh - 24px);
+  }
+  .modal-header {
+    padding-bottom: 8px;
+  }
+  .modal-footer {
+    padding-top: 8px;
+  }
+  .engine-cards-grid {
+    gap: 8px;
+  }
+  .engine-card {
+    padding: 10px 12px;
+  }
 }
 
 /* === 인앱 토스트 알림 === */

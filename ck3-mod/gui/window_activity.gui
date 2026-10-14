@@ -27,6 +27,11 @@ window = {
 		using = Animation_FadeOut_Standard
 		using = Sound_WindowHide_Standard
 		on_start = "[PdxGuiWidget.FindChild( 'pulse_action_popup' ).Hide]"
+		next = tts_clear_activity_var
+	}
+
+	state = {
+		name = tts_clear_activity_var
 		on_start = "[GetVariableSystem.Clear('tts_last_activity_event_desc')]"
 	}
 
@@ -1131,8 +1136,40 @@ types ActivityWindowTypes
 		using = Event_Window_Debug_EventTools
 
 		state = {
+			name = _show
+			next = tts_activity_event_auto_play
+		}
+
+		state = {
 			name = activity_new_event_shown
 			on_start = "[PdxGuiTriggerAllAnimations( 'activity_event_appear' )]"
+			next = tts_activity_event_auto_play
+		}
+
+		# CK3 TTS Companion: 대형/일반 활동 이벤트 안전 자동 낭독 3단계 체이닝 (단일 on_start 원칙 준수)
+		state = {
+			name = tts_activity_event_auto_play
+			trigger_when = "[And(And(EventWindowViewInsert.HasOpenEvent, Not(StringIsEmpty(EventWindowData.GetDescription))), Not(GetVariableSystem.HasValue('tts_last_activity_event_desc', EventWindowData.GetDescription)))]"
+			delay = 0.1
+			on_start = "[GetVariableSystem.Set('tts_last_activity_event_desc', EventWindowData.GetDescription)]"
+			next = tts_activity_clipboard_play
+		}
+
+		state = {
+			name = tts_activity_clipboard_play
+			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
+			next = tts_activity_console_fallback
+		}
+
+		state = {
+			name = tts_activity_console_fallback
+			delay = 0.05
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
+		}
+
+		state = {
+			name = _hide
+			on_start = "[GetVariableSystem.Clear('tts_last_activity_event_desc')]"
 		}
 
 
@@ -1854,30 +1891,6 @@ types ActivityWindowTypes
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
-
-		# 수동 낭독 안내 라벨 (버튼 우측 배치)
-		flowcontainer = {
-			name = "tts_speak_notice"
-			parentanchor = top|left
-			position = { 85 70 }
-			direction = vertical
-			ignoreinvisible = yes
-
-			text_single = {
-				autoresize = yes
-				text = "TTS_ACTIVITY_NOTICE_NO_AUTOPLAY"
-				default_format = "#weak"
-				fontsize = 12
-				align = left
-			}
-			text_single = {
-				autoresize = yes
-				text = "TTS_ACTIVITY_NOTICE_MANUAL_SPEAK"
-				default_format = "#weak"
-				fontsize = 12
-				align = left
-			}
-		}
 	}
 
 	type activity_event_widget_base = widget
@@ -1889,6 +1902,42 @@ types ActivityWindowTypes
 		using = Window_Background
 		using = Window_Decoration_Frontend_Flat
 		allow_outside = yes
+
+		state = {
+			name = _show
+			next = tts_activity_event_auto_play
+		}
+
+		state = {
+			name = activity_new_event_shown
+			next = tts_activity_event_auto_play
+		}
+
+		# CK3 TTS Companion: 거점/토너먼트 일반 이벤트 안전 자동 낭독 3단계 체이닝 (단일 on_start 원칙 준수)
+		state = {
+			name = tts_activity_event_auto_play
+			trigger_when = "[And(And(EventWindowViewInsert.HasOpenEvent, Not(StringIsEmpty(EventWindowData.GetDescription))), Not(GetVariableSystem.HasValue('tts_last_activity_event_desc', EventWindowData.GetDescription)))]"
+			delay = 0.1
+			on_start = "[GetVariableSystem.Set('tts_last_activity_event_desc', EventWindowData.GetDescription)]"
+			next = tts_activity_clipboard_play
+		}
+
+		state = {
+			name = tts_activity_clipboard_play
+			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
+			next = tts_activity_console_fallback
+		}
+
+		state = {
+			name = tts_activity_console_fallback
+			delay = 0.05
+			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
+		}
+
+		state = {
+			name = _hide
+			on_start = "[GetVariableSystem.Clear('tts_last_activity_event_desc')]"
+		}
 
 		event_window_background_widget = {
 			margin = { 40 0 }
@@ -2749,30 +2798,6 @@ types ActivityWindowTypes
 
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
-		}
-
-		# 수동 낭독 안내 라벨 (버튼 우측 배치)
-		flowcontainer = {
-			name = "tts_speak_notice"
-			parentanchor = top|left
-			position = { 85 70 }
-			direction = vertical
-			ignoreinvisible = yes
-
-			text_single = {
-				autoresize = yes
-				text = "TTS_ACTIVITY_NOTICE_NO_AUTOPLAY"
-				default_format = "#weak"
-				fontsize = 12
-				align = left
-			}
-			text_single = {
-				autoresize = yes
-				text = "TTS_ACTIVITY_NOTICE_MANUAL_SPEAK"
-				default_format = "#weak"
-				fontsize = 12
-				align = left
-			}
 		}
 	}
 
