@@ -1,0 +1,163 @@
+# ==============================================================================
+# CK3 TTS Companion - Activity Pulse Actions Scope Safety Override
+# ------------------------------------------------------------------------------
+# 바닐라 wedding_pulse_actions.txt 의 admired_venue 는 is_valid 내부에서
+# is_physically_able_ai_adult = yes 조건이 NOR = { ... } 블록 안쪽에 잘못 배치되어
+# AI 성인이 아닌 캐릭터(플레이어 등)만 조건을 만족할 때 트리거가 통과한 뒤,
+# effect 단계의 random_attending_character 에서 scope:first 가 NULL 이 되어
+# 인게임 로그에 "ERROR:[first.GetShortUINameNoTooltip|(이)가 멈춰 서서 풍경을 감상함" 및
+# "• (이)가 스트레스를 15만큼 상실함" 에러가 노출되는 결함을 교정합니다.
+# ==============================================================================
+
+admired_venue = {
+	icon = wedding
+
+	is_valid = {
+		is_current_phase_active = yes
+		trigger_if = {
+			limit = {
+				scope:activity = { has_activity_type = activity_wedding }
+			}
+			any_attending_character = {
+				NOR = {
+					this = scope:host
+					this = scope:activity.special_guest:spouse_1
+					this = scope:activity.special_guest:spouse_2
+				}
+				is_physically_able_ai_adult = yes
+				location = scope:province
+				has_activity_intent = reduce_stress_intent
+			}
+		}
+
+		trigger_if = {
+			limit = {
+				scope:activity = { has_activity_type = activity_coronation }
+			}
+			any_attending_character = {
+				NOR = {
+					this = scope:host
+					scope:activity.var:officiator ?= this
+				}
+				is_physically_able_ai_adult = yes
+				location = scope:province
+				has_activity_intent = coronation_bear_witness
+			}
+		}
+	}
+
+	weight = {
+		value = 1
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_type = activity_wedding
+					has_activity_option = {
+						category = wedding_option_decoration
+						option = wedding_decoration_good
+					}
+				}
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_type = activity_wedding
+					has_activity_option = {
+						category = wedding_option_decoration
+						option = wedding_decoration_normal
+					}
+				}
+			}
+			add = 0.5
+		}
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_type = activity_coronation
+					has_activity_option = {
+						category = ceremony_size
+						option = coronation_large_ceremony
+					}
+				}
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				scope:activity = {
+					has_activity_type = activity_coronation
+					has_activity_option = {
+						category = ceremony_size
+						option = coronation_medium_ceremony
+					}
+				}
+			}
+			add = 0.5
+		}
+	}
+
+	effect = {
+		scope:host = {
+			save_scope_as = root_scope
+		}
+
+		random_attending_character = {
+			limit = {
+				trigger_if = {
+					limit = {
+						scope:activity = { has_activity_type = activity_wedding }
+					}
+					NOR = {
+						this = scope:host
+						this = scope:activity.special_guest:spouse_1
+						this = scope:activity.special_guest:spouse_2
+					}
+					has_activity_intent = reduce_stress_intent
+				}
+
+				trigger_if = {
+					limit = {
+						scope:activity = { has_activity_type = activity_coronation }
+					}
+					NOR = {
+						this = scope:host
+						scope:activity.var:officiator ?= this
+					}
+					has_activity_intent = coronation_bear_witness
+				}
+
+				is_physically_able_ai_adult = yes
+				location = scope:province
+			}
+			alternative_limit = {
+				is_physically_able_adult = yes
+				location = scope:province
+			}
+			save_scope_as = first
+		}
+
+		if = {
+			limit = {
+				NOT = { exists = scope:first }
+			}
+			scope:host = {
+				save_scope_as = first
+			}
+		}
+
+		add_activity_log_entry = {
+			key = admired_venue
+			tags = { pulse_action }
+			character = scope:first
+
+			scope:first = {
+				stress_and_fulfillment_impact = {
+					base = minor_stress_impact_loss
+				}
+			}
+		}
+	}
+}
+

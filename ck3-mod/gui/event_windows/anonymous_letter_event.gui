@@ -128,6 +128,7 @@ window = {
 		state = {
 			name = show
 			delay = 0.8
+			next = tts_console_fallback
 
 			using = Animation_FadeIn_Standard
 
@@ -147,7 +148,7 @@ window = {
 
 		state = {
 			name = tts_console_fallback
-			delay = 0.85
+			using = Animation_FadeIn_Standard
 			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 		}
 

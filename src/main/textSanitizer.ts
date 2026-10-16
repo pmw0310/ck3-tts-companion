@@ -4,10 +4,11 @@ import type { Ck3EventType } from '@/shared/types';
 
 /** CK3 내부 서식, 아이콘, 툴팁 명령을 제거하기 위한 정규식 패턴 목록 */
 const CK3_TAG_PATTERNS: readonly RegExp[] = [
-  /\[\d{2}:\d{2}:\d{2}\]\[[A-Z]\]\[[^\]]+\]:\s*(?:(?:Error|ERROR):\s*"?|console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 및 Error: " 등 로그 헤더
+  /\[\d{2}:\d{2}:\d{2}\](?:\[[^\]]+\])+:\s*(?:(?:Error|ERROR):\s*"?|console_success:\s*)?/gi, // [19:56:07][D][console.cpp:1193]: console_success: 및 Error: " 등 로그 헤더
   /\bconsole_success:\s*/gi,                                  // console_success 접두사
   /(?:^|\s)(?:(?:Error|ERROR):\s*)+"?/gi,                          // Error: 및 ERROR:ERROR: 접두사 및 따옴표 잔여물 제거
   /(?:(?:Error|ERROR):\s*)+\[[^\]]+\]/gi,                        // ERROR:ERROR:[target_character...] 등 Jomini 스코프 런타임 결함 태그 제거
+  /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.'(),\s]+(?:\]|\|[a-zA-Z0-9_]*)/gi, // ERROR:[first.GetShortUINameNoTooltip| 처럼 파이프(|)에서 닫는 대괄호가 잘린 런타임 결함 태그 제거
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
@@ -244,6 +245,13 @@ const resolveKoreanParticles = (text: string): string => {
     });
   }
 
+  // 1.5. 문장 맨 앞이나 불릿(•, ·, -) 직후에 앞 단어(주어/목적어) 자체가 아예 누락된 채 홀로 남은 괄호 조사 제거
+  //      (예: "• (이)가 스트레스를 15만큼 상실함" -> "• 스트레스를 15만큼 상실함")
+  resolved = resolved.replace(
+    /(^|[•·\-])\s*\((?:이\s*[/]\s*가|가\s*[/]\s*이|은\s*[/]\s*는|는\s*[/]\s*은|을\s*[/]\s*를|를\s*[/]\s*을|와\s*[/]\s*과|과\s*[/]\s*와|이|가|은|는|을|를|와|과)\)(?:이|가|은|는|을|를|와|과)?\s*/g,
+    '$1 '
+  );
+
   // 2. 앞 단어 매칭에 실패한 독립 잔여 괄호 조사 안전 변환 (Fallback)
   resolved = resolved
     .replace(/(^|\s)\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/g, '$1다')
@@ -283,9 +291,52 @@ export const sanitizeCk3Text = (rawText: string): string => {
 
   let cleaned = rawText;
 
-  // 0. 패러독스 엔진 텍스트 서식 닫기 마커 제어문자(\x15!\x15! 등) 및 내부 서식/색상 구분용 제어 문자 제거
-  cleaned = cleaned.replace(/(?:[\x00-\x1F\x7F]+!|![\x00-\x1F\x7F]+)/g, ' ');
+  // 0. 패러독스 엔진 텍스트 서식 닫기 마커 제어문자(\x15!\x15! 등) 및 내부 서식/색상 구분용 제어 문자 제거 (\t, \n, \r 등 정상 공백 보존)
+  cleaned = cleaned.replace(/(?:[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+!|![\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+)/g, ' ');
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+  // 0.5. 관형사형('~인') 뒤 ERROR:[...] 런타임 결함 태그 및 조건부 조사가 이어지는 경우(예: "주군인 ERROR:[preacher_liege.GeTitledFirstName](이)가"),
+  //      결함 태그 제거 후 "주군인 (이)가" -> "주군인이"로 왜곡되지 않도록 관형사형 어미('인')와 결함 태그를 함께 정리하여 앞 명사("주군")에 조사가 자연스럽게 결합되도록 보정
+  cleaned = cleaned.replace(
+    /([가-힣]+)인\s+(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.'(),\s]+(?:\]|\|[a-zA-Z0-9_]*)(?=\s*\((?:이|가|은|는|을|를|와|과|으|로))/gi,
+    '$1'
+  );
+
+  // 0.55. 수도회 스코프 결함(ERROR:[monastic_order.GetName] 등) 복원
+  //       단독 삭제 규칙(0.6)에 의해 주어 자체가 유실되기 전에 의미 있는 명사("수도회")로 우선 복원
+  //       (예: "ERROR:[monastic_order.GetName]의 영주로 남음" -> "수도회의 영주로 남음",
+  //            "ERROR:ERROR:[monastic_order.GetName](이)가" -> "수도회(이)가")
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.]*\]\s*의/gi,
+    ' 수도회의'
+  );
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.]*\]/gi,
+    ' 수도회'
+  );
+
+  // 0.6. 단독 ERROR:[...] (또는 파이프로 잘린 ERROR:[...|) 바로 뒤에 결합된 조건부 조사는 주어/목적어 자체가 유실된 것이므로 함께 제거
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.'(),\s]+(?:\]|\|[a-zA-Z0-9_]*)\s*\((?:이\s*[/]\s*가|가\s*[/]\s*이|은\s*[/]\s*는|는\s*[/]\s*은|을\s*[/]\s*를|를\s*[/]\s*을|와\s*[/]\s*과|과\s*[/]\s*와|으\s*[/]\s*로|로\s*[/]\s*으|이|가|은|는|을|를|와|과|으|로)\)(?:이|가|은|는|을|를|와|과|으|로|서)?/gi,
+    ' '
+  );
+
+  // 0.8. CDataSystem NULL 평가로 발생한 "None(을)를 창설했습니다" 및 "신흥 수도회 'None'의" 기계어 정제
+  cleaned = cleaned.replace(
+    /(?:^|\s)None\s*(?:\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?|(?:을|를))\s*창설했습니다/g,
+    ' 수도회를 창설했습니다'
+  );
+  cleaned = cleaned.replace(
+    /(신흥\s+수도회)\s*['"‘“「『]?None['"’”」』]?의/gi,
+    '$1의'
+  );
+  cleaned = cleaned.replace(
+    /(수도회)\s*['"‘“「『]None['"’”」』]/gi,
+    '$1'
+  );
+
+  // 0.9. 대괄호 없이 홀로 남은 잔여 ERROR: 접두사 및 따옴표 잔여물 정리
+  cleaned = cleaned.replace(/(?:(?:Error|ERROR):\s*)+"?/gi, ' ');
 
   // 1. 미평가/미치환 스코프 태그를 자연스러운 명사로 치환하거나 제거
   cleaned = cleaned
@@ -507,6 +558,25 @@ const recoverEventsFromErrorLog = (
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // debug.log에서 큰따옴표로 잘린 미완성 시작 태그 라인(예: "##CK3_TTS## 독일 궁정|||")이 스티칭된 경우 제목 보존을 위해 수집 시작
+    if (
+      !trimmed.includes('Unknown effect:') &&
+      (trimmed.includes('##CK3_TTS') || trimmed.includes('[CK3_TTS')) &&
+      !trimmed.includes('##CK3_TTS_END##') &&
+      !trimmed.includes('[CK3_TTS_END]') &&
+      !trimmed.includes('##CK3_TTS_STOP##') &&
+      !trimmed.includes('[CK3_TTS_STOP]')
+    ) {
+      const hashIdx = trimmed.indexOf('##CK3_TTS');
+      const bracketIdx = trimmed.indexOf('[CK3_TTS');
+      const tagStartIdx = hashIdx !== -1 ? hashIdx : bracketIdx;
+      if (tagStartIdx !== -1) {
+        currentTokens = [trimmed.slice(tagStartIdx).trim()];
+        isCollecting = true;
+        continue;
+      }
+    }
+
     // Unknown effect 에러 라인 매칭
     if (trimmed.includes('Unknown effect:')) {
       isCollecting = true;
@@ -612,6 +682,23 @@ const recoverEventsFromErrorLog = (
       }
       currentTokens = [];
       isCollecting = false;
+    }
+  }
+
+  // 청크가 Unknown effect 라인으로 끝났고(빈 줄 없음) 짝수 큰따옴표로 인해 ##CK3_TTS_END##가 삼켜진 경우 루프 종료 시 잔여 토큰 플러시
+  if (isCollecting && currentTokens.length > 0) {
+    const fullPayload = currentTokens.join(' ');
+    const hasExplicitTtsMarker =
+      fullPayload.includes('CK3_TTS') ||
+      fullPayload.includes('|||') ||
+      /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
+    const hasSubstantialSentence = fullPayload.length >= 20;
+
+    if (hasExplicitTtsMarker || hasSubstantialSentence) {
+      const recovered = parseRecoveredPayload(fullPayload);
+      if (recovered) {
+        recoveredEvents.push(recovered);
+      }
     }
   }
 

@@ -277,16 +277,40 @@ const syncCacheUsageDisplay = (maxMb: number): void => {
   const currentBytes = lastKnownCacheStats?.totalSizeBytes ?? 0;
   const currentMb = (currentBytes / 1024 / 1024).toFixed(1);
   const maxBytes = maxMb * 1024 * 1024;
-  const usagePercent =
-    maxBytes > 0
-      ? Math.min(Math.round((currentBytes / maxBytes) * 100), 100)
-      : 0;
+  
+  // 실제 정밀 사용률(%) 계산
+  const rawPercent = maxBytes > 0 ? (currentBytes / maxBytes) * 100 : 0;
+  // 1% 미만의 미세 사용량일 경우 소수점 1자리(예: 0.2%) 표기, 그 외에는 정수 표기
+  const displayPercent =
+    rawPercent > 0 && rawPercent < 1
+      ? rawPercent.toFixed(1)
+      : Math.round(rawPercent);
+  const clampedPercent = Math.min(Math.max(0, Math.round(rawPercent)), 100);
 
   if (cacheUsageBar) {
-    cacheUsageBar.style.width = `${usagePercent}%`;
+    // 0보다 큰 캐시 데이터가 있을 때 최소 시각 폭 보장
+    cacheUsageBar.style.width = `${clampedPercent}%`;
+
+    if (currentBytes > 0) {
+      cacheUsageBar.classList.add('has-data');
+    } else {
+      cacheUsageBar.classList.remove('has-data');
+    }
+
+    // 캐시 용량 점유율에 따른 시각적 경고/위험 색상 전환
+    if (rawPercent >= 90) {
+      cacheUsageBar.classList.add('is-danger');
+      cacheUsageBar.classList.remove('is-warning');
+    } else if (rawPercent >= 75) {
+      cacheUsageBar.classList.add('is-warning');
+      cacheUsageBar.classList.remove('is-danger');
+    } else {
+      cacheUsageBar.classList.remove('is-warning', 'is-danger');
+    }
   }
+
   if (cacheUsageText) {
-    cacheUsageText.textContent = `${currentMb} MB / ${maxMb} MB (${usagePercent}%)`;
+    cacheUsageText.textContent = `${currentMb} MB / ${maxMb} MB (${displayPercent}%)`;
   }
   if (rangeCacheSize) {
     updateSliderFillTrack(rangeCacheSize);

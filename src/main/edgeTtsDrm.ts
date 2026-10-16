@@ -434,11 +434,175 @@ export const attachEdgeTtsDrmHeadersToRequest = (
 };
 
 /**
+ * msedge-tts 라이브러리 내부 _streams 맵의 엔트리 구조입니다.
+ */
+export interface EdgeTtsStreamEntry {
+  audio?: {
+    push: (chunk: unknown) => boolean;
+    destroy?: (err?: Error) => void;
+  };
+  metadata?: {
+    push: (chunk: unknown) => boolean;
+    destroy?: (err?: Error) => void;
+  };
+  turnEnded?: boolean;
+  socket?: unknown;
+}
+
+// 스트림 프록시 중복 래핑 방지용 심볼
+const SAFE_STREAMS_PROXY_MARKER = Symbol('SAFE_STREAMS_PROXY_MARKER');
+
+/**
+ * 삭제되거나 유효하지 않은 requestId에 대해 msedge-tts 내부의
+ * turnEnded 대입, audio.push(null), _pushAudioData 등의 비동기 이벤트 핸들러가
+ * Uncaught Exception 크래시를 유발하지 않도록 흡수하는 더미 스트림 객체를 생성합니다.
+ * @returns 안전한 더미 스트림 엔트리
+ */
+export const createDummyStreamEntry = (): EdgeTtsStreamEntry => ({
+  audio: {
+    push: () => false,
+    destroy: () => {}
+  },
+  metadata: {
+    push: () => false,
+    destroy: () => {}
+  },
+  turnEnded: true,
+  socket: null
+});
+
+/**
+ * msedge-tts 인스턴스의 _streams 맵을 Proxy로 래핑하여,
+ * 스트림 종료(audioStream.destroy()) 후 소켓 버퍼에서 뒤늦게 도착한 패킷들이
+ * TypeError: Cannot read properties of undefined (reading 'audio') 등의
+ * 프로세스 크래시를 유발하지 않도록 안전하게 가드합니다.
+ * @param rawStreams - 원본 스트림 맵
+ * @returns 프록시로 감싼 안전한 스트림 맵
+ */
+export const wrapStreamsWithSafeProxy = (
+  rawStreams: Record<string, EdgeTtsStreamEntry>
+): Record<string, EdgeTtsStreamEntry> => {
+  if (
+    !rawStreams ||
+    (rawStreams as Record<string | symbol, unknown>)[SAFE_STREAMS_PROXY_MARKER]
+  ) {
+    return rawStreams;
+  }
+
+  return new Proxy(rawStreams, {
+    get(target, prop, receiver) {
+      if (prop === SAFE_STREAMS_PROXY_MARKER) {
+        return true;
+      }
+      if (typeof prop === 'string' && !(prop in target) && prop !== 'then') {
+        // 이미 삭제되었거나 아직 등록되지 않은 requestId 접근 시 더미 스트림 엔트리 반환
+        return createDummyStreamEntry();
+      }
+      return Reflect.get(target, prop, receiver);
+    }
+  });
+};
+
+/**
+ * MsEdgeTTS 프로토타입 메서드 인터페이스입니다.
+ */
+export interface MsEdgeTtsPrototype {
+  _pushAudioData?: (data: unknown, requestId: string) => void;
+  _pushMetadata?: (data: unknown, requestId: string) => void;
+  _rawSSMLRequest?: (...args: unknown[]) => unknown;
+  _createClient?: (...args: unknown[]) => Promise<unknown>;
+  _streams?: Record<string, EdgeTtsStreamEntry>;
+}
+
+// 프로토타입 중복 패치 방지용 WeakSet
+const patchedPrototypes = new WeakSet<object>();
+
+/**
+ * MsEdgeTTS 프로토타입에 스트림 종료 경합(Race Condition) 방어 로직을 주입합니다.
+ * 스트림 삭제 후 인플라이트 오디오/메타데이터/종료 패킷 도착 시 발생하는 Uncaught TypeError를 영구 방어합니다.
+ * @param proto - MsEdgeTTS.prototype 객체
+ */
+export const patchMsEdgeTtsPrototype = (proto: MsEdgeTtsPrototype): void => {
+  if (!proto || patchedPrototypes.has(proto)) {
+    return;
+  }
+
+  proto._pushAudioData = function (
+    this: { _streams?: Record<string, EdgeTtsStreamEntry> },
+    data: unknown,
+    requestId: string
+  ): void {
+    if (!this._streams) {
+      return;
+    }
+    const stream = this._streams[requestId];
+    if (stream?.audio && typeof stream.audio.push === 'function') {
+      try {
+        stream.audio.push(data);
+      } catch {
+        // 이미 파기된 스트림 또는 닫힌 채널에 대한 데이터 푸시 예외는 안전하게 흡수합니다.
+      }
+    }
+  };
+
+  proto._pushMetadata = function (
+    this: { _streams?: Record<string, EdgeTtsStreamEntry> },
+    data: unknown,
+    requestId: string
+  ): void {
+    if (!this._streams) {
+      return;
+    }
+    const stream = this._streams[requestId];
+    if (stream?.metadata && typeof stream.metadata.push === 'function') {
+      try {
+        stream.metadata.push(data);
+      } catch {
+        // 메타데이터 스트림 예외 안전 흡수
+      }
+    }
+  };
+
+  const originalRawSsmlRequest = proto._rawSSMLRequest;
+  if (typeof originalRawSsmlRequest === 'function') {
+    proto._rawSSMLRequest = function (
+      this: { _streams?: Record<string, EdgeTtsStreamEntry> },
+      ...args: unknown[]
+    ): unknown {
+      if (this._streams) {
+        this._streams = wrapStreamsWithSafeProxy(this._streams);
+      }
+      const result = originalRawSsmlRequest.apply(this, args);
+      if (this._streams) {
+        this._streams = wrapStreamsWithSafeProxy(this._streams);
+      }
+      return result;
+    };
+  }
+
+  const originalCreateClient = proto._createClient;
+  if (typeof originalCreateClient === 'function') {
+    proto._createClient = async function (
+      this: { _streams?: Record<string, EdgeTtsStreamEntry> },
+      ...args: unknown[]
+    ): Promise<unknown> {
+      if (this._streams) {
+        this._streams = wrapStreamsWithSafeProxy(this._streams);
+      }
+      return await originalCreateClient.apply(this, args);
+    };
+  }
+
+  patchedPrototypes.add(proto);
+};
+
+/**
  * MsEdgeTTS 정적 메서드 패치 대상 인터페이스입니다.
  */
 export interface EdgeTtsPatchableStatic {
   generateSecMsGec?: (trustedClientToken: string) => Promise<string>;
   getSynthUrl?: () => Promise<string>;
+  prototype?: MsEdgeTtsPrototype;
 }
 
 // 에이전트 중복 래핑 방지용 WeakSet
@@ -446,7 +610,8 @@ const patchedAgents = new WeakSet<object>();
 
 /**
  * msedge-tts 라이브러리의 구버전 Sec-MS-GEC v1 생성기 및 WebSocket 에이전트를
- * 최신 Sec-MS-GEC v2(2-143.0.3650.75) 및 MUID 쿠키 헤더 규격으로 런타임 패치합니다.
+ * 최신 Sec-MS-GEC v2(2-143.0.3650.75) 및 MUID 쿠키 헤더 규격으로 런타임 패치하며,
+ * 비동기 스트림 파기 후 뒤늦게 도착한 패킷에 의한 메인 프로세스 크래시를 방어합니다.
  * @param edgeTtsClass - MsEdgeTTS 클래스 생성자 객체
  * @param agent - WebSocket 연결에 사용되는 https.Agent 인스턴스
  * @returns 반환값 없음
@@ -462,6 +627,10 @@ export const applyEdgeTtsDrmPatch = (
     const target = edgeTtsClass as EdgeTtsPatchableStatic;
     target.generateSecMsGec = async (): Promise<string> => generateSecMsGecV2();
     target.getSynthUrl = async (): Promise<string> => buildEdgeTtsSynthUrlV2();
+
+    if (target.prototype) {
+      patchMsEdgeTtsPrototype(target.prototype);
+    }
   }
 
   if (agent && !patchedAgents.has(agent)) {
