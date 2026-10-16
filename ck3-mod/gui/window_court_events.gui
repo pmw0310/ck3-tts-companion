@@ -108,15 +108,17 @@ types RoyalCourtTypes
 							margin_right = 2
 
 							text_single = {
-								text = "궁정 자동 재생 불가"
+								raw_text = "궁정 자동 재생 불가"
 								default_format = "#weak"
-								fontsize = 12
+								fontsize = 13
+								fontsize_min = 10
 								align = right
 							}
 							text_single = {
-								text = "수동 낭독 (단축키: F)"
+								raw_text = "수동 낭독 (단축키: F)"
 								default_format = "#weak"
-								fontsize = 12
+								fontsize = 13
+								fontsize_min = 10
 								align = right
 							}
 						}
@@ -124,7 +126,7 @@ types RoyalCourtTypes
 						button_round = {
 							name = "tts_speak_button"
 							size = { 36 36 }
-							tooltip = "TTS_COURT_EVENT_TOOLTIP"
+							raw_tooltip = "이 궁정 청원 낭독 다시 듣기 (단축키: F)"
 							shortcut = "army_split_half"
 
 							button_icon = {

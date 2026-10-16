@@ -19,7 +19,7 @@ import type {
 } from '@/shared/types';
 import { splitIntoPlaybackChunks } from '@/shared/sentenceSplitter';
 import { splitNarrativeAndDialogue } from '@/shared/narrativeDialogueSplitter';
-import { shouldPlayEvent } from '@/shared/eventDeduplicator';
+import { isTextFragmentOf, shouldPlayEvent } from '@/shared/eventDeduplicator';
 import { buildFallbackToastMessage } from '@/shared/fallbackMessageFormatter';
 import { initAudioVisualizer } from '@/renderer/audioVisualizer';
 import { playExecutionSound } from '@/renderer/executionSoundManager';
@@ -1061,8 +1061,23 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
 
   state.currentEvent = event;
 
-  // 최신 히스토리와 동일한 내용이 연달아 중복 적재되지 않도록 방어
-  if (state.history.length === 0 || state.history[0]?.content !== event.content) {
+  // 최신 히스토리와 동일한 내용이 연달아 중복 적재되지 않도록 방어하고,
+  // 짧은 파편 유입 후 온전한 원본이 도착한 경우 히스토리 항목을 인플레이스 승격(Upgrade)
+  const latestHistory = state.history[0];
+  const isRecentSameEvent =
+    latestHistory &&
+    now - latestHistory.timestamp < 10000 &&
+    (latestHistory.content === event.content ||
+      isTextFragmentOf(latestHistory.content, event.content) ||
+      isTextFragmentOf(event.content, latestHistory.content));
+
+  if (isRecentSameEvent) {
+    if (event.content.length > latestHistory.content.length) {
+      // 기존 짧은 파편을 온전한 상위 원문으로 인플레이스 대체
+      state.history[0] = event;
+      renderHistoryList();
+    }
+  } else {
     state.history.unshift(event);
     if (state.history.length > 20) {
       state.history.pop();

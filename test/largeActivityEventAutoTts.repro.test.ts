@@ -119,11 +119,29 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
     const fsStart = localeContent.indexOf('type widget_activity_locale_fullscreen_event = widget')
     assert.ok(fsStart !== -1, 'widget_activity_locale_fullscreen_event 블록이 존재해야 합니다.')
     const fsBlock = localeContent.slice(fsStart)
+    const childWidgetStart = fsBlock.indexOf('\n\t\twidget = {')
+    assert.ok(childWidgetStart !== -1, '내부 자식 widget 블록이 존재해야 합니다.')
+    const rootLevelBlock = fsBlock.slice(0, childWidgetStart)
 
     assert.match(
-      fsBlock,
+      rootLevelBlock,
       /state\s*=\s*\{\s*name\s*=\s*_show\s+next\s*=\s*tts_activity_event_auto_play\s*\}/,
-      'widget_activity_locale_fullscreen_event에 _show -> tts_activity_event_auto_play 진입점이 있어야 합니다.'
+      'widget_activity_locale_fullscreen_event 루트 레벨에 _show -> tts_activity_event_auto_play 진입점이 있어야 합니다.'
+    )
+    assert.equal(
+      countOnStartInState(rootLevelBlock, 'tts_activity_event_auto_play'),
+      1,
+      'tts_activity_event_auto_play는 _show와 동일한 루트 위젯 레벨에 존재하여 next 체이닝이 단절되지 않아야 합니다.'
+    )
+    assert.equal(
+      countOnStartInState(rootLevelBlock, 'tts_activity_clipboard_play'),
+      1,
+      'tts_activity_clipboard_play는 동일한 루트 위젯 레벨에 존재해야 합니다.'
+    )
+    assert.equal(
+      countOnStartInState(rootLevelBlock, 'tts_activity_console_fallback'),
+      1,
+      'tts_activity_console_fallback는 동일한 루트 위젯 레벨에 존재해야 합니다.'
     )
     assert.equal(
       countOnStartInState(fsBlock, 'activity_new_event_shown'),

@@ -1,5 +1,6 @@
 import { hasBatchim, josa } from 'es-hangul';
 import { convertLatinPhrasesInText } from '@/main/latinTransliteration';
+import { isTextFragmentOf } from '@/shared/eventDeduplicator';
 import type { Ck3EventType } from '@/shared/types';
 
 /** CK3 내부 서식, 아이콘, 툴팁 명령을 제거하기 위한 정규식 패턴 목록 */
@@ -12,7 +13,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
-  /\bEMP\b/gi,                                               // EMP 강조 서식
+  /\b(?:EMP|TUT);?\b/gi,                                      // EMP 강조 서식 및 TUT 튜토리얼 서식 마커
   /\b[GLEIPBVN];\s*/gi,                                         // G;, L;, E;, I;, P;, B;, V;, N; 링크/게임컨셉/수치/아이콘 마커
   /(?:^|\s)[GIEPLBVN];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B, V, N 마커 (예: "G 강령술사", "V; 3", "L ' 엽사 '", "I 승전")
   /#+[A-Za-z0-9_]+\s*(?:DEBUG|디버그)\s*#!?/gi,              // #D 디버그#! 등 복합 서식 태그 디버그 문구
@@ -21,7 +22,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
   /\b(?:DEBUG|디버그)\b/gi,                                    // 디버그 단독 키워드 잔여물
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
-  /(?:^|\s)(?:high|bold|italic|flavor|weak|color_[a-z0-9_]+)\b\s*/gi, // high, bold 등 폰트 서식 키워드 잔여물
+  /(?:^|\s)(?:high|bold|italic|flavor|weak|tut|color_[a-z0-9_]+)\b\s*/gi, // high, bold, tut 등 폰트 서식 키워드 잔여물
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /@[a-zA-Z0-9_!]+!/g,                                      // @skill_martial_icon! 등 아이콘
   /\b(?:indent_newline:\d|positive_value|negative_value)\b/g, // 들여쓰기 및 수치 변수
@@ -359,10 +360,14 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = cleaned.replace(/(?:^|\s)[LGV];?\s*(?=['"`‘“「『가-힣\d])/gi, ' ');
   cleaned = cleaned.replace(/^[LGV]\s+/i, '');
 
-  // 4. 단어 뒤에 분리되어 붙거나 결합된 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "성직 지역!! 안에", "수도!!가")
-  // 단, 단어에 바로 붙은 정상 단일 감탄 부호("있습니다!", "성공!")는 보존
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])!{2,}(?=\s|[가-힣a-zA-Z0-9]|$)/g, '$1 ');
-  cleaned = cleaned.replace(/(?:\s+!)+\s*(?=[가-힣a-zA-Z0-9(]|$)/g, ' ');
+  // 4. 단어 뒤에 분리되어 붙거나 결합된 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "성직 지역!! 안에", "수도!!가", "파벌 ! !이", "봉신 ! !들이나", "살해 ! !하는")
+  // - 마지막 '!' 바로 뒤에 공백 없이 한글/괄호가 이어지는 경우는 로컬라이제이션 원문에서 조사/어미가 바로 붙어 있던 것이므로 공백 없이 직결
+  // - 마지막 '!' 뒤에 공백이나 문장 끝이 오는 경우는 단어 간 띄어쓰기 공백(' ') 유지
+  // - 단, 단어에 바로 붙은 정상 단일 감탄 부호("있습니다!", "성공!")는 보존
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])!{2,}(?=[가-힣(])/g, '$1');
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])!{2,}(?=\s|[a-zA-Z0-9]|$)/g, '$1 ');
+  cleaned = cleaned.replace(/(?:\s+!)+(?=[가-힣(])/g, '');
+  cleaned = cleaned.replace(/(?:\s+!)+\s*(?=[a-zA-Z0-9]|\s|$)/g, ' ');
   cleaned = cleaned.replace(/\s+!\s+/g, ' ');
   cleaned = cleaned.replace(/(?:![\s!]+!)/g, ' ');
 
@@ -375,9 +380,9 @@ export const sanitizeCk3Text = (rawText: string): string => {
   // 6. 한국어 조사 태그 자동 보정
   cleaned = resolveKoreanParticles(cleaned);
 
-  // 7. 태그 및 특수문자 제거 후 발생한 조사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
+  // 7. 태그 및 특수문자 제거 후 발생한 조사/접미사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
   // 단, '이'는 지시관형사(예: "이 녀석", "이 결정")로 쓰일 수 있으므로 뒤에 또 다른 한글 단어가 오는 경우(\s+[가-힣])에는 앞 단어와 붙이지 않음
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야)(?=[^\w가-힣]|$)/g, '$1$2');
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야|들(?:이|은|을|의|에게|과|와|도|만|이나|이라도|조차|마저)?)(?=[^\w가-힣]|$)/g, '$1$2');
   cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+이(?=[,.?!;:)]|$)/g, '$1이');
 
   // 7.5. 수치 서식 태그 제거 후 발생한 숫자 뒤 단위성 명사 앞 공백 정리 (예: "3 명의" -> "3명의", "10 곳" -> "10곳")
@@ -447,6 +452,9 @@ const parseRecoveredPayload = (
   speakerGender?: 'male' | 'female' | 'narrator';
   eventType?: Ck3EventType;
 } | null => {
+  const isForceReplay =
+    payload.includes('##CK3_TTS_FORCE##') || payload.includes('[CK3_TTS_FORCE]');
+
   let clean = payload
     .replace(/(?:\[|##)CK3_TTS(?:_FORCE)?(?:\]|##)/gi, '')
     .trim();
@@ -519,10 +527,27 @@ const parseRecoveredPayload = (
 
   // error.log 단독 또는 스티칭된 파편에서 추출된 본문이 유효한 서사 텍스트인지 검증
   if (isValidNarrativeText(title) && isValidNarrativeText(content)) {
-    return { title, content, isForceReplay: false, speakerGender, eventType: typeExtraction.markerType ?? eventType };
+    return {
+      title,
+      content,
+      isForceReplay,
+      speakerGender,
+      eventType: typeExtraction.markerType ?? eventType
+    };
   }
   return null;
 };
+
+/**
+ * 인용구 사이의 서술문에 단락 개행(\n\n)이 포함되어 멀티라인으로 쪼개진 Unknown effect 항목을 단일 라인으로 병합합니다.
+ * @param rawChunk - 원본 에러 로그 청크 문자열
+ * @returns 멀티라인 Unknown effect가 단일 라인으로 정규화된 문자열
+ */
+export const normalizeMultilineUnknownEffects = (rawChunk: string): string =>
+  rawChunk.replace(
+    /(Unknown effect:[^\r\n]*?)(?:\r?\n)+\s*(,\s*near line:\s*\d+)/gi,
+    '$1 $2'
+  );
 
 /**
  * error.log 내 콘솔 명령어 구문 파싱 에러(큰따옴표 조기 종료 등)로 쪼개진 Unknown effect 라인들을 모아
@@ -551,14 +576,18 @@ const recoverEventsFromErrorLog = (
     return recoveredEvents;
   }
 
-  const lines = chunk.split(/\r?\n/);
+  // 인용구 사이의 서술문에 단락 개행(\n\n)이 포함되어 멀티라인으로 쪼개진 Unknown effect 항목을 단일 라인으로 사전 병합
+  const normalizedChunk = normalizeMultilineUnknownEffects(chunk);
+
+  const lines = normalizedChunk.split(/\r?\n/);
   let currentTokens: string[] = [];
   let isCollecting = false;
+  let hasSeenUnknownEffect = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // debug.log에서 큰따옴표로 잘린 미완성 시작 태그 라인(예: "##CK3_TTS## 독일 궁정|||")이 스티칭된 경우 제목 보존을 위해 수집 시작
+    // debug.log에서 큰따옴표로 잘린 미완성 시작 태그 라인(예: "##CK3_TTS## 금화 약간만 있다면...|||...")이 스티칭된 경우 제목 및 1문단 보존을 위해 수집 시작
     if (
       !trimmed.includes('Unknown effect:') &&
       (trimmed.includes('##CK3_TTS') || trimmed.includes('[CK3_TTS')) &&
@@ -571,8 +600,17 @@ const recoverEventsFromErrorLog = (
       const bracketIdx = trimmed.indexOf('[CK3_TTS');
       const tagStartIdx = hashIdx !== -1 ? hashIdx : bracketIdx;
       if (tagStartIdx !== -1) {
+        // 이미 Unknown effect를 수집한 뒤 새 시작 태그가 나왔다면 이전 수집 블록을 먼저 플러시
+        if (isCollecting && hasSeenUnknownEffect && currentTokens.length > 0) {
+          const prevPayload = currentTokens.join(' ');
+          const recovered = parseRecoveredPayload(prevPayload);
+          if (recovered) {
+            recoveredEvents.push(recovered);
+          }
+        }
         currentTokens = [trimmed.slice(tagStartIdx).trim()];
         isCollecting = true;
+        hasSeenUnknownEffect = false;
         continue;
       }
     }
@@ -580,6 +618,7 @@ const recoverEventsFromErrorLog = (
     // Unknown effect 에러 라인 매칭
     if (trimmed.includes('Unknown effect:')) {
       isCollecting = true;
+      hasSeenUnknownEffect = true;
 
       // 1. 접두사 "Unknown effect:" 앞부분(로그 헤더 포함) 제거
       let lineBody = trimmed.replace(/^.*?Unknown effect:\s*/, '');
@@ -643,6 +682,7 @@ const recoverEventsFromErrorLog = (
 
         currentTokens = [];
         isCollecting = false;
+        hasSeenUnknownEffect = false;
 
         if (!hasExplicitTtsMarker && !hasSubstantialSentence) {
           continue;
@@ -658,14 +698,25 @@ const recoverEventsFromErrorLog = (
       const fullPayload = currentTokens.join(' ');
       currentTokens = [];
       isCollecting = false;
+      hasSeenUnknownEffect = false;
 
       const recovered = parseRecoveredPayload(fullPayload);
       if (recovered) {
         recoveredEvents.push(recovered);
       }
+    } else if (isCollecting && !hasSeenUnknownEffect) {
+      // 시작 태그(debug.log 앞부분) 수집 직후 아직 첫 Unknown effect 라인이 나오기 전에는
+      // 문단 구분용 빈 줄(\n\n)에서 조기 플러시하지 않고 건너뛰며, 멀티라인 본문은 그대로 이어붙임
+      if (trimmed.length === 0) {
+        continue;
+      }
+      if (!/^\[\d{2}:\d{2}:\d{2}\]/.test(trimmed)) {
+        currentTokens.push(trimmed);
+      }
     } else if (isCollecting && (!trimmed.includes('Unknown effect:') || trimmed.length === 0)) {
       // Unknown effect 연속이 끊겼을 때 (빈 줄 또는 다른 로그 헤더 시작)
-      if (currentTokens.length > 0) {
+      // 실제 Unknown effect 파편을 최소 1개 이상 수집했을 때만 온전한 복원으로 판정하여 플러시
+      if (hasSeenUnknownEffect && currentTokens.length > 0) {
         const fullPayload = currentTokens.join(' ');
         const hasExplicitTtsMarker =
           fullPayload.includes('CK3_TTS') ||
@@ -682,11 +733,13 @@ const recoverEventsFromErrorLog = (
       }
       currentTokens = [];
       isCollecting = false;
+      hasSeenUnknownEffect = false;
     }
   }
 
   // 청크가 Unknown effect 라인으로 끝났고(빈 줄 없음) 짝수 큰따옴표로 인해 ##CK3_TTS_END##가 삼켜진 경우 루프 종료 시 잔여 토큰 플러시
-  if (isCollecting && currentTokens.length > 0) {
+  // (실제 Unknown effect가 1개 이상 수집된 경우에만 플러시하여 debug.log 미완성 단독 라인의 허위 복원 원천 차단)
+  if (isCollecting && hasSeenUnknownEffect && currentTokens.length > 0) {
     const fullPayload = currentTokens.join(' ');
     const hasExplicitTtsMarker =
       fullPayload.includes('CK3_TTS') ||
@@ -711,19 +764,8 @@ const recoverEventsFromErrorLog = (
  * @param existingText - 비교 기준 원본 텍스트
  * @returns 50% 이상 단어가 중복되는 파편이면 true
  */
-export const isFragmentOf = (candidateText: string, existingText: string): boolean => {
-  const words = candidateText.split(/\s+/).filter((w) => w.length >= 2);
-  if (words.length === 0) {
-    return false;
-  }
-  let matchCount = 0;
-  for (const word of words) {
-    if (existingText.includes(word)) {
-      matchCount++;
-    }
-  }
-  return matchCount / words.length >= 0.5;
-};
+export const isFragmentOf = (candidateText: string, existingText: string): boolean =>
+  isTextFragmentOf(candidateText, existingText);
 
 /**
  * 로그 텍스트 청크(멀티라인 줄바꿈 포함)에서 ##CK3_TTS## 및 [CK3_TTS] 블록들을 온전하게 추출합니다.
@@ -891,10 +933,10 @@ export const extractCk3EventsFromChunk = (
   }
 
   // 동일한 청크 내 중복 또는 파편이 존재할 경우, 더 완전하고 긴 본문을 우선 채택
+  // (단, 튜토리얼 1/2 -> 2/2처럼 제목은 같지만 본문이 전혀 다른 별개 단계는 각각 보존)
   for (const candidate of candidateEvents) {
     const existingIndex = events.findIndex(
       (e) =>
-        e.title === candidate.title ||
         candidate.content.includes(e.content) ||
         e.content.includes(candidate.content) ||
         isFragmentOf(candidate.content, e.content) ||

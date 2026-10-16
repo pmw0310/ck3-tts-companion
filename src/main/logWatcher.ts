@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import chokidar from 'chokidar';
 import type { FSWatcher } from 'chokidar';
-import { extractCk3EventsFromChunk, isFragmentOf } from '@/main/textSanitizer';
+import {
+  extractCk3EventsFromChunk,
+  isFragmentOf,
+  normalizeMultilineUnknownEffects
+} from '@/main/textSanitizer';
 import type {
   Ck3EventMessage,
   ExecutionSoundEvent,
@@ -23,6 +27,8 @@ const CACHE_TTL_MS = 180000;
 const CLIPBOARD_POLL_MS = 150;
 /** 서로 다른 채널(클립보드/debug.log/error.log)로 도착한 동일 이벤트를 중복으로 보는 시간 창 (ms) */
 const CROSS_CHANNEL_DEDUPE_MS = 5000;
+/** 하위 파편 덮어쓰기 차단 및 최근 제목 캐시 유효 시간 (ms) */
+const RECENT_FRAGMENT_TTL_MS = 10000;
 /** error.log 파편을 클립보드 원문 도착 이후에 검사하기 위한 지연 시간 (ms) */
 const ERROR_LOG_DEFER_MS = 600;
 /** 클립보드에 실린 모드 페이로드 식별 마커 */
@@ -232,7 +238,7 @@ export const startWatchingLogFile = <TSnapshot>(
   const activeReadStreams = new Set<string>();
   const pendingReadRequests = new Set<string>();
   const crossChannelCache = new Map<string, { channel: EventChannel; time: number }>();
-  const recentTitleCache = new Map<string, { channel: EventChannel; time: number }>();
+  const recentTitleCache = new Map<string, { channel: EventChannel; time: number; content: string }>();
 
   // 감시할 파일 목록 구성 (기본 debug.log 및 파서 구문 에러가 기록되는 error.log 동시 감시)
   const debugLogPath = path.resolve(logFilePath);
@@ -286,33 +292,41 @@ export const startWatchingLogFile = <TSnapshot>(
       }
     }
     for (const [cachedTitle, entry] of recentTitleCache.entries()) {
-      if (now - entry.time > 10000) {
+      if (now - entry.time > RECENT_FRAGMENT_TTL_MS) {
         recentTitleCache.delete(cachedTitle);
       }
     }
 
     for (const event of parsedEvents) {
-      // ⚠️ [error.log 파편 덮어쓰기 방어]
-      // error.log에서 유입되었거나 스티칭된 이벤트가 최근 다른 채널에서 받은 완전한 원본의 단어 파편이거나 동일 사건이면 무시합니다.
-      if (channel === 'error') {
-        let isDuplicateFragment = false;
-        // 1. 단어 파편(Subset) 검사
-        for (const [cachedContent, cachedTime] of recentEventCache.entries()) {
-          if (now - cachedTime < 10000 && isFragmentOf(event.content, cachedContent)) {
-            isDuplicateFragment = true;
-            break;
-          }
+      // ⚠️ [전 채널 파편 덮어쓰기 방어 (Cross-channel Subset Guard)]
+      // 이미 다른 채널(예: 클립보드)에서 온전한 원본을 수신한 상태에서,
+      // 뒤늦게 debug.log 또는 error.log에서 유입된 잘린 하위 파편(Subset)이 온전한 본문을 덮어쓰지 않도록 차단합니다.
+      let isDuplicateFragment = false;
+
+      // 1. 단어 파편(Subset) 또는 부분 문자열 검사 (기존에 더 긴 원본이 이미 활성화되어 있는 경우)
+      for (const [cachedContent, cachedTime] of recentEventCache.entries()) {
+        if (
+          now - cachedTime < RECENT_FRAGMENT_TTL_MS &&
+          isFragmentOf(event.content, cachedContent)
+        ) {
+          isDuplicateFragment = true;
+          break;
         }
-        // 2. 동일 제목 검사 (클립보드 등에서 이미 온전한 원문이 등록된 경우)
-        const titleEntry = recentTitleCache.get(event.title);
-        if (titleEntry && titleEntry.channel !== 'error' && now - titleEntry.time < 10000) {
+      }
+
+      // 2. 동일 제목 검사 (동일 사건에 대해 이미 더 긴 본문이 등록되어 있고 현재 본문이 그 하위 파편인 경우)
+      const titleEntry = recentTitleCache.get(event.title);
+      if (titleEntry && now - titleEntry.time < RECENT_FRAGMENT_TTL_MS) {
+        if (isFragmentOf(event.content, titleEntry.content)) {
+          // 기존 본문이 더 길고 현재 들어온 짧은 본문이 그 하위 파편인 경우에만 차단
+          // (튜토리얼 1/2 -> 2/2처럼 제목은 같지만 본문이 전혀 다른 다음 단계는 정상 통과)
           isDuplicateFragment = true;
         }
+      }
 
-        if (isDuplicateFragment) {
-          console.log('ℹ️ [LogWatcher] 완전한 원본이 이미 활성화되어 있어 error.log 파편 덮어쓰기를 차단했습니다.');
-          continue;
-        }
+      if (isDuplicateFragment) {
+        console.log(`ℹ️ [LogWatcher] 더 완전한 원본이 이미 활성화되어 있어 하위 파편 유입을 차단했습니다 (${channel}):`, event.title);
+        continue;
       }
 
       // 채널 간 중복: 다른 채널에서 5초 내 동일 본문이 이미 전달되었다면 같은 클릭/표시의 중복 수신으로 판단
@@ -330,7 +344,7 @@ export const startWatchingLogFile = <TSnapshot>(
 
       updateRecentEventCache(recentEventCache, event.content, now);
       crossChannelCache.set(event.content, { channel, time: now });
-      recentTitleCache.set(event.title, { channel, time: now });
+      recentTitleCache.set(event.title, { channel, time: now, content: event.content });
 
       const eventMessage: Ck3EventMessage = {
         id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
@@ -464,8 +478,9 @@ export const startWatchingLogFile = <TSnapshot>(
               bufferText.includes('[CK3_TTS_END]') ||
               bufferText.includes('Unknown effect:')
             ) {
-              // 엔진 에러(console.cpp, ai_activity 등)를 걸러내고 Unknown effect 및 TTS 태그 라인만 선별 결합
-              const cleanErrorLines = bufferText
+              // 멀티라인 Unknown effect 항목(단락 개행 뒤 다음 줄에 , near line: 이 찍히는 케이스)을 먼저 한 줄로 병합한 뒤 선별 결합
+              const normalizedErrorBuffer = normalizeMultilineUnknownEffects(bufferText);
+              const cleanErrorLines = normalizedErrorBuffer
                 .split(/\r?\n/)
                 .filter(
                   (line) =>

@@ -54,7 +54,7 @@ window = {
 				position = { 10 10 }
 				parentanchor = top|left
 				size = { 36 36 }
-				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
+				raw_tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
 				onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, '##CK3_TTS_END##\"')))))]"
 
 				button_icon = {

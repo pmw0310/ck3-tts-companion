@@ -15,38 +15,75 @@ types TutorialWindow {
 			name = _hide
 			using = Animation_FadeOut_Quick
 			using = Sound_WindowHide_Standard
+			next = _hide_clear_pending_auto
 			on_start = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
+		}
+
+		state = {
+			name = _hide_clear_pending_auto
+			next = _hide_clear_pending_force
 			on_start = "[GetVariableSystem.Clear('tutorial_tts_pending_auto')]"
+		}
+
+		state = {
+			name = _hide_clear_pending_force
 			on_start = "[GetVariableSystem.Clear('tutorial_tts_pending_force')]"
 		}
 
-		# 튜토리얼 스텝 텍스트 변경(다음 버튼 클릭 및 자동 진행) 실시간 감지 낭독기
-		state = {
-			name = tutorial_step_tts_trigger
-			trigger_when = "[And(Not(StringIsEmpty(Tutorial.GetStepText)), Not(GetVariableSystem.HasValue('tutorial_current_step_text', Tutorial.GetStepText)))]"
-			delay = 0.1
-			on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+		# 튜토리얼 스텝 텍스트 변경(창 열림 및 조건 달성 자동 진행) 실시간 감지 낭독기
+		# 루트 tutorial_window의 위치 이동 애니메이션(center, top_right 등)과 경합하지 않도록 전용 자식 위젯에 격리합니다.
+		widget = {
+			name = "tts_tutorial_step_detector"
+			size = { 0 0 }
+
+			state = {
+				name = tutorial_step_tts_trigger
+				trigger_when = "[And(Tutorial.ShouldBeVisible, And(Not(GetVariableSystem.Exists('tutorial_tts_pending_auto')), And(Not(StringIsEmpty(Tutorial.GetStepText)), Not(GetVariableSystem.HasValue('tutorial_current_step_text', Tutorial.GetStepText)))))]"
+				delay = 0.1
+				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
+				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			}
 		}
 
 		# CK3 TTS Companion: Tutorial.OnClickTransition 직후에는 Tutorial.GetStepText가 아직 이전 단계 문단을 반환하므로,
 		# 클릭 시점에 즉시 평가하지 않고 대기 플래그만 세운 뒤 짧은 지연 후(on_finish) 최신 단계 문단을 평가하여 낭독합니다.
-		# (바닐라 window_barbershop.gui의 delay + trigger_when + on_finish 패턴)
-		state = {
-			name = tutorial_tts_deferred_auto
-			delay = 0.35
-			trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_auto')]"
-			on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_auto')]"
-			on_finish = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-			on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+		# 단일 state 내 on_finish 중복 덮어쓰기를 방지하기 위해 next 체이닝과 전용 자식 위젯으로 격리합니다.
+		widget = {
+			name = "tts_tutorial_deferred_auto_tracker"
+			size = { 0 0 }
+
+			state = {
+				name = tutorial_tts_deferred_auto
+				delay = 0.35
+				trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_auto')]"
+				next = tutorial_tts_deferred_auto_speak
+				on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_auto')]"
+			}
+
+			state = {
+				name = tutorial_tts_deferred_auto_speak
+				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
+				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			}
 		}
 
-		state = {
-			name = tutorial_tts_deferred_force
-			delay = 0.35
-			trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_force')]"
-			on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_force')]"
-			on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+		widget = {
+			name = "tts_tutorial_deferred_force_tracker"
+			size = { 0 0 }
+
+			state = {
+				name = tutorial_tts_deferred_force
+				delay = 0.35
+				trigger_when = "[GetVariableSystem.Exists('tutorial_tts_pending_force')]"
+				next = tutorial_tts_deferred_force_speak
+				on_finish = "[GetVariableSystem.Clear('tutorial_tts_pending_force')]"
+			}
+
+			state = {
+				name = tutorial_tts_deferred_force_speak
+				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
+				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+			}
 		}
 
 		button = {
@@ -206,7 +243,7 @@ types TutorialWindow {
 						button_round = {
 							name = "tts_speak_button"
 							size = { 32 32 }
-							tooltip = "이 튜토리얼 낭독 다시 듣기 (단축키: F)"
+							raw_tooltip = "이 튜토리얼 낭독 다시 듣기 (단축키: F)"
 							onclick = "[GetVariableSystem.Set('tutorial_tts_pending_force', 'yes')]"
 
 							button_icon = {

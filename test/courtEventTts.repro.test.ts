@@ -53,17 +53,17 @@ test('궁정 이벤트 창(window_royal_court.gui & window_court_events.gui) TTS
   await t.test('3. [안내 라벨 및 툴팁] 궁정 TTS가 자동 재생 불가 및 수동 낭독임을 알리는 시각적 텍스트 라벨과 툴팁이 구비되어 있어야 함', () => {
     assert.match(
       courtContent,
-      /text_single\s*=\s*\{[\s\S]*?text\s*=\s*"궁정 자동 재생 불가"/,
+      /text_single\s*=\s*\{[\s\S]*?(?:raw_)?text\s*=\s*"궁정 자동 재생 불가"/,
       '헤더 영역에 "궁정 자동 재생 불가" 안내 라벨이 시각적으로 노출되어야 합니다.'
     );
     assert.match(
       courtContent,
-      /text_single\s*=\s*\{[\s\S]*?text\s*=\s*"수동 낭독 \(단축키: F\)"/,
+      /text_single\s*=\s*\{[\s\S]*?(?:raw_)?text\s*=\s*"수동 낭독 \(단축키: F\)"/,
       '헤더 영역에 "수동 낭독 (단축키: F)" 안내 라벨이 시각적으로 노출되어야 합니다.'
     );
     assert.match(
       courtContent,
-      /(?:raw_)?tooltip\s*=\s*"(?:TTS_COURT_EVENT_TOOLTIP|TTS 이벤트 낭독[\s\S]*?궁정\(알현실\) 이벤트는)/,
+      /(?:raw_)?tooltip\s*=\s*"(?:TTS_COURT_EVENT_TOOLTIP|이 궁정 청원 낭독 다시 듣기|TTS 이벤트 낭독[\s\S]*?궁정\(알현실\) 이벤트는)/,
       '스피커 버튼에 자동 재생 불가 및 수동 낭독 안내 툴팁이 명시되어 있어야 합니다.'
     );
   });

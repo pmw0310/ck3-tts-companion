@@ -58,7 +58,7 @@ window = {
 				position = { 10 10 }
 				parentanchor = top|left
 				size = { 36 36 }
-				tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
+				raw_tooltip = "이 서신 낭독 다시 듣기 (단축키: F)"
 				shortcut = "army_split_half"
 
 				button_icon = {
