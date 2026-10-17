@@ -510,7 +510,7 @@ const parseRecoveredPayload = (
     const sanitizedTitle = parts.length === 2 && isGenderMarker ? '이벤트' : sanitizeCk3Text(rawTitle);
     const sanitizedContent = sanitizeCk3Text(rawContent);
     title = sanitizedTitle.length > 0 ? sanitizedTitle : '이벤트';
-    content = sanitizedContent;
+    content = deduplicateRepeatedContent(sanitizedContent);
   } else {
     const genderMatch = clean.match(/(?:\|{1,3}\s*)?GENDER:([A-Za-z_]+)/i);
     if (genderMatch && genderMatch[1]) {
@@ -522,7 +522,7 @@ const parseRecoveredPayload = (
       }
       clean = clean.replace(/(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, '').trim();
     }
-    content = sanitizeCk3Text(clean);
+    content = deduplicateRepeatedContent(sanitizeCk3Text(clean));
   }
 
   // error.log 단독 또는 스티칭된 파편에서 추출된 본문이 유효한 서사 텍스트인지 검증
@@ -536,6 +536,54 @@ const parseRecoveredPayload = (
     };
   }
   return null;
+};
+
+/**
+ * 문자열 내에 동일한 문장이나 단락이 공백 없이 또는 공백 1개를 두고 2회 연속 반복되는 경우(예: A + A),
+ * 단일 인스턴스(A)로 압축 정제합니다.
+ * @param text - 대상 텍스트
+ * @returns 중복 반복이 제거된 텍스트
+ */
+export const deduplicateRepeatedContent = (text: string): string => {
+  if (!text || text.length < 20) {
+    return text;
+  }
+  const trimmed = text.trim();
+
+  // 1. 정확히 절반으로 나뉘는 완전 동일 2회 반복 패턴 (예: "ABCABC")
+  const len = trimmed.length;
+  if (len % 2 === 0) {
+    const half = len / 2;
+    if (trimmed.slice(0, half) === trimmed.slice(half)) {
+      return trimmed.slice(0, half);
+    }
+  }
+
+  // 2. 중간에 공백 1개로 나뉘는 2회 반복 패턴 (예: "ABC ABC")
+  if (len % 2 === 1) {
+    const half = Math.floor(len / 2);
+    if (trimmed[half] === ' ' && trimmed.slice(0, half) === trimmed.slice(half + 1)) {
+      return trimmed.slice(0, half);
+    }
+  }
+
+  // 3. 앞 단락의 끝과 뒷 단락의 시작이 겹쳐서 반복되는 경우 탐색 (비율 40% ~ 60% 구간)
+  const firstChar = trimmed[0];
+  for (let splitLen = Math.floor(len * 0.4); splitLen <= Math.floor(len * 0.6); splitLen++) {
+    // 분할 지점(또는 구분 공백 바로 다음 문자)이 첫 글자와 일치하지 않으면 슬라이스 생략
+    const restStartChar = trimmed[splitLen] === ' ' ? trimmed[splitLen + 1] : trimmed[splitLen];
+    if (restStartChar !== firstChar) {
+      continue;
+    }
+
+    const candidate = trimmed.slice(0, splitLen).trim();
+    const rest = trimmed.slice(splitLen).trim();
+    if (candidate.length >= 15 && candidate === rest) {
+      return candidate;
+    }
+  }
+
+  return text;
 };
 
 /**
@@ -576,6 +624,45 @@ const recoverEventsFromErrorLog = (
     return recoveredEvents;
   }
 
+  /**
+   * 수집된 페이로드를 파싱하여 중복 검사 후 복원 이벤트 배열에 등록합니다.
+   * @param payload - 수집된 토큰 문자열
+   */
+  const pushRecoveredPayload = (payload: string): void => {
+    const hasExplicitTtsMarker =
+      payload.includes('CK3_TTS') ||
+      payload.includes('|||') ||
+      /\bGENDER:[A-Za-z_]+/i.test(payload);
+    const hasSubstantialSentence = payload.length >= 20;
+
+    if (!hasExplicitTtsMarker && !hasSubstantialSentence) {
+      return;
+    }
+
+    const recovered = parseRecoveredPayload(payload);
+    if (!recovered) {
+      return;
+    }
+
+    // 중복 방어: 이미 복원된 이벤트와 동일하거나 상호 포함 관계인 경우 단일 이벤트로 압축
+    const duplicateIdx = recoveredEvents.findIndex(
+      (existing) =>
+        existing.content === recovered.content ||
+        isTextFragmentOf(existing.content, recovered.content) ||
+        isTextFragmentOf(recovered.content, existing.content)
+    );
+
+    if (duplicateIdx !== -1) {
+      const existing = recoveredEvents[duplicateIdx];
+      if (existing && recovered.content.length > existing.content.length) {
+        recoveredEvents[duplicateIdx] = recovered;
+      }
+      return;
+    }
+
+    recoveredEvents.push(recovered);
+  };
+
   // 인용구 사이의 서술문에 단락 개행(\n\n)이 포함되어 멀티라인으로 쪼개진 Unknown effect 항목을 단일 라인으로 사전 병합
   const normalizedChunk = normalizeMultilineUnknownEffects(chunk);
 
@@ -587,7 +674,7 @@ const recoverEventsFromErrorLog = (
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // debug.log에서 큰따옴표로 잘린 미완성 시작 태그 라인(예: "##CK3_TTS## 금화 약간만 있다면...|||...")이 스티칭된 경우 제목 및 1문단 보존을 위해 수집 시작
+    // debug.log에서 큰따옴표로 잘린 미완성 시작 태그 라인이 스티칭된 경우 제목 보존을 위해 수집 시작
     if (
       !trimmed.includes('Unknown effect:') &&
       (trimmed.includes('##CK3_TTS') || trimmed.includes('[CK3_TTS')) &&
@@ -602,11 +689,7 @@ const recoverEventsFromErrorLog = (
       if (tagStartIdx !== -1) {
         // 이미 Unknown effect를 수집한 뒤 새 시작 태그가 나왔다면 이전 수집 블록을 먼저 플러시
         if (isCollecting && hasSeenUnknownEffect && currentTokens.length > 0) {
-          const prevPayload = currentTokens.join(' ');
-          const recovered = parseRecoveredPayload(prevPayload);
-          if (recovered) {
-            recoveredEvents.push(recovered);
-          }
+          pushRecoveredPayload(currentTokens.join(' '));
         }
         currentTokens = [trimmed.slice(tagStartIdx).trim()];
         isCollecting = true;
@@ -636,27 +719,13 @@ const recoverEventsFromErrorLog = (
       lineBody = lineBody.trim();
 
       // 5. 토큰 정제: 인게임 태그 및 DB 식별자 필터링
-      // - TOOLTIP:FAITH, TOOLTIP:LANDED_TITLE,7232 등 서식 태그 및 ID 파편 제거
       lineBody = lineBody.replace(/\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, '').trim();
       lineBody = lineBody.replace(/,\s*\d{3,}\b/g, '').trim();
-
-      // - maitreya_faith, catholic 등 순수 스네이크케이스 영문 DB 키(신앙/특성/문화 식별자) 제거
       lineBody = lineBody.replace(/\b[a-z0-9]+_[a-z0-9_]+\b/g, '').trim();
-
-      // - 잔여 앞뒤 쉼표 및 느낌표 정리
       lineBody = lineBody.replace(/^[,!.\s]+/, '').replace(/[,!.\s]+$/, '').trim();
 
-      // 6. 파편화된 무효 토큰 배제 (수집 스킵)
-      // - 3자리 이상의 순수 숫자열 (캐릭터/타이틀 고유 ID 파편: 15301, 7232 등)
-      if (/^\d{3,}$/.test(lineBody)) {
-        continue;
-      }
-      // - 단독 서식/링크 마커 (L, G, V, B, E, I, P, N)
-      if (/^[LGVBEIPN]$/i.test(lineBody)) {
-        continue;
-      }
-      // - 구두점만 남은 토큰
-      if (/^[!,.:;?\s]+$/.test(lineBody)) {
+      // 6. 파편화된 무효 토큰 배제
+      if (/^\d{3,}$/.test(lineBody) || /^[LGVBEIPN]$/i.test(lineBody) || /^[!,.:;?\s]+$/.test(lineBody)) {
         continue;
       }
 
@@ -669,44 +738,18 @@ const recoverEventsFromErrorLog = (
         trimmed.includes('##CK3_TTS_END##') ||
         trimmed.includes('[CK3_TTS_END]')
       ) {
-        const fullPayload = currentTokens.join(' ');
-        const hasExplicitTtsMarker =
-          fullPayload.includes('CK3_TTS') ||
-          fullPayload.includes('|||') ||
-          /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
-
-        // 명시적 TTS 마커(CK3_TTS 태그, ||| 구분자, GENDER 성별)가 없는 경우:
-        // 전체 복원 텍스트가 최소 20자 이상이어야만 유효한 복원으로 판정.
-        // (단순 무의미한 극소수 단어 조각 파편은 가짜 이벤트 생성을 방지하기 위해 폐기)
-        const hasSubstantialSentence = fullPayload.length >= 20;
-
+        pushRecoveredPayload(currentTokens.join(' '));
         currentTokens = [];
         isCollecting = false;
         hasSeenUnknownEffect = false;
-
-        if (!hasExplicitTtsMarker && !hasSubstantialSentence) {
-          continue;
-        }
-
-        const recovered = parseRecoveredPayload(fullPayload);
-        if (recovered) {
-          recoveredEvents.push(recovered);
-        }
       }
     } else if (isCollecting && (trimmed.includes('##CK3_TTS_END##') || trimmed.includes('[CK3_TTS_END]'))) {
       currentTokens.push(trimmed);
-      const fullPayload = currentTokens.join(' ');
+      pushRecoveredPayload(currentTokens.join(' '));
       currentTokens = [];
       isCollecting = false;
       hasSeenUnknownEffect = false;
-
-      const recovered = parseRecoveredPayload(fullPayload);
-      if (recovered) {
-        recoveredEvents.push(recovered);
-      }
     } else if (isCollecting && !hasSeenUnknownEffect) {
-      // 시작 태그(debug.log 앞부분) 수집 직후 아직 첫 Unknown effect 라인이 나오기 전에는
-      // 문단 구분용 빈 줄(\n\n)에서 조기 플러시하지 않고 건너뛰며, 멀티라인 본문은 그대로 이어붙임
       if (trimmed.length === 0) {
         continue;
       }
@@ -714,22 +757,8 @@ const recoverEventsFromErrorLog = (
         currentTokens.push(trimmed);
       }
     } else if (isCollecting && (!trimmed.includes('Unknown effect:') || trimmed.length === 0)) {
-      // Unknown effect 연속이 끊겼을 때 (빈 줄 또는 다른 로그 헤더 시작)
-      // 실제 Unknown effect 파편을 최소 1개 이상 수집했을 때만 온전한 복원으로 판정하여 플러시
       if (hasSeenUnknownEffect && currentTokens.length > 0) {
-        const fullPayload = currentTokens.join(' ');
-        const hasExplicitTtsMarker =
-          fullPayload.includes('CK3_TTS') ||
-          fullPayload.includes('|||') ||
-          /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
-        const hasSubstantialSentence = fullPayload.length >= 20;
-
-        if (hasExplicitTtsMarker || hasSubstantialSentence) {
-          const recovered = parseRecoveredPayload(fullPayload);
-          if (recovered) {
-            recoveredEvents.push(recovered);
-          }
-        }
+        pushRecoveredPayload(currentTokens.join(' '));
       }
       currentTokens = [];
       isCollecting = false;
@@ -737,22 +766,9 @@ const recoverEventsFromErrorLog = (
     }
   }
 
-  // 청크가 Unknown effect 라인으로 끝났고(빈 줄 없음) 짝수 큰따옴표로 인해 ##CK3_TTS_END##가 삼켜진 경우 루프 종료 시 잔여 토큰 플러시
-  // (실제 Unknown effect가 1개 이상 수집된 경우에만 플러시하여 debug.log 미완성 단독 라인의 허위 복원 원천 차단)
+  // 청크 종료 시 잔여 토큰 플러시
   if (isCollecting && hasSeenUnknownEffect && currentTokens.length > 0) {
-    const fullPayload = currentTokens.join(' ');
-    const hasExplicitTtsMarker =
-      fullPayload.includes('CK3_TTS') ||
-      fullPayload.includes('|||') ||
-      /\bGENDER:[A-Za-z_]+/i.test(fullPayload);
-    const hasSubstantialSentence = fullPayload.length >= 20;
-
-    if (hasExplicitTtsMarker || hasSubstantialSentence) {
-      const recovered = parseRecoveredPayload(fullPayload);
-      if (recovered) {
-        recoveredEvents.push(recovered);
-      }
-    }
+    pushRecoveredPayload(currentTokens.join(' '));
   }
 
   return recoveredEvents;

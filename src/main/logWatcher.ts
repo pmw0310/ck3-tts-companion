@@ -487,7 +487,9 @@ export const startWatchingLogFile = <TSnapshot>(
                     line.includes('Unknown effect:') ||
                     line.includes('##CK3_TTS_END##') ||
                     line.includes('[CK3_TTS_END]') ||
-                    line.includes('|||')
+                    line.includes('|||') ||
+                    line.includes('[E][') ||
+                    line.includes('Error:')
                 )
                 .join('\n');
               effectiveText = `${debugPending}\n${cleanErrorLines}`;
