@@ -52,15 +52,15 @@ describe('수도회 monastic_order 스코프 결함 및 None 찌꺼기 정제 �
     }
   });
 
-  it('3. 한국어 로컬라이제이션에 monastic_order 스코프 검사 및 Select_CString 가드가 적용되어 있어야 한다', () => {
+  it('3. 한국어 로컬라이제이션에 CDataSystem 컴파일 에러 없는 안전한 "수도회" 표준 문구가 적용되어 있어야 한다', () => {
     const koreanContent = fs.readFileSync(locPaths[0]!, 'utf-8');
     assert.ok(
-      koreanContent.includes("Select_CString( SCOPE.sTitle('monastic_order').IsValid"),
-      "monastic_order 스코프 검사 가드가 포함되어야 합니다."
+      koreanContent.includes('pick_becomes_monastic_order_leader_tt:0 "[chosen_leader.GetShortUIName](이)가 수도회의 [ruler|E]가 됨"'),
+      "monastic_order.GetName 대신 안전한 수도회 문구가 포함되어야 합니다."
     );
     assert.ok(
-      koreanContent.includes("Select_CString( leader.GetPrimaryTitle.IsValid"),
-      "leader.GetPrimaryTitle.IsValid 안전 가드가 포함되어야 합니다."
+      !koreanContent.includes('monastic_order.GetName'),
+      "CDataSystem 컴파일 에러를 유발하는 monastic_order.GetName이 없어야 합니다."
     );
   });
 

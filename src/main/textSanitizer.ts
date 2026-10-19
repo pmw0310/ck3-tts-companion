@@ -1,5 +1,4 @@
 import { hasBatchim, josa } from 'es-hangul';
-import { convertLatinPhrasesInText } from '@/main/latinTransliteration';
 import { isTextFragmentOf } from '@/shared/eventDeduplicator';
 import type { Ck3EventType } from '@/shared/types';
 
@@ -51,7 +50,12 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /(?:^|\s)(?:아이\s+트리에드\s+토\s+크레아테\s+안\s+인발리드[^\n.]*\.?)/gi,
   /(?:^|\s)(?:Script\s+system\s+error!?)/gi,
   /(?:^|\s)(?:스크립트\s+시스템\s+에러!?)/gi,
-  /(?:^|\s)(?:Variable\s+'[^']+'\s+is\s+(?:used|set)[^\n.]*\.?)/gi
+  /(?:^|\s)(?:Variable\s+'[^']+'\s+is\s+(?:used|set)[^\n.]*\.?)/gi,
+  // 스크립트 플래그/트리거/이펙트 미사용 엔진 경고 잔여물 차단
+  /(?:^|\s)Flag\s+'[^']+'\s+is\s+set\s+but\s+is\s+never\s+used[^\n.]*\.?/gi,
+  /(?:^|\s)Note\s+that\s+use\s+in\s+localization\s+doesn't\s+count[^\n.]*\.?/gi,
+  /(?:^|\s)Use\s+in\s+unused\s+scripted\s+triggers\s+and\s+effects[^\n.]*\.?/gi,
+  /(?:^|\s)(?:does\s+not\s+count\s+setting\s+it\s+in\s+an\s+unused[^\n.]*\.?)/gi
 ] as const;
 
 /** Jomini GUI 스크립트 키워드, 함수 호출 및 파싱되지 않은 엔진 코드 패턴 목록 */
@@ -68,7 +72,12 @@ const JOMINI_SCRIPT_GARBAGE_PATTERNS: readonly RegExp[] = [
   /\beffect\s+(?:debug|info|error)_log\b/i,
   /\b(?:debug|info|error)_log\s*=/i,
   /^\s*['"][,\s]/,
-  /['"],\s*[a-zA-Z_]+\s*\(/
+  /['"],\s*[a-zA-Z_]+\s*\(/,
+  // 엔진 스크립트 경고/에러 패턴 차단
+  /\bFlag\s+'[^']+'\s+is\s+set\s+but\s+is\s+never\s+used\b/i,
+  /\bNote\s+that\s+use\s+in\s+localization\s+doesn't\s+count\b/i,
+  /\bUse\s+in\s+unused\s+scripted\s+triggers\s+and\s+effects\b/i,
+  /\bdoes\s+not\s+count\s+setting\s+it\b/i
 ] as const;
 
 /**
@@ -303,16 +312,45 @@ export const sanitizeCk3Text = (rawText: string): string => {
     '$1'
   );
 
-  // 0.55. 수도회 스코프 결함(ERROR:[monastic_order.GetName] 등) 복원
+  // 0.52. 스코프 결함으로 앞 관계 명사가 유실되어 홀로 남은 관형절 파편("나의 인 ERROR:[targeted_courtier...](을)를") 복원
+  //       "나의 인 ERROR:[...](을)를" -> "나의 궁정 신하(을)를"
+  cleaned = cleaned.replace(
+    /(?:^|\s)나의\s+인\s+(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.'(),\s]*(?:targeted_courtier|courtier)[a-zA-Z0-9_.'(),\s]*(?:\]|\|[a-zA-Z0-9_]*)/gi,
+    ' 나의 궁정 신하'
+  );
+  cleaned = cleaned.replace(
+    /(?:^|\s)나의\s+(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.'(),\s]*(?:targeted_courtier|courtier)[a-zA-Z0-9_.'(),\s]*(?:\]|\|[a-zA-Z0-9_]*)/gi,
+    ' 나의 궁정 신하'
+  );
+
+  // 0.53. 대상 궁신 스코프 결함(ERROR:[targeted_courtier...] 등) 단독 복원
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*targeted_courtier[a-zA-Z0-9_.]*\]\s*의/gi,
+    ' 궁정 신하의'
+  );
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*targeted_courtier[a-zA-Z0-9_.]*\]/gi,
+    ' 궁정 신하'
+  );
+
+  // 0.54. 새로운 왕국/제국 수립 결단 스코프 결함(ERROR:[king_aspirant.GetShortUINamePossessive] 등) 복원
+  //       "ERROR:[king_aspirant.GetShortUINamePossessive] 새로운 왕국의" -> "당신의 새로운 왕국의"
+  cleaned = cleaned.replace(
+    /(?:(?:Error|ERROR):\s*)+\[[^\]]*(?:king_aspirant|founder)[^\]]*\]\s*/gi,
+    ' 당신의 '
+  );
+
+  // 0.55. 수도회 스코프 결함(ERROR:[monastic_order.GetName] 및 ERROR:[Select_CString(...monastic_order...)] 등) 복원
   //       단독 삭제 규칙(0.6)에 의해 주어 자체가 유실되기 전에 의미 있는 명사("수도회")로 우선 복원
   //       (예: "ERROR:[monastic_order.GetName]의 영주로 남음" -> "수도회의 영주로 남음",
+  //            "ERROR:[Select_CString( SCOPE.sTitle('monastic_order').IsValid... )]의 영주가 됨" -> "수도회의 영주가 됨",
   //            "ERROR:ERROR:[monastic_order.GetName](이)가" -> "수도회(이)가")
   cleaned = cleaned.replace(
-    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.]*\]\s*의/gi,
+    /(?:(?:Error|ERROR):\s*)+\[(?:Select_CString\([^\]]*monastic_order[^\]]*\)|[a-zA-Z0-9_.'(),\s]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.'(),\s]*)\s*\]\s*의/gi,
     ' 수도회의'
   );
   cleaned = cleaned.replace(
-    /(?:(?:Error|ERROR):\s*)+\[[a-zA-Z0-9_.]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.]*\]/gi,
+    /(?:(?:Error|ERROR):\s*)+\[(?:Select_CString\([^\]]*monastic_order[^\]]*\)|[a-zA-Z0-9_.'(),\s]*(?:monastic_order|new_holy_order|holy_order|target_order)[a-zA-Z0-9_.'(),\s]*)\s*\]/gi,
     ' 수도회'
   );
 
@@ -373,9 +411,6 @@ export const sanitizeCk3Text = (rawText: string): string => {
 
   // 5. 줄바꿈(\n)을 단락 간 자연스러운 공백으로 치환
   cleaned = cleaned.replace(/\r?\n+/g, ' ');
-
-  // 5.5. 라틴어 기도문, 성경 구절, 유명 격언을 유창한 한글 독음으로 자동 변환
-  cleaned = convertLatinPhrasesInText(cleaned);
 
   // 6. 한국어 조사 태그 자동 보정
   cleaned = resolveKoreanParticles(cleaned);
