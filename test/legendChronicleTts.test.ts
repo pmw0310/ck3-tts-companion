@@ -41,7 +41,7 @@ describe('전설 연대기(Legend Chronicle) TTS 연동 및 조사 정제 검증
     // 2. 황금 스피커 버튼 및 F 단축키 검증
     assert.ok(content.includes('name = "tts_speak_button"'), 'tts_speak_button 위젯이 존재해야 합니다');
     assert.ok(content.includes('shortcut = "army_split_half"'), 'F 단축키가 바인딩되어 있어야 합니다');
-    assert.ok(content.includes('effect info_log = \\"##CK3_TTS_FORCE## '), '버튼 클릭 시 ##CK3_TTS_FORCE## 강제 재생이 연동되어야 합니다');
+    assert.ok(content.includes("CloseGameView(Concatenate('##CK3_TTS_FORCE## "), '버튼 클릭 시 ##CK3_TTS_FORCE## 강제 재생이 연동되어야 합니다');
 
     // 3. 중괄호 쌍 일치 검증
     const openBraces = (content.match(/\{/g) || []).length;

@@ -19,7 +19,7 @@ describe('대관식 및 무(無)포트레이트 이벤트 Jomini HasPortraitChar
       isFemaleCalls,
       `window_activity.gui에서 left_portrait 안전 가드 없이 IsFemale을 직접 호출하는 취약한 구문이 ${isFemaleCalls - guardedCalls}건 발견되었습니다.`
     );
-    assert.strictEqual(content.includes('##CK3_TTS_END##\\"'), true, '포트레이트가 1명도 없을 때를 위한 폴백 종결자가 누락되었습니다.');
+    assert.strictEqual(content.includes("'##CK3_TTS_END##'"), true, '포트레이트가 1명도 없을 때를 위한 폴백 종결자가 누락되었습니다.');
   });
 
   it('2. window_activity_locale.gui의 모든 Concatenate 성별 구문은 left_portrait 검사를 포함해야 한다', () => {
@@ -34,7 +34,7 @@ describe('대관식 및 무(無)포트레이트 이벤트 Jomini HasPortraitChar
       isFemaleCalls,
       `window_activity_locale.gui에서 left_portrait 안전 가드 없이 IsFemale을 직접 호출하는 취약한 구문이 ${isFemaleCalls - guardedCalls}건 발견되었습니다.`
     );
-    assert.strictEqual(content.includes('##CK3_TTS_END##\\"'), true, '포트레이트가 1명도 없을 때를 위한 폴백 종결자가 누락되었습니다.');
+    assert.strictEqual(content.includes("'##CK3_TTS_END##'"), true, '포트레이트가 1명도 없을 때를 위한 폴백 종결자가 누락되었습니다.');
   });
 
   it('3. character_event, big_event, fullscreen_event 등 모든 이벤트 창의 성별 구문은 left_portrait 검사를 포함해야 한다', () => {
@@ -56,7 +56,7 @@ describe('대관식 및 무(無)포트레이트 이벤트 Jomini HasPortraitChar
       const isFemaleCalls = (content.match(/GetPortraitCharacter\('left_portrait'\)\.IsFemale/g) || []).length;
       const guardedCalls = (content.match(/HasPortraitCharacter\('left_portrait'\),\s*Select_CString\(\s*EventWindowData\.GetPortraitCharacter\('left_portrait'\)\.IsFemale/g) || []).length;
 
-      if (isFemaleCalls !== guardedCalls || !content.includes('##CK3_TTS_END##\\"')) {
+      if (isFemaleCalls !== guardedCalls || !content.includes("'##CK3_TTS_END##'")) {
         violations.push(`${relPath} (미보호 호출: ${isFemaleCalls - guardedCalls}건)`);
       }
     }

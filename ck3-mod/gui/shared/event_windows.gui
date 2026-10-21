@@ -88,7 +88,8 @@ types Events
 
 		default_clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
 		onclick = "[EventOption.Select]"
-		onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+		onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]"
+		onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 		clicksound = "[EventOption.GetClickSound]"
 		block "eventoption_down" {
 			down = "[And(GetVariableSystem.HasValue('event_tooltip', EventOption.GetText), PdxGuiFoldOut.IsUnfolded)]"
@@ -1737,8 +1738,121 @@ template artifact_event_flowcontainer {
 
 template Event_Window_Debug_Info
 {
-	# CK3 TTS Companion: 디버그 모드 특유의 거추장스러운 상단 디버그 버튼들을 숨겨 몰입도를 유지합니다.
-	visible = no
+	block "debug_spacer" {}
+
+	button_round = {
+		alwaystransparent = no
+		tooltip = "REGENERATE_EVENT_CONTENTS"
+		using = tooltip_below
+
+		using = Animation_ShowHide_Quick
+
+		block "event_reset_onclick"
+		{
+			onclick = "[EventWindow.ResetContents]"
+		}
+
+		button_replace = {
+			parentanchor = center
+			alwaystransparent = yes
+		}
+	}
+
+	button_round = {
+		size = { 40 40 }
+
+		button_icon = {
+			size = { 30 30 }
+			parentanchor = center
+			texture = "gfx/interface/icons/flat_icons/history.dds"
+			tooltip = "TOGGLE_DEBUG_OPTION_TOOLTIPS"
+			using = tooltip_below
+			onclick = "[EventWindowData.ToggleDebugOptionTooltips]"
+			onclick = "[GetVariableSystem.Clear('event_tooltip')]"
+			onclick = "[PdxGuiFoldOut.Fold]"
+			fontsize = 24
+		}
+	}
+
+	button_round = {
+		size = { 40 40 }
+
+		button_icon = {
+			size = { 30 30 }
+			parentanchor = center
+			texture = "gfx/interface/icons/flat_icons/tower_construction.dds"
+			tooltip = "TOGGLE_DEVELOPER_EVENT_TOOLS"
+			using = tooltip_below
+			onclick = "[EventWindowData.ToggleEventTools]"
+			fontsize = 24
+		}
+	}
+
+	button_round = {
+		size = { 40 40 }
+
+		button_icon = {
+			size = { 100% 100% }
+			texture = "gfx/interface/icons/flat_icons/data_system.dds"
+			tooltip = "TOGGLE_DATA_SYSTEM"
+			using = tooltip_below
+			onclick = "[ExecuteConsoleCommand('Localization.ToggleSkipDataSystemInLocOutput')]"
+			fontsize = 24
+		}
+	}
+
+	button_round = {
+		size = { 40 40 }
+		button_copy = {
+			parentanchor = center
+			onclick = "[EventWindowData.CopyToClipboard]"
+			tooltip = "COPY_EVENT_CONTENTS"
+		}
+	}
+
+	button_round = {
+		name = "debug_icon"
+		size = { 40 40 }
+		button_search = {
+			parentanchor = center
+			size = { 26 26 }
+			tooltip = "EVENT_DEBUG_TOOLTIP"
+			using = tooltip_se
+			onclick = "[EventWindowData.DebugOpen]"
+			button_ignore = none
+		}
+	}
+
+	container = {
+		tooltip = "[EventWindowData.GetTriggerBreakdown]"
+		using = tooltip_es
+		icon = {
+			visible = "[EventWindowData.IsTriggerFulfilled]"
+			size = { 40 40 }
+			texture = "gfx/interface/icons/symbols/icon_check.dds"
+		}
+
+		icon = {
+			visible = "[Not( EventWindowData.IsTriggerFulfilled )]"
+			size = { 40 40 }
+			texture = "gfx/interface/icons/symbols/icon_cross.dds"
+		}
+	}
+
+	button = {
+		size = { 40 40 }
+
+		button = {
+			size = { 100% 100% }
+			tooltip = "[EventWindowData.GetDebugInfo]"
+			using = tooltip_es
+			onclick = "[EventWindowData.CopyToClipboard]"
+			onrightclick = "[EventWindowData.DebugOpen]"
+			button_ignore = none
+			raw_text = "?"
+			fontsize = 24
+		}
+	}
 }
 
 template Event_Window_Debug_OptionTooltips

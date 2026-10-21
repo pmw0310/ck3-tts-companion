@@ -15,9 +15,9 @@ import { extractCk3EventsFromChunk } from '@/main/textSanitizer';
  *   recoverEventsFromErrorLog가 선행 debug.log 헤더(##CK3_TTS## 독일 궁정|||)를 무시하고 루프 종료 시 토큰을 플러시하지 않아 이벤트가 완전 소실됨.
  */
 describe('대형 이벤트 창(big_event_window 등) 자동 TTS 상태 머신 체이닝 및 짝수 따옴표 복원 검증', () => {
-  const guiDir = path.resolve(__dirname, '../ck3-mod/gui/event_windows');
+  const guiDir = path.resolve(process.cwd(), 'ck3-mod/gui/event_windows');
 
-  it('1. event_windows GUI 파일들에서 CopyStringToClipboard가 C++ CEventWindow가 호출하는 show(_show) state의 on_start에 직접 배치되고 next = tts_console_fallback으로 체이닝되어야 한다', () => {
+  it('1. event_windows GUI 파일들에서 CopyStringToClipboard가 C++ CEventWindow가 호출하는 show(_show) state의 on_start에 직접 배치되고 디버그 콘솔 폴백(tts_console_fallback)이 없어야 한다', () => {
     const targetFiles = [
       'big_event_window.gui',
       'character_event.gui',
@@ -32,27 +32,23 @@ describe('대형 이벤트 창(big_event_window 등) 자동 TTS 상태 머신 �
       const filePath = path.join(guiDir, fileName);
       const content = fs.readFileSync(filePath, 'utf-8');
 
-      // 1) show 또는 _show state 내부에 next = tts_console_fallback과 CopyStringToClipboard가 직접 존재해야 함
+      // 1) show 또는 _show state 내부에 CopyStringToClipboard가 직접 존재해야 함
       assert.match(
         content,
-        /state\s*=\s*\{\s*name\s*=\s*_?show[\s\S]*?next\s*=\s*tts_console_fallback[\s\S]*?EventWindowData\.CopyStringToClipboard/,
-        `[${fileName}] show(_show) state 내부에 CopyStringToClipboard와 next = tts_console_fallback이 직접 선언되어야 합니다.`
+        /state\s*=\s*\{\s*name\s*=\s*_?show[\s\S]*?EventWindowData\.CopyStringToClipboard/,
+        `[${fileName}] show(_show) state 내부에 CopyStringToClipboard가 직접 선언되어야 합니다.`
       );
 
-      // 2) tts_console_fallback에는 trigger_on_create = yes가 없어야 하며 using = Animation_FadeIn_Standard가 있어야 함
-      const fallbackMatch = content.match(
-        /state\s*=\s*\{\s*name\s*=\s*tts_console_fallback([^}]*)\}/
-      );
-      assert.ok(fallbackMatch, `[${fileName}] tts_console_fallback state가 존재해야 합니다.`);
+      // 2) 디버그 모드 전용 tts_console_fallback 및 ExecuteConsoleCommand가 완전히 제거되어야 함
       assert.strictEqual(
-        /trigger_on_create\s*=\s*yes/.test(fallbackMatch[1] ?? ''),
+        content.includes('tts_console_fallback'),
         false,
-        `[${fileName}] tts_console_fallback에 trigger_on_create = yes가 있으면 show state와 경합하므로 절대 없어야 합니다.`
+        `[${fileName}] tts_console_fallback state가 제거되어야 합니다.`
       );
       assert.strictEqual(
-        /using\s*=\s*Animation_FadeIn_Standard/.test(fallbackMatch[1] ?? ''),
-        true,
-        `[${fileName}] tts_console_fallback에 using = Animation_FadeIn_Standard가 있어야 애니메이션 상태 머신에서 정상 실행됩니다.`
+        content.includes('effect info_log'),
+        false,
+        `[${fileName}] 디버그 전용 effect info_log 콘솔 명령어가 제거되어야 합니다.`
       );
     }
   });

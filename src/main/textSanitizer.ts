@@ -31,6 +31,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\bAI\s*(?:수준|weight)\s*:\s*[\d.]+/gi,                    // AI 수준: 25.00 디버그 가중치 정보
   /(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi,       // |||GENDER:F, |||GENDER:M, |||GENDER:LETTER_F 등 성별 메타데이터 태그 잔여물
   /\bUnknown effect:\s*/gi,                                   // error.log 파서 에러 접두사 잔여물
+  /\bunknown game view\s*'?/gi,                               // CloseGameView 비디버그 브릿지 로그 접두사 잔여물
   /\(엑스판데드 프롬 필레:[^)]*\)/gi,                         // 음차 변환된 스크립트 확장 메타데이터 잔여물
   /\(expanded from file:[^)]*\)/gi,                           // (expanded from file: ...) 매크로 확장 메타데이터
   /,?\s*near line:\s*\d+/gi,                                  // near line: 3 등 라인 정보 잔여물
@@ -64,6 +65,7 @@ const JOMINI_SCRIPT_GARBAGE_PATTERNS: readonly RegExp[] = [
   /\bSelect_CString\s*\(/i,
   /\bStringIsEmpty\s*\(/i,
   /\bExecuteConsoleCommand\b/i,
+  /\bCloseGameView\b/i,
   /\bEventWindowData\b/i,
   /\bActivity\.[a-zA-Z0-9_]+/i,
   /\bPdxGui[a-zA-Z0-9_]*/i,

@@ -14,8 +14,8 @@
 | **⚡ 로컬 오디오 캐싱** | 반복되는 공통 지문 및 이벤트를 로컬 디스크에 SHA-256 해시로 캐싱하여 **0초(0ms) 지연 즉시 낭독** 및 API 호출 비용 절감 |
 | **🛡️ 스코프 결함 자동 복원** | 바닐라 결단("새로운 왕국 수립"), 수도회 창설, 모략 발견 등 인게임 붉은색 `ERROR:[...]` 런타임 결함 교정 및 자연스러운 낭독 |
 | **👑 궁정(Royal Court) 알현실 특화** | 알현실 3D 환경의 안정성을 위해 궁정 주최는 **수동 낭독(단축키: F)**으로 지원하며, 알현실 닫기 시 즉각 오디오 중단(`STOP`) 연동 |
-| **🧹 인게임 디버그 클린 모드** | `-debug_mode` 활성화 시 화면을 가리는 보라색 디버그 툴팁, DNA 모디파이어, 지도 좌표, 캐릭터 창 디버그 버튼 자동 숨김 |
-| **🍏 Windows & macOS 완벽 지원** | Paradox 게임 로그 경로(`debug.log`)를 자동으로 탐색하여 양대 OS에서 단일 코드베이스로 완벽 구동 |
+| **🔓 디버그 모드(`-debug_mode`) 불필요** | 스팀 시작 옵션 설정 없이 **일반 모드 / 철인(Ironman) 모드**에서 클립보드 브릿지(`CopyStringToClipboard`)와 비디버그 엔진 브릿지(`CloseGameView` / `error.log`)만으로 모든 이벤트·특수 창 TTS, 선택지 클릭 시 음성 정지(`STOP`), 처형 효과음이 100% 작동 |
+| **🍏 Windows & macOS 완벽 지원** | Paradox 게임 로그 경로(`error.log`) 및 클립보드 브릿지를 자동으로 연동하여 양대 OS에서 단일 코드베이스로 완벽 구동 |
 | **⚡ 전역 단축키 & 실시간 자막** | 게임 전체 화면 중에도 `Ctrl/Cmd + Shift + S`로 낭독 토글 가능, 실시간 오디오 파형 시각화 및 사건 히스토리 대시보드 제공 |
 
 ---
@@ -25,12 +25,12 @@
 ```mermaid
 flowchart LR
     subgraph Game ["크루세이더 킹즈 3 (인게임)"]
-        A["이벤트 창 팝업 / 단축키 F"] --> B["debug.log<br/>(##CK3_TTS## ...)"]
-        A2["창 닫기 / 알현실 종료"] --> B2["debug.log<br/>(##CK3_TTS_STOP##)"]
+        A["이벤트 창 팝업 / 단축키 F"] --> B["클립보드 브릿지 & error.log<br/>(##CK3_TTS## ...)"]
+        A2["선택지 클릭 / 창 닫기"] --> B2["클립보드 브릿지 & error.log<br/>(##CK3_TTS_STOP##)"]
     end
 
     subgraph CompanionApp ["CK3 TTS Companion (Electron + TypeScript)"]
-        B & B2 -->|"실시간 스트리밍 (chokidar)"| C["로그 감시 & 정제 엔진<br/>(TextSanitizer)"]
+        B & B2 -->|"실시간 감지 (폴링 & chokidar)"| C["로그 감시 & 정제 엔진<br/>(TextSanitizer)"]
         C --> D{"로컬 오디오 캐시<br/>적중 검사"}
         D -->|"⚡ 캐시 적중 (0ms)"| G["오디오 플레이어<br/>& 실시간 자막"]
         D -->|"캐시 미스"| E{"TTS 엔진"}
@@ -80,16 +80,10 @@ npm run sync:mod
 
 ---
 
-### 3단계: 스팀 시작 옵션 디버그 모드 설정 (필수)
+### 3단계: 패러독스 런처에서 모드 활성화 (`-debug_mode` 불필요!)
 
-게임 엔진이 `debug.log` 파일에 이벤트 내용을 실시간으로 기록할 수 있도록 디버그 모드를 켭니다.
-
-1. **Steam 라이브러리**에서 **Crusader Kings III** 우클릭 ➔ **[속성(Properties)]** 선택
-2. **일반(General)** 탭 하단의 **[시작 옵션(Launch Options)]** 입력란에 아래 명령어 입력:
-   ```text
-   -debug_mode
-   ```
-3. **Paradox 런처** 실행 ➔ **[플레이셋(Playsets)]** ➔ **CK3 TTS Companion Bridge** 모드 활성화 후 게임 시작
+1. **Paradox 런처** 실행 ➔ **[플레이셋(Playsets)]** ➔ **CK3 TTS Companion Bridge** 모드 활성화 후 게임 시작
+2. **일반 모드 / 철인 모드 완벽 지원**: 스팀 시작 옵션에 `-debug_mode`를 설정할 필요가 없습니다. 클립보드 브릿지(`CopyStringToClipboard`)와 비디버그 엔진 브릿지(`CloseGameView` / `error.log`)를 통해 일반 모드에서도 모든 TTS 낭독, 창 닫기 정지(`STOP`), 처형 효과음이 100% 작동합니다.
 
 ---
 
@@ -120,8 +114,6 @@ npm run sync:mod
   - 알현실 나가기 및 창 닫힘 시 오디오 즉각 중단(`STOP`) 연동
 - **유물(아이템) 툴팁** (`cooltip.gui`):
   - 불필요한 호버 자동 발화를 방지하고 **수동 낭독(단축키: F 및 스피커 버튼 클릭)** 전용으로 지원
-- **문장 디자이너(Coat of Arms Designer)** (`coa_designer.gui`):
-  - 디버그 모드에서 노출되던 개발용 텍스처 파일명(`pattern_solid.dds`, `ce_lion_rampant.dds` 등) 툴팁 완전 은닉
 - **바닐라 결함 툴팁 및 로컬라이제이션 자동 정제** (`debug_cleanup_l_*.yml`):
   - **새로운 왕국 수립**: 단절 영지 툴팁의 `king_aspirant` 누락 에러를 `founder` 스코프로 교정 (인게임 붉은색 `ERROR:[...]` 완전 소거)
   - **수도회 창설**: 미생성 타이틀 참조 에러 없는 안전한 고정 명사("수도회") 툴팁 보장
@@ -202,8 +194,8 @@ ck3-tts-companion/
 ├── 📁 ck3-mod/                  # 인게임 브릿지 모드 패키지
 │   ├── 📄 descriptor.mod        # 모드 메타데이터
 │   ├── 📄 README.md             # 모드 설치 상세 매뉴얼
-│   ├── 📁 common/decisions/     # 테스트용 인게임 결단
-│   ├── 📁 localization/replace/ # 디버그 툴팁 정제 로컬라이제이션 (BOM UTF-8)
+│   ├── 📁 common/scripted_effects/ # 처형 효과음 비디버그 브릿지
+│   ├── 📁 localization/         # TTS 안내 툴팁 및 바닐라 번역 보정 로컬라이제이션 (BOM UTF-8)
 │   └── 📁 gui/                  # 알현실, 전쟁, 결투, 서신 등 인게임 이벤트 GUI 템플릿
 └── 📄 README.md                 # 본 문서
 ```

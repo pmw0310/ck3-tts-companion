@@ -1,4 +1,4 @@
-types RoyalCourtTypes
+﻿types RoyalCourtTypes
 {
 	# Requires an EventWindowViewInsert data context
 	type widget_court_event = widget {
@@ -126,7 +126,7 @@ types RoyalCourtTypes
 						button_round = {
 							name = "tts_speak_button"
 							size = { 36 36 }
-							raw_tooltip = "이 궁정 청원 낭독 다시 듣기 (단축키: F)"
+							tooltip = "TTS_COURT_EVENT_TOOLTIP"
 							shortcut = "army_split_half"
 
 							button_icon = {
@@ -137,7 +137,6 @@ types RoyalCourtTypes
 							}
 
 							onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 						}
 					}
 				}

@@ -12,7 +12,7 @@ window = {
 	state = {
 		name = _show
 		on_finish = "[PdxGuiTriggerAllAnimations('ruler_transition_appear')]"
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+		on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##')))))))]"
 		next = tts_clear_ruler_transition_fade
 	}
 
@@ -33,7 +33,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+		onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##')))))))]"
 	}
 
 	button = {
@@ -202,7 +202,7 @@ window = {
 						alwaystransparent = yes
 					}
 
-					onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+					onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##')))))))]"
 				}
 
 				flowcontainer = {
@@ -351,7 +351,7 @@ window = {
 							tooltip = "CLOSE_TOOLTIP"
 							texture = "gfx/interface/icons/flat_icons/window_close.dds"
 							onclick = "[SuccessionEventWindow.Close]"
-							onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+							onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 						}
 					}
 

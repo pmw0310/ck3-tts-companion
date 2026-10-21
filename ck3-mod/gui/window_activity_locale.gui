@@ -261,7 +261,7 @@
 
 		onclick = "[VariableSystem.Clear( 'activity_locale_view' )]"
 		onclick = "[ActivityLocaleWindow.Close]"
-		onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+		onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 
 		shortcut = "close_window"
 
@@ -1033,13 +1033,6 @@ types ActivityLocaleTypes
 		state = {
 			name = tts_activity_clipboard_play
 			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			next = tts_activity_console_fallback
-		}
-
-		state = {
-			name = tts_activity_console_fallback
-			delay = 0.05
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
 
 		state = {
@@ -1676,7 +1669,6 @@ types ActivityLocaleTypes
 						}
 
 						onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-						onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 					}
 				}
 

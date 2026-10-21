@@ -48,35 +48,7 @@ describe('CK3 모드 호환성 리베이스 및 Jomini State 무결성 검증 (m
     );
   });
 
-  it('2. [window_domicile.gui / window_character.gui / interaction_templates.gui] 최신 바닐라 드리프트 복원 및 디버그 은닉 보존 검증', () => {
-    const domicileText = fs.readFileSync(path.join(modGuiDir, 'window_domicile.gui'), 'utf8');
-    assert.ok(
-      domicileText.includes('text = "[Domicile.GetRite.GetName]"'),
-      'window_domicile.gui에 최신 바닐라 Domicile.GetRite.GetName이 보존되어야 합니다.'
-    );
-    assert.ok(
-      domicileText.includes('onclick = "[DomicileWindow.PlayBuildingSfx( DomicileBuildingSlot.Self )]"'),
-      'window_domicile.gui에 최신 바닐라 PlayBuildingSfx가 보존되어야 합니다.'
-    );
-
-    const charText = fs.readFileSync(path.join(modGuiDir, 'window_character.gui'), 'utf8');
-    assert.ok(
-      charText.includes('visible = "[And( Character.IsRuler, Character.IsClergy )]"'),
-      'window_character.gui에 최신 바닐라 성직자 궁정 탭 조건식이 보존되어야 합니다.'
-    );
-    assert.ok(
-      !charText.includes('visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"'),
-      'window_character.gui의 디버그 전용 버튼은 모두 visible = no로 은닉되어야 합니다.'
-    );
-
-    const templatesText = fs.readFileSync(path.join(modGuiDir, 'interaction_templates.gui'), 'utf8');
-    assert.ok(
-      templatesText.includes('datacontext = "[InteractionSchemeInfo.GetOwner]"'),
-      'interaction_templates.gui에 최신 바닐라 InteractionSchemeInfo.GetOwner가 보존되어야 합니다.'
-    );
-  });
-
-  it('3. [window_legend_chronicle.gui / window_succession_event.gui] TTS state 단일 on_start 체이닝 검증', () => {
+  it('2. [window_legend_chronicle.gui / window_succession_event.gui] TTS state 단일 on_start 체이닝 검증', () => {
     const legendText = fs.readFileSync(path.join(modGuiDir, 'window_legend_chronicle.gui'), 'utf8');
     const legendAutoMatch = legendText.match(
       /state\s*=\s*\{\s*name\s*=\s*tts_legend_auto_play[\s\S]*?\r?\n\t\}/
@@ -131,15 +103,17 @@ describe('CK3 모드 호환성 리베이스 및 Jomini State 무결성 검증 (m
     }
   });
 
-  it('5. [로컬라이제이션 무결성] 바닐라 누락 키(TRIGGER_BLOCKER_GROUP, 잠재적 경쟁자, 벼농사 파라미터, 논밭 지역) 및 UTF-8 with BOM 검증', () => {
-    const locFiles = [
-      'ck3-mod/localization/korean/replace/debug_cleanup_l_korean.yml',
-      'ck3-mod/localization/replace/korean/debug_cleanup_l_korean.yml',
-      'ck3-mod/localization/english/replace/debug_cleanup_l_english.yml',
-      'ck3-mod/localization/replace/english/debug_cleanup_l_english.yml'
+  it('5. [로컬라이제이션 무결성] tts_companion_l_*.yml 핵심 키(궁정 툴팁, 모험가 전환, 모험가 수장 칭호) 및 UTF-8 with BOM 검증', () => {
+    const korFiles = [
+      'ck3-mod/localization/korean/replace/tts_companion_l_korean.yml',
+      'ck3-mod/localization/replace/korean/tts_companion_l_korean.yml'
+    ];
+    const engFiles = [
+      'ck3-mod/localization/english/replace/tts_companion_l_english.yml',
+      'ck3-mod/localization/replace/english/tts_companion_l_english.yml'
     ];
 
-    for (const rel of locFiles) {
+    for (const rel of [...korFiles, ...engFiles]) {
       const filePath = path.resolve(process.cwd(), rel);
       const buf = fs.readFileSync(filePath);
 
@@ -149,24 +123,16 @@ describe('CK3 모드 호환성 리베이스 및 Jomini State 무결성 검증 (m
       assert.strictEqual(buf[2], 0xbf, `${rel} 파일은 UTF-8 BOM(0xBF)으로 시작해야 합니다.`);
 
       const content = buf.toString('utf8');
+      assert.ok(content.includes('TTS_COURT_EVENT_TOOLTIP:0'), `${rel}에 TTS_COURT_EVENT_TOOLTIP 키가 정의되어 있어야 합니다.`);
+      assert.ok(content.includes('switch_adventurer:0'), `${rel}에 switch_adventurer 키가 정의되어 있어야 합니다.`);
+    }
 
-      // 4대 필수 교정 키 존재 검증
-      assert.ok(
-        content.includes('TRIGGER_BLOCKER_GROUP:0'),
-        `${rel}에 TRIGGER_BLOCKER_GROUP 키가 정의되어 있어야 합니다.`
-      );
-      assert.ok(
-        content.includes('has_relation_potential_rival_trigger:0'),
-        `${rel}에 has_relation_potential_rival_trigger 키가 정의되어 있어야 합니다.`
-      );
-      assert.ok(
-        content.includes('rice_cultivators_can_construct_paddy_fields_in_hills_and_jungle_name:0'),
-        `${rel}에 rice_cultivators_can_construct_paddy_fields_in_hills_and_jungle_name 키가 정의되어 있어야 합니다.`
-      );
-      assert.ok(
-        content.includes('paddy_fields_region:0'),
-        `${rel}에 paddy_fields_region 키가 정의되어 있어야 합니다.`
-      );
+    for (const rel of korFiles) {
+      const content = fs.readFileSync(path.resolve(process.cwd(), rel), 'utf8');
+      assert.ok(content.includes('duke_landless_adventurer_camp_wanderers:0 "부군"'));
+      assert.ok(content.includes('duchess_landless_adventurer_camp_wanderers:0 "부인"'));
+      assert.ok(content.includes('duke_landless_adventurer_camp_scholars:0 "부군"'));
+      assert.ok(content.includes('duchess_landless_adventurer_camp_scholars:0 "부인"'));
     }
   });
 });

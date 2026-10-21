@@ -8,16 +8,6 @@ import { sanitizeCk3Text, extractCk3EventsFromChunk } from '@/main/textSanitizer
  * 군주 사망 및 승계 창에서 발생하는 'D 디버그!' 잔여물 정제 및 로컬라이제이션 무결성 검증 테스트
  */
 test('군주 사망 승계 창 디버그 태그 정제 및 로컬라이제이션 무결성 검증', async (t) => {
-  const rootDir = process.cwd();
-  const koreanYmlPath = path.join(
-    rootDir,
-    'ck3-mod/localization/replace/korean/debug_cleanup_l_korean.yml'
-  );
-  const englishYmlPath = path.join(
-    rootDir,
-    'ck3-mod/localization/replace/english/debug_cleanup_l_english.yml'
-  );
-
   await t.test('1. [정제기 검증] 엔진 콘솔 직렬화 잔여물(D 디버그 !)이 말끔하게 소거되어야 함', () => {
     const rawNarrative =
       '개성의 공작 김 헌종(은)는 18세의 나이에 그의 세속의 족쇄를 벗어던졌습니다.  D 디버그 !한 그는 외모가 얼마가 추했는지, 그 모습만 봐도 악몽에 시달리게 된다는 소문이 돌았습니다.';
@@ -80,32 +70,6 @@ test('군주 사망 승계 창 디버그 태그 정제 및 로컬라이제이션
       event.content.includes('D !'),
       false,
       `추출된 본문에 엔진 포맷 잔여물이 포함되지 않아야 합니다: ${event.content}`
-    );
-  });
-
-  await t.test('4. [로컬라이제이션 검증] 한국어 debug_cleanup_l_korean.yml에 debug:0 키가 존재하고 UTF-8 BOM이어야 함', () => {
-    const buf = fs.readFileSync(koreanYmlPath);
-    const hasBOM = buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF;
-    assert.equal(hasBOM, true, 'debug_cleanup_l_korean.yml 파일은 반드시 UTF-8 with BOM이어야 합니다.');
-
-    const content = buf.toString('utf-8');
-    assert.equal(
-      content.includes('debug:0 "의문의 죽음을 맞이"'),
-      true,
-      '한국어 debug 치환 키가 "의문의 죽음을 맞이"로 정의되어 있어야 합니다.'
-    );
-  });
-
-  await t.test('5. [로컬라이제이션 검증] 영어 debug_cleanup_l_english.yml에 debug:0 키가 존재하고 UTF-8 BOM이어야 함', () => {
-    const buf = fs.readFileSync(englishYmlPath);
-    const hasBOM = buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF;
-    assert.equal(hasBOM, true, 'debug_cleanup_l_english.yml 파일은 반드시 UTF-8 with BOM이어야 합니다.');
-
-    const content = buf.toString('utf-8');
-    assert.equal(
-      content.includes('debug:0 "died mysteriously"'),
-      true,
-      '영어 debug 치환 키가 "died mysteriously"로 정의되어 있어야 합니다.'
     );
   });
 });

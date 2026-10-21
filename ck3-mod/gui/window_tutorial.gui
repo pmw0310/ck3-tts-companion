@@ -1,4 +1,4 @@
-types TutorialWindow {
+﻿types TutorialWindow {
 	type tutorial_window = window {
 		alwaystransparent = no
 		resizable = no
@@ -41,7 +41,7 @@ types TutorialWindow {
 				trigger_when = "[And(Tutorial.ShouldBeVisible, And(Not(GetVariableSystem.Exists('tutorial_tts_pending_auto')), And(Not(StringIsEmpty(Tutorial.GetStepText)), Not(GetVariableSystem.HasValue('tutorial_current_step_text', Tutorial.GetStepText)))))]"
 				delay = 0.1
 				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+				on_finish = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
 			}
 		}
 
@@ -63,7 +63,7 @@ types TutorialWindow {
 			state = {
 				name = tutorial_tts_deferred_auto_speak
 				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+				on_finish = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
 			}
 		}
 
@@ -82,7 +82,7 @@ types TutorialWindow {
 			state = {
 				name = tutorial_tts_deferred_force_speak
 				on_start = "[GetVariableSystem.Set('tutorial_current_step_text', Tutorial.GetStepText)]"
-				on_finish = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##\"')))))]"
+				on_finish = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
 			}
 		}
 
@@ -269,7 +269,7 @@ types TutorialWindow {
 					}
 
 					button_standard = {
-						visible = no
+						visible = "[InDebugMode]"
 						raw_text = "Debug"
 						default_format = "#D"
 						onclick = "[ExecuteConsoleCommand('tutorial.debugwindow')]"
@@ -316,7 +316,7 @@ types TutorialWindow {
 					tooltip = "tutorial_lesson_button_read_later"
 					onclick = "[Tutorial.OnClickTransition('read_later')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
-					onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+					onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				}
 			}
 
@@ -424,7 +424,7 @@ types TutorialWindow {
 					text = "[Tutorial.GetTransitionText('skip')]"
 					onclick = "[Tutorial.OnClickTransition('skip')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
-					onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+					onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				}
 
 				button_primary = {

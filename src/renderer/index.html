@@ -35,12 +35,6 @@
         </div>
 
         <div class="header-actions">
-          <!-- 감시 상태 뱃지 -->
-          <div id="log-status-badge" class="status-badge status-waiting" title="로그 감시 경로 탐색 중">
-            <span class="status-dot"></span>
-            <span id="log-status-text">게임 연결 대기 중</span>
-          </div>
-
           <!-- 설정 모달 토글 버튼 -->
           <button id="btn-open-settings" class="btn-icon" aria-label="설정" title="설정">
             ⚙️
@@ -130,10 +124,6 @@
 
       <!-- 푸터 상태 바 -->
       <footer class="app-footer">
-        <div class="footer-info">
-          <span class="info-label">감시 경로:</span>
-          <span id="log-path-display" class="info-path" title="경로 확인 중">경로 탐색 중...</span>
-        </div>
         <div class="shortcut-tip">
           단축키: <kbd>Ctrl/Cmd + Shift + S</kbd> (낭독 일시중지/재개)
         </div>
@@ -547,23 +537,6 @@
 
             <!-- 3. 게임 연동 & 시스템 탭 패널 -->
             <div id="tab-panel-system" class="modal-tab-panel">
-              <!-- CK3 로그 경로 수동 설정 -->
-              <div class="form-row log-path-row">
-                <label class="setting-label">CK3 debug.log 경로</label>
-                <div class="path-input-group">
-                  <input
-                    type="text"
-                    id="input-custom-log-path"
-                    class="form-input"
-                    readonly
-                    placeholder="자동 감지됨 (변경을 원하시면 우측 버튼 클릭)"
-                  />
-                  <button type="button" id="btn-browse-log" class="btn btn-secondary">
-                    찾아보기...
-                  </button>
-                </div>
-              </div>
-
               <!-- CK3 모드 썸네일 및 동기화 상태 -->
               <div class="form-row mod-preview-row">
                 <label class="setting-label">연동 CK3 모드 (패러독스 런처)</label>

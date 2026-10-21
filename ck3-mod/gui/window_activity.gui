@@ -877,7 +877,7 @@
 			blockoverride "button_close"
 			{
 				onclick = "[ActivityWindow.Close]"
-				onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 			blockoverride "button_go_to"
 			{
@@ -1158,13 +1158,6 @@ types ActivityWindowTypes
 		state = {
 			name = tts_activity_clipboard_play
 			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			next = tts_activity_console_fallback
-		}
-
-		state = {
-			name = tts_activity_console_fallback
-			delay = 0.05
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
 
 		state = {
@@ -1852,6 +1845,13 @@ types ActivityWindowTypes
 			{
 				onclick = "[EventWindowViewInsert.Reload]"
 			}
+
+			blockoverride "debug_spacer" {
+				spacer = {
+					visible = "[Activity.MakeScope.Var( 'body_to_bury' ).IsSet]"
+					size = { 130 0 }
+				}
+			}
 		}
 		
 		widget = {
@@ -1878,7 +1878,7 @@ types ActivityWindowTypes
 			parentanchor = top|left
 			position = { 35 65 }
 			size = { 42 42 }
-			tooltip = "TTS_ACTIVITY_EVENT_TOOLTIP"
+			raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
 			shortcut = "army_split_half"
 
 			button_icon = {
@@ -1889,7 +1889,6 @@ types ActivityWindowTypes
 			}
 
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
 	}
 
@@ -1925,13 +1924,6 @@ types ActivityWindowTypes
 		state = {
 			name = tts_activity_clipboard_play
 			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			next = tts_activity_console_fallback
-		}
-
-		state = {
-			name = tts_activity_console_fallback
-			delay = 0.05
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
 
 		state = {
@@ -2786,7 +2778,7 @@ types ActivityWindowTypes
 			parentanchor = top|left
 			position = { 35 65 }
 			size = { 42 42 }
-			tooltip = "TTS_ACTIVITY_EVENT_TOOLTIP"
+			raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
 			shortcut = "army_split_half"
 
 			button_icon = {
@@ -2797,7 +2789,6 @@ types ActivityWindowTypes
 			}
 
 			onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-			onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 		}
 	}
 

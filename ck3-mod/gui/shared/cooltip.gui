@@ -1483,23 +1483,23 @@ types GameTooltipTypes
 				cooltip_paragraph = {
 					layoutpolicy_horizontal	= expanding
 					text = "[Character.GetDebugTooltip]"
-					visible = no
+					visible = "[InDebugMode]"
 				}
 
 				cooltip_paragraph = {
 					layoutpolicy_horizontal	= expanding
 					text = "CHARACTER_KILLER_TOOLTIP"
-					visible = no
+					visible = "[And( InDebugMode, Character.GetKiller.IsValid )]"
 				}
 
 				cooltip_paragraph = {
 					layoutpolicy_horizontal	= expanding
 					raw_text = "[GetAnimationTooltip( PdxGuiWidget.Self, Character.Self )]"
-					visible = no
+					visible = "[ShouldShowAnimationInfo]"
 				}
 
 				hbox = {
-					visible = no
+					visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"
 					layoutpolicy_horizontal = expanding
 
 					spacing = 5
@@ -1702,13 +1702,13 @@ types GameTooltipTypes
 				}
 
 				vbox_character_debug_tooltip = {
-					visible = no
+					visible = "[And( InDebugMode, Not( Character.AccessDenied ) )]"
 				}
 
 				hbox = {
 					layoutpolicy_horizontal = expanding
 					margin_bottom = 10
-					visible = no
+					visible = "[ShouldShowAnimationInfo]"
 
 					#### Animation ####
 					text_single = {
@@ -6453,7 +6453,7 @@ types InventoryTooltips
 								alwaystransparent = yes
 							}
 
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##\"')))))]"
+							onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##')))))]"
 						}
 					}
 				}

@@ -46,7 +46,7 @@ describe('튜토리얼 이전 단계 문단 낭독 방지 (지연 평가)', () =
       assert.match(block, /delay\s*=\s*0\.\d+/);
       assert.ok(block.includes(`GetVariableSystem.Exists('${flag}')`), 'trigger_when 플래그 감시 누락');
       assert.ok(block.includes(`on_finish = "[GetVariableSystem.Clear('${flag}')]"`), '플래그 소거 누락');
-      assert.ok(/on_finish = "\[ExecuteConsoleCommand/.test(block) && block.includes(tag), 'on_finish 낭독 누락');
+      assert.ok(/on_finish = "\[CloseGameView/.test(block) && block.includes(tag), 'on_finish 낭독 누락');
     }
   });
 

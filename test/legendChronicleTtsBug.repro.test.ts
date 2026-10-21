@@ -24,7 +24,7 @@ test('전설 연대기(Legend Chronicle) TTS 미작동 및 따옴표 결함 재�
     // 주인공(Legend.GetProtagonist)이 유효하지 않은 경우에도 CDataSystem Null Object 접근 크래시 없이
     // '##CK3_TTS_END##'로 안전하게 종결되도록 IsValid 가드가 감싸져 있어야 함
     const hasProtagonistGuard = content.includes(
-      "Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\\\"', '|||GENDER:M##CK3_TTS_END##\\\"' ), '##CK3_TTS_END##\\\"' )"
+      "Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' )"
     );
 
     assert.ok(

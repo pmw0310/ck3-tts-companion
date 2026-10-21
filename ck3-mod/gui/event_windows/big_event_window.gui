@@ -34,7 +34,6 @@ types BigWindowTypes {
 				using = Animation_FadeIn_Standard
 				duration = 0.7
 				delay = 0.1
-				next = tts_console_fallback
 
 				on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 				on_finish = "[GetVariableSystem.Clear( 'event_window_mouse_leave')]"
@@ -47,12 +46,6 @@ types BigWindowTypes {
 						value = 1
 					}
 				}
-			}
-
-			state = {
-				name = tts_console_fallback
-				using = Animation_FadeIn_Standard
-				on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 			}
 
 			state = {
@@ -939,7 +932,6 @@ types BigWindowTypes {
 						}
 
 						onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-						onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 					}
 
 					icon = {
@@ -1013,7 +1005,7 @@ types BigWindowTypes {
 
 		flowcontainer = {
 			name = "debug_stuff"
-			visible = no
+			visible = "[InDebugMode]"
 			parentanchor = top|right
 			position = { -100 25 }
 			ignoreinvisible = yes
@@ -1042,7 +1034,6 @@ types BigWindowTypes {
 				using = Animation_FadeIn_Standard
 				duration = 0.7
 				delay = 0.1
-				next = tts_scheme_conclusion_auto_play
 
 				on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
 				on_finish = "[GetVariableSystem.Clear( 'event_window_mouse_leave')]"
@@ -1055,12 +1046,6 @@ types BigWindowTypes {
 						value = 1
 					}
 				}
-			}
-
-			state = {
-				name = tts_scheme_conclusion_auto_play
-				using = Animation_FadeIn_Standard
-				on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 			}
 
 			state = {
@@ -1287,7 +1272,6 @@ types BigWindowTypes {
 					}
 
 					onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
-					onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) ) ))))))]"
 				}
 			}
 		}

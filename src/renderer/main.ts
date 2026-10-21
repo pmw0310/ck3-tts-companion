@@ -108,9 +108,6 @@ const state: RendererState = {
 };
 
 // DOM 엘리먼트 캐싱
-const logStatusBadge = document.getElementById('log-status-badge') as HTMLDivElement;
-const logStatusText = document.getElementById('log-status-text') as HTMLSpanElement;
-const logPathDisplay = document.getElementById('log-path-display') as HTMLSpanElement;
 const providerBadge = document.getElementById('provider-badge') as HTMLSpanElement;
 const audioVisualizer = document.getElementById('audio-visualizer') as HTMLDivElement;
 const ttsStatusIndicator = document.getElementById('tts-status-indicator') as HTMLDivElement;
@@ -129,7 +126,6 @@ const btnOpenSettings = document.getElementById('btn-open-settings') as HTMLButt
 const btnCloseSettings = document.getElementById('btn-close-settings') as HTMLButtonElement;
 const btnSaveSettings = document.getElementById('btn-save-settings') as HTMLButtonElement;
 const btnTestSpeech = document.getElementById('btn-test-speech') as HTMLButtonElement;
-const btnBrowseLog = document.getElementById('btn-browse-log') as HTMLButtonElement;
 const settingsModal = document.getElementById('settings-modal') as HTMLDivElement;
 
 const audioPlayer = document.getElementById('tts-audio-player') as HTMLAudioElement;
@@ -175,7 +171,6 @@ const selectGeminiVoice = document.getElementById('select-gemini-voice') as HTML
 const selectGeminiTone = document.getElementById('select-gemini-tone') as HTMLSelectElement;
 const customPromptWrapper = document.getElementById('custom-prompt-wrapper') as HTMLDivElement;
 const textareaGeminiPrompt = document.getElementById('textarea-gemini-prompt') as HTMLTextAreaElement;
-const inputCustomLogPath = document.getElementById('input-custom-log-path') as HTMLInputElement;
 
 // OpenAI 설정 폼 엘리먼트
 const openaiOptionsGroup = document.getElementById('openai-options') as HTMLDivElement;
@@ -1254,7 +1249,6 @@ const syncSettingsForm = (): void => {
     textareaGeminiPrompt.value = GEMINI_TONE_PRESETS[matchedTone] ?? '';
   }
 
-  inputCustomLogPath.value = state.settings.customLogPath ?? '';
   chkAutoPlay.checked = state.settings.isAutoPlayEnabled;
 
   if (rangeSpeechRate) {
@@ -1404,14 +1398,6 @@ const bindEventListeners = (): void => {
     }
   });
 
-  // 커스텀 로그 파일 찾기
-  btnBrowseLog.addEventListener('click', async () => {
-    const selected = await window.electronAPI.selectCustomLogPath();
-    if (selected) {
-      inputCustomLogPath.value = selected;
-    }
-  });
-
   // 목소리 테스트 버튼
   btnTestSpeech.addEventListener('click', async () => {
     const val = parseInt(rangeSpeechRate.value, 10);
@@ -1551,7 +1537,7 @@ const bindEventListeners = (): void => {
       elevenLabsVoiceMale: selectElevenlabsVoiceMale.value || 'JBFqnCBsd6RMkjVDRZzb',
       elevenLabsVoiceFemale: selectElevenlabsVoiceFemale.value || 'Xb7hH8MSUJpSbSDYk0k2',
       systemVoice: (selectSystemVoice.value as SystemVoiceName) || 'default',
-      customLogPath: inputCustomLogPath.value.trim() || null,
+      customLogPath: state.settings.customLogPath,
       isAudioDramaEnabled: chkAudioDrama.checked,
       isCacheEnabled: chkCacheEnabled ? chkCacheEnabled.checked : true,
       maxCacheSizeMb: rangeCacheSize ? parseInt(rangeCacheSize.value, 10) || 500 : 500,
@@ -1684,28 +1670,6 @@ const initializeApp = async (): Promise<void> => {
   // 비동기 백그라운드 자동 업데이트 확인 실행 (앱 시작 시점)
   checkAppUpdates(false).catch((err: unknown) => {
     console.warn('⚠️ [UpdateCheck] 백그라운드 업데이트 확인 실패:', err);
-  });
-
-  // 초기 경로 표시 및 감시 상태 활성화
-  const initialPath = await window.electronAPI.getLogPath();
-  if (initialPath) {
-    logStatusBadge.className = 'status-badge status-active';
-    logStatusText.textContent = 'CK3 로그 감시 중';
-    logPathDisplay.textContent = initialPath;
-    logPathDisplay.title = initialPath;
-  }
-
-  // 실시간 로그 감시 상태 이벤트 구독
-  window.electronAPI.onLogStatusChange((isWatching: boolean, filePath: string | null) => {
-    if (isWatching && filePath) {
-      logStatusBadge.className = 'status-badge status-active';
-      logStatusText.textContent = 'CK3 로그 감시 중';
-      logPathDisplay.textContent = filePath;
-      logPathDisplay.title = filePath;
-    } else {
-      logStatusBadge.className = 'status-badge status-waiting';
-      logStatusText.textContent = '게임 연결 대기 중';
-    }
   });
 
   // 실시간 CK3 이벤트 수신 구독

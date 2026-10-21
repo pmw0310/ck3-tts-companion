@@ -31,10 +31,8 @@ const CROSS_CHANNEL_DEDUPE_MS = 5000;
 const RECENT_FRAGMENT_TTL_MS = 10000;
 /** error.log 파편을 클립보드 원문 도착 이후에 검사하기 위한 지연 시간 (ms) */
 const ERROR_LOG_DEFER_MS = 600;
-/** 클립보드에 실린 모드 페이로드 식별 마커 */
-const CLIPBOARD_PAYLOAD_MARKER = '##CK3_TTS';
-/** 로그 활동이 없으면(게임 미실행) 클립보드 폴링을 쉬는 기준 시간 (ms) */
-const CLIPBOARD_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+/** 클립보드에 실린 모드 페이로드 식별 마커 목록 */
+const CLIPBOARD_PAYLOAD_MARKERS = ['##CK3_TTS', '[CK3_TTS'] as const;
 
 /**
  * 게임 GUI가 EventWindowData.CopyStringToClipboard로 넘긴 원문을 읽고 사용자 클립보드를 복구하기 위한 추상화
@@ -230,7 +228,6 @@ export const startWatchingLogFile = <TSnapshot>(
   const filePositions = new Map<string, number>();
   let watcher: FSWatcher | null = null;
   let isStopped = false;
-  let lastLogActivityTime = Date.now();
   const deferredEmitTimers = new Set<ReturnType<typeof setTimeout>>();
   const recentEventCache = new Map<string, number>();
   const recentExecutionSoundCache = new Map<string, number>();
@@ -239,16 +236,48 @@ export const startWatchingLogFile = <TSnapshot>(
   const pendingReadRequests = new Set<string>();
   const crossChannelCache = new Map<string, { channel: EventChannel; time: number }>();
   const recentTitleCache = new Map<string, { channel: EventChannel; time: number; content: string }>();
+  let lastEventEmitTime = 0;
+  let lastEventEmitChannel: EventChannel | null = null;
+  let lastStopEmitTime = 0;
+  let lastStopEmitChannel: EventChannel | null = null;
+  let lastUserSnapshot: TSnapshot | null = null;
 
-  // 감시할 파일 목록 구성 (기본 debug.log 및 파서 구문 에러가 기록되는 error.log 동시 감시)
+  /**
+   * 채널 간 중복 및 지연 STOP 경합을 방어하며 정지 신호를 방출합니다.
+   * @param channel - STOP 신호가 감지된 채널
+   */
+  const emitStopSignal = (channel: EventChannel): void => {
+    if (isStopped) {
+      return;
+    }
+    const now = Date.now();
+    // 1) 이미 다른 채널(예: 클립보드)에서 방금(1초 이내) STOP을 처리했다면 중복 STOP 방출 생략
+    if (
+      lastStopEmitChannel !== null &&
+      lastStopEmitChannel !== channel &&
+      now - lastStopEmitTime < 1000
+    ) {
+      return;
+    }
+    // 2) 다른 채널(예: 클립보드)에서 새 이벤트가 방출된 직후(800ms 이내) 뒤늦게 도착한 이전 창의 지연 STOP 신호는 새 오디오를 끊지 않도록 무시
+    if (
+      lastEventEmitChannel !== null &&
+      lastEventEmitChannel !== channel &&
+      now - lastEventEmitTime < 800
+    ) {
+      return;
+    }
+    lastStopEmitTime = now;
+    lastStopEmitChannel = channel;
+    onStop?.();
+  };
+
+  // 감시할 파일 목록 구성 (기본 debug.log 및 비디버그 모드/파서 에러가 기록되는 error.log 상시 동시 감시)
   const debugLogPath = path.resolve(logFilePath);
   const logDir = path.dirname(debugLogPath);
   const errorLogPath = path.join(logDir, 'error.log');
 
-  const watchPaths: string[] = [debugLogPath];
-  if (fs.existsSync(errorLogPath)) {
-    watchPaths.push(errorLogPath);
-  }
+  const watchPaths: string[] = [debugLogPath, errorLogPath];
 
   // 기존 파일 크기 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
   for (const targetPath of watchPaths) {
@@ -345,6 +374,11 @@ export const startWatchingLogFile = <TSnapshot>(
       updateRecentEventCache(recentEventCache, event.content, now);
       crossChannelCache.set(event.content, { channel, time: now });
       recentTitleCache.set(event.title, { channel, time: now, content: event.content });
+      lastEventEmitTime = now;
+      lastEventEmitChannel = channel;
+      // 새 이벤트가 방출되었으므로 이전 창의 STOP 디바운스 상태를 초기화하여 새 창 닫기 STOP이 즉시 작동하도록 합니다.
+      lastStopEmitTime = 0;
+      lastStopEmitChannel = null;
 
       const eventMessage: Ck3EventMessage = {
         id: `${now}-${Math.random().toString(36).slice(2, 7)}`,
@@ -388,8 +422,6 @@ export const startWatchingLogFile = <TSnapshot>(
       if (currentStats.size === filePosition) {
         return;
       }
-
-      lastLogActivityTime = Date.now();
 
       activeReadStreams.add(normalizedPath);
       const targetSize = currentStats.size;
@@ -516,13 +548,16 @@ export const startWatchingLogFile = <TSnapshot>(
             const lastEndIndex = Math.max(lastEndHash, lastEndBracket);
 
             if (parsedEvents.length === 0 || lastStopIndex > lastEndIndex) {
-              onStop?.();
+              emitStopSignal(isFromErrorLog ? 'error' : 'debug');
               return;
             }
           }
 
-          const isErrorSource = isFromErrorLog || didStitchDebugPending;
-          if (isErrorSource) {
+          // 콘솔 큰따옴표 절단으로 쪼개진 Unknown effect 파편만 클립보드 원문 도착을 기다리기 위해 지연 방출하고,
+          // 비디버그 모드 브릿지(CloseGameView 등)로 기록된 완결형 error.log 이벤트는 즉시 방출합니다.
+          const isFragmentedErrorSource =
+            didStitchDebugPending || (isFromErrorLog && effectiveText.includes('Unknown effect:'));
+          if (isFragmentedErrorSource) {
             // 클립보드 채널이 원문을 먼저 등록할 수 있도록 지연 후 파편 여부를 검사 (stop 시 일괄 취소되도록 추적)
             const deferredText = effectiveText;
             const deferredTimer = setTimeout(() => {
@@ -531,7 +566,7 @@ export const startWatchingLogFile = <TSnapshot>(
             }, ERROR_LOG_DEFER_MS);
             deferredEmitTimers.add(deferredTimer);
           } else {
-            emitParsedEvents(parsedEvents, 'debug', effectiveText);
+            emitParsedEvents(parsedEvents, isFromErrorLog ? 'error' : 'debug', effectiveText);
           }
         } finally {
           // 스트림 읽기 종료 시점에 항상 바이트 포지션 확정 및 뮤텍스 락 해제 (STOP 조기 반환 시에도 데드락 방지)
@@ -612,16 +647,18 @@ export const startWatchingLogFile = <TSnapshot>(
 
   onStatusChange?.(true, logFilePath);
 
-  // 📋 클립보드 채널: 대사에 큰따옴표가 있으면 콘솔 명령(info_log)이 잘려 원문을 잃으므로,
-  // GUI가 EventWindowData.CopyStringToClipboard로 함께 넘긴 원문을 읽고 즉시 사용자 클립보드를 복구합니다.
+  // 📋 클립보드 채널:
+  // 1) 일반 모드(-debug_mode 미사용)에서도 EventWindowData.CopyStringToClipboard는 엔진에서 100% 동작하므로 주력 채널로 활용합니다.
+  // 2) 디버그 모드에서도 대사에 큰따옴표가 있으면 콘솔 명령(info_log)이 잘려 원문을 잃으므로 클립보드 원문을 우선 수신하고 즉시 사용자 클립보드를 복구합니다.
   let clipboardTimer: ReturnType<typeof setInterval> | null = null;
   if (clipboardBridge) {
+    const hasClipboardPayloadMarker = (text: string): boolean =>
+      CLIPBOARD_PAYLOAD_MARKERS.some((marker) => text.includes(marker));
+
     let lastObservedSignature = '';
-    // 사용자가 마지막으로 복사한 클립보드 전체 상태(이미지/서식 포함). 페이로드 소비 후 이 상태로 복구
-    let lastUserSnapshot: TSnapshot | null = null;
     try {
       lastObservedSignature = clipboardBridge.readSignature();
-      if (!clipboardBridge.readText().includes(CLIPBOARD_PAYLOAD_MARKER)) {
+      if (!hasClipboardPayloadMarker(clipboardBridge.readText())) {
         lastUserSnapshot = clipboardBridge.takeSnapshot();
       }
     } catch (initError: unknown) {
@@ -629,10 +666,6 @@ export const startWatchingLogFile = <TSnapshot>(
     }
 
     clipboardTimer = setInterval(() => {
-      // 게임 로그 활동이 없으면(게임 미실행) 사용자 클립보드를 불필요하게 읽지 않도록 폴링 중단
-      if (Date.now() - lastLogActivityTime > CLIPBOARD_IDLE_TIMEOUT_MS) {
-        return;
-      }
       try {
         const currentSignature = clipboardBridge.readSignature();
         if (currentSignature === lastObservedSignature) {
@@ -641,13 +674,27 @@ export const startWatchingLogFile = <TSnapshot>(
         lastObservedSignature = currentSignature;
 
         const currentText = clipboardBridge.readText();
-        if (!currentText.includes(CLIPBOARD_PAYLOAD_MARKER)) {
+        if (!hasClipboardPayloadMarker(currentText)) {
           // 사용자가 직접 복사한 내용은 형식 그대로 복구 대상으로 보관
           lastUserSnapshot = clipboardBridge.takeSnapshot();
           return;
         }
 
-        emitParsedEvents(extractCk3EventsFromChunk(currentText), 'clipboard', currentText);
+        const parsedClipboardEvents = extractCk3EventsFromChunk(currentText);
+        const lastClipStop = Math.max(
+          currentText.lastIndexOf('##CK3_TTS_STOP##'),
+          currentText.lastIndexOf('[CK3_TTS_STOP]')
+        );
+        const lastClipEnd = Math.max(
+          currentText.lastIndexOf('##CK3_TTS_END##'),
+          currentText.lastIndexOf('[CK3_TTS_END]')
+        );
+
+        if (lastClipStop !== -1 && (parsedClipboardEvents.length === 0 || lastClipStop > lastClipEnd)) {
+          emitStopSignal('clipboard');
+        } else if (parsedClipboardEvents.length > 0) {
+          emitParsedEvents(parsedClipboardEvents, 'clipboard', currentText);
+        }
 
         // 모드 페이로드를 소비한 뒤 사용자의 원래 클립보드 상태를 복구
         clipboardBridge.restoreSnapshot(lastUserSnapshot);
@@ -662,6 +709,7 @@ export const startWatchingLogFile = <TSnapshot>(
     getPath: () => logFilePath,
     stop: async () => {
       isStopped = true;
+      lastUserSnapshot = null;
       clearInterval(healIntervalTimer);
       if (clipboardTimer) {
         clearInterval(clipboardTimer);

@@ -45,7 +45,7 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
       'activity_new_event_shown state가 tts_activity_event_auto_play로 체이닝되어야 합니다.'
     )
 
-    // 2) 3단계 체이닝 존재 및 단일 on_start 원칙 검증 (on_start 중복 덮어쓰기 버그 방지)
+    // 2) 비디버그 체이닝 존재 및 단일 on_start 원칙 검증 (on_start 중복 덮어쓰기 버그 방지)
     assert.equal(
       countOnStartInState(widgetBlock, 'tts_activity_event_auto_play'),
       1,
@@ -55,11 +55,6 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
       countOnStartInState(widgetBlock, 'tts_activity_clipboard_play'),
       1,
       'tts_activity_clipboard_play는 단일 on_start(CopyStringToClipboard)만 가져야 합니다.'
-    )
-    assert.equal(
-      countOnStartInState(widgetBlock, 'tts_activity_console_fallback'),
-      1,
-      'tts_activity_console_fallback는 단일 on_start(ExecuteConsoleCommand)만 가져야 합니다.'
     )
 
     // 3) "대형 이벤트 자동 재생 불가" 안내 라벨 제거 및 수동 버튼 유지 확인
@@ -73,7 +68,7 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
     )
   })
 
-  it('2. window_activity.gui의 activity_event_widget_base(토너먼트 등 거점 일반 이벤트 부모 타입)에도 동일한 자동 TTS 3단계 체이닝이 복원되어야 한다', () => {
+  it('2. window_activity.gui의 activity_event_widget_base(토너먼트 등 거점 일반 이벤트 부모 타입)에도 동일한 자동 TTS 체이닝이 복원되어야 한다', () => {
     const content = readFileSync(windowActivityPath, 'utf8')
     const baseStart = content.indexOf('type activity_event_widget_base = widget')
     assert.ok(baseStart !== -1, 'activity_event_widget_base 블록이 존재해야 합니다.')
@@ -94,11 +89,6 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
       countOnStartInState(baseBlock, 'tts_activity_clipboard_play'),
       1,
       'activity_event_widget_base의 tts_activity_clipboard_play는 단일 on_start만 가져야 합니다.'
-    )
-    assert.equal(
-      countOnStartInState(baseBlock, 'tts_activity_console_fallback'),
-      1,
-      'activity_event_widget_base의 tts_activity_console_fallback는 단일 on_start만 가져야 합니다.'
     )
     assert.ok(
       !baseBlock.includes('tts_speak_notice'),
@@ -139,23 +129,18 @@ describe('대형 이벤트 및 활동(Activity) 창 자동 TTS 복원 및 체이
       'tts_activity_clipboard_play는 동일한 루트 위젯 레벨에 존재해야 합니다.'
     )
     assert.equal(
-      countOnStartInState(rootLevelBlock, 'tts_activity_console_fallback'),
-      1,
-      'tts_activity_console_fallback는 동일한 루트 위젯 레벨에 존재해야 합니다.'
-    )
-    assert.equal(
       countOnStartInState(fsBlock, 'activity_new_event_shown'),
       1,
       'widget_activity_locale_fullscreen_event의 activity_new_event_shown은 단일 on_start만 가져야 합니다.'
     )
   })
 
-  it('4. fullscreen_event.gui 및 scheme_preparations_event.gui에서 자동 TTS 체이닝과 단일 on_start 규칙이 보장되어야 한다', () => {
+  it('4. fullscreen_event.gui 및 scheme_preparations_event.gui에서 자동 TTS와 단일 on_start 규칙이 보장되어야 한다', () => {
     const fsEventContent = readFileSync(fullscreenEventPath, 'utf8')
     assert.match(
       fsEventContent,
-      /name\s*=\s*"fade_in"[\s\S]*?next\s*=\s*tts_console_fallback/,
-      'fullscreen_event.gui의 fade_in state가 tts_console_fallback으로 체이닝되어야 합니다.'
+      /name\s*=\s*"fade_in"[\s\S]*?EventWindowData\.CopyStringToClipboard/,
+      'fullscreen_event.gui의 fade_in state에 CopyStringToClipboard가 존재해야 합니다.'
     )
 
     const schemePrepContent = readFileSync(schemePrepEventPath, 'utf8')

@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "royal_court_window"
 	size = { 100% 100% }
 	parentanchor = center|hcenter
@@ -201,7 +201,7 @@ window = {
 			tooltip = "CLOSE_TOOLTIP"
 			clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_close"
 			onclick = "[RoyalCourtWindow.Close]"
-			onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+			onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 
 			using = Animation_ShowHide_Quick
 
@@ -1350,7 +1350,7 @@ window = {
 	}
 
 	court_scene_editor_window = {
-		visible = no
+		visible = "[And( Not(VariableSystem.Exists('royal_court_screenshot_window')), And( InDebugMode, VariableSystem.Exists('scene_editor') ) )]"
 		datacontext = "[RoyalCourtWindow.AccessCourtSceneEditorWindow]"
 
 		using = Animation_ShowHide_Quick
@@ -1358,7 +1358,7 @@ window = {
 	}
 
 	artifact_test_helper_window = {
-		visible = no
+		visible = "[And( Not(VariableSystem.Exists('royal_court_screenshot_window')), And( InDebugMode, VariableSystem.Exists( 'artifact_test' ) ) )]"
 		datacontext = "[RoyalCourtWindow.AccessArtifactHelperWindow]"
 
 		using = Animation_ShowHide_Quick
@@ -1368,7 +1368,7 @@ window = {
 	flowcontainer = {
 		name = "debug_buttons"
 		datacontext = "[RoyalCourtWindow.GetCourtSceneEditorWindow]"
-		visible = no
+		visible = "[And( Not(VariableSystem.Exists('royal_court_screenshot_window')), InDebugMode )]"
 		parentanchor = top|hcenter
 		ignoreinvisible = yes
 		margin_top = 10

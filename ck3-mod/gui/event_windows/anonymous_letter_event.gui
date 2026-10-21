@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "anonymous_letter_event"
 
 	parentanchor = center
@@ -128,7 +128,6 @@ window = {
 		state = {
 			name = show
 			delay = 0.8
-			next = tts_console_fallback
 
 			using = Animation_FadeIn_Standard
 
@@ -147,12 +146,6 @@ window = {
 		}
 
 		state = {
-			name = tts_console_fallback
-			using = Animation_FadeIn_Standard
-			on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
-		}
-
-		state = {
 			name = hide
 			using = Animation_FadeOut_Quick
 			duration = 0.08
@@ -160,7 +153,7 @@ window = {
 
 		flowcontainer = {
 			name = "debug_stuff"
-			visible = no
+			visible = "[InDebugMode]"
 			parentanchor = top|hcenter
 			position = { 25 20 }
 			ignoreinvisible = yes
@@ -268,7 +261,6 @@ window = {
 							}
 
 							onclick = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##')))))]"
-							onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, '##CK3_TTS_END##\"')))))]"
 						}
 					}
 
@@ -411,7 +403,8 @@ window = {
 						tooltip_visible = "[Not( StringIsEmpty( EventOption.GetTooltip ) )]"
 
 						onclick = "[EventOption.Select]"
-						onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+						onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]"
+						onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 						onmousehierarchyenter = "[EventOption.OnEnter]"
 						onmousehierarchyleave = "[EventOption.OnLeave]"
 						enabled = "[EventOption.IsValid]"

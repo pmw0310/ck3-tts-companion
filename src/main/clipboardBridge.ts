@@ -27,8 +27,12 @@ const isEmptySnapshot = (snapshot: ElectronClipboardSnapshot): boolean =>
  */
 export const createElectronClipboardBridge = (): ClipboardBridge<ElectronClipboardSnapshot> => ({
   readText: () => clipboard.readText(),
-  // 이미지/서식만 바뀐 경우도 감지하도록 형식 목록을 서명에 포함 (이미지 바이트는 비용 때문에 제외)
-  readSignature: () => `${clipboard.availableFormats().join('|')}\n${clipboard.readText()}`,
+  // 이미지/서식만 바뀐 경우도 감지하도록 형식 목록을 서명에 포함하고, 대용량 외부 텍스트 복사 시 메모리 할당을 막기 위해 길이와 앞/뒤 슬라이스만 서명으로 구성
+  readSignature: () => {
+    const text = clipboard.readText();
+    const preview = text.length <= 256 ? text : `${text.slice(0, 128)}...${text.slice(-128)}`;
+    return `${clipboard.availableFormats().join('|')}\n${text.length}:${preview}`;
+  },
   takeSnapshot: () => {
     const image = clipboard.readImage();
     return {

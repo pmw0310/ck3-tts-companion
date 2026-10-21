@@ -67,27 +67,27 @@ test('대관식 및 활동 창(window_activity.gui) TTS 버튼 DataContext 결�
     );
   });
 
-  await t.test('4. [안내 라벨 제거 및 툴팁] 대형 이벤트 자동 TTS 복원에 따라 불필요한 안내 배지는 제거되고 툴팁 키가 정상 바인딩되어야 함', () => {
+  await t.test('4. [안내 라벨 제거 및 툴팁] 대형 이벤트 자동 TTS 복원에 따라 불필요한 안내 배지는 제거되고 raw_tooltip 및 궁정 툴팁 키가 정상 유지되어야 함', () => {
     assert.ok(
       !content.includes('name = "tts_speak_notice"'),
       '대형 이벤트 자동 재생이 복원되었으므로 자동 재생 불가 안내 라벨(tts_speak_notice)은 제거되어야 합니다.'
     );
     assert.match(
       content,
-      /tooltip\s*=\s*"TTS_ACTIVITY_EVENT_TOOLTIP"/,
-      '활동 이벤트 tooltip이 로컬라이제이션 키로 바인딩되어 있어야 합니다.'
+      /raw_tooltip\s*=\s*"TTS 이벤트 낭독 \(단축키: F\)"/,
+      '활동 이벤트 raw_tooltip이 바인딩되어 있어야 합니다.'
     );
 
-    // 로컬라이제이션 파일에 해당 키들이 정상 등록되어 있는지 교차 검증
-    const korLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/korean/replace/debug_cleanup_l_korean.yml');
-    const engLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/english/replace/debug_cleanup_l_english.yml');
+    // 로컬라이제이션 파일(tts_companion_l_*.yml)에 궁정 수동 낭독 툴팁 키가 정상 등록되어 있는지 교차 검증
+    const korLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/korean/replace/tts_companion_l_korean.yml');
+    const engLocPath = path.resolve(process.cwd(), 'ck3-mod/localization/english/replace/tts_companion_l_english.yml');
     assert.ok(fs.existsSync(korLocPath), '한국어 로컬라이제이션 파일이 존재해야 합니다.');
     assert.ok(fs.existsSync(engLocPath), '영어 로컬라이제이션 파일이 존재해야 합니다.');
 
     const korLoc = fs.readFileSync(korLocPath, 'utf-8');
     const engLoc = fs.readFileSync(engLocPath, 'utf-8');
 
-    for (const key of ['TTS_ACTIVITY_EVENT_TOOLTIP', 'TTS_COURT_EVENT_TOOLTIP']) {
+    for (const key of ['TTS_COURT_EVENT_TOOLTIP', 'switch_adventurer']) {
       assert.ok(korLoc.includes(`${key}:0 `), `한국어 로컬라이제이션에 ${key}:0 키가 정의되어 있어야 합니다.`);
       assert.ok(engLoc.includes(`${key}:0 `), `영어 로컬라이제이션에 ${key}:0 키가 정의되어 있어야 합니다.`);
     }

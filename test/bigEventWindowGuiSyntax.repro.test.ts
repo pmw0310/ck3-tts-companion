@@ -79,9 +79,9 @@ describe('CK3 모드 GUI 무결성 및 구문 검증 (Mod GUI Integrity)', () =>
     );
 
     assert.strictEqual(
-      content.includes('name = tts_scheme_conclusion_auto_play'),
+      content.includes('EventWindowData.CopyStringToClipboard'),
       true,
-      '모략 결론 창 전용 자동 재생 state(tts_scheme_conclusion_auto_play)가 정의되어 있어야 합니다.'
+      '비디버그 클립보드 자동 재생 훅(EventWindowData.CopyStringToClipboard)이 정의되어 있어야 합니다.'
     );
   });
 

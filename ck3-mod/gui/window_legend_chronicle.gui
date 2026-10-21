@@ -25,7 +25,7 @@
 
 	state = {
 		name = tts_legend_console_play
-		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) )))))))))))))]"
+		on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) )))))))))))))]"
 	}
 
 	state = {
@@ -147,7 +147,7 @@
 					blockoverride "button_close"
 					{
 						onclick = "[LegendChronicleWindow.Close]"
-						onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+						onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 					}
 					margin_right = 18
 				}
@@ -242,7 +242,7 @@
 							alwaystransparent = yes
 						}
 
-						onclick = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##\"', '|||GENDER:M##CK3_TTS_END##\"' ), '##CK3_TTS_END##\"' ) )))))))))))))]"
+						onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) )))))))))))))]"
 					}
 				}
 
@@ -408,7 +408,7 @@
 
 							onclick = "[PostCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							onclick = "[LegendChronicleWindow.Close]"
-							onclick = "[ExecuteConsoleCommand('effect info_log = \"##CK3_TTS_STOP##\"')]"
+							onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 							enabled = "[IsValidCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							tooltip = "[GetCommandDesc( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 
