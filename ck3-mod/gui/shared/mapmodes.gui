@@ -1,4 +1,4 @@
-types MapModes
+﻿types MapModes
 {
 	type map_modes_debug = flowcontainer {
 		# CK3 TTS Companion: 디버그 모드 전용 맵모드/도구 버튼 숨김

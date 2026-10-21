@@ -58,3 +58,7 @@
  hostile_scheme_discovery.1001.desc_no_spymaster_other_target:0 "Grave news has reached me. It has been discovered that my [ROOT.Char.Custom2('RelationToMe', SCOPE.sC('agent'))], [agent.GetTitledFirstName], is scheming against my [AddTextIf( SCOPE.sC('targeted_courtier').IsValid, Concatenate( ROOT.Char.Custom2('RelationToMe', SCOPE.sC('targeted_courtier')), ' ' ) )][Select_CString( SCOPE.sC('targeted_courtier').IsValid, SCOPE.sC('targeted_courtier').GetTitledFirstName, 'courtier' )]!"
  hostile_scheme_discovery.1001.close_relation_no_spymaster_other_target:0 "Grave news has reached me. [agent.GetTitledFirstName], my own [ROOT.Char.Custom2('RelationToMe', SCOPE.sC('agent'))] is scheming against my [AddTextIf( SCOPE.sC('targeted_courtier').IsValid, Concatenate( ROOT.Char.Custom2('RelationToMe', SCOPE.sC('targeted_courtier')), ' ' ) )][Select_CString( SCOPE.sC('targeted_courtier').IsValid, SCOPE.sC('targeted_courtier').GetTitledFirstName, 'courtier' )]!"
   consecrate_kingdom_additional_duchy_exclave_tt:0 "[additional_duchy.GetName] may be added to the [de_jure|E] of [founder.GetShortUINamePossessive] new [kingdom|E] #EMP #weak (or it will be an exclave within its current Kingdom)#!#!"
+ TRIGGER_BLOCKER_GROUP:0 "Requires $BLOCKER|l$"
+ has_relation_potential_rival_trigger:0 "[TARGET_CHARACTER.GetShortUIName] is marked as a potential rival for [CHARACTER.GetShortUIName]"
+ rice_cultivators_can_construct_paddy_fields_in_hills_and_jungle_name:0 "#V $tradition_tgp_rice_cultivators_name$#!"
+ paddy_fields_region:0 "$paddy_field_region$"

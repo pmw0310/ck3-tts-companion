@@ -1,4 +1,4 @@
-######################################################
+﻿######################################################
 ################# SUCCESSION EVENT ###################
 ######################################################
 
@@ -12,8 +12,13 @@ window = {
 	state = {
 		name = _show
 		on_finish = "[PdxGuiTriggerAllAnimations('ruler_transition_appear')]"
-		on_start = "[GetVariableSystem.Clear( 'ruler_transition_remove_fade')]"
 		on_start = "[ExecuteConsoleCommand(Concatenate('effect info_log = \"##CK3_TTS## ', Concatenate(SuccessionEventWindow.GetHeader, Concatenate('|||', Concatenate(SuccessionEventWindow.GetDeadDesc, Concatenate(' ', Concatenate(SuccessionEventWindow.GetHeirDesc, '##CK3_TTS_END##\"')))))))]"
+		next = tts_clear_ruler_transition_fade
+	}
+
+	state = {
+		name = tts_clear_ruler_transition_fade
+		on_start = "[GetVariableSystem.Clear( 'ruler_transition_remove_fade')]"
 	}
 
 	state = {

@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "activity_window"
 	size = { 1390 750 }
 	layer = middle

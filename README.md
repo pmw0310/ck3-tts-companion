@@ -113,15 +113,23 @@ npm run sync:mod
 - **동맹 참전 알림** (`interaction_call_ally_notification_window.gui`): 동맹국의 참전 요청 서신
 - **상호작용 알림** (`interaction_notification_window.gui`): 투옥, 협박, 청혼 등 인물 통보
 - **승계 및 사망 창** (`window_succession_event.gui`): 군주 사망 및 후계자 즉위 사건
-- **토너먼트/액티비티 창** (`window_activity.gui`): 순례, 연회, 마상시합 등 활동 내러티브
+- **토너먼트/액티비티 창** (`window_activity.gui`, `window_activity_locale.gui`): 순례, 연회, 마상시합 등 활동 내러티브
 - **반응형 튜토리얼 창** (`window_tutorial.gui`): "다음/뒤로" 스텝 전환 시 애니메이션 선점 방지 및 자동 TTS 낭독
 - **궁정(Royal Court) 알현실** (`window_royal_court.gui`, `window_court_events.gui`):
   - 알현실 환경 안정성을 위해 **수동 낭독(단축키: F)** 전용으로 구동
   - 알현실 나가기 및 창 닫힘 시 오디오 즉각 중단(`STOP`) 연동
-- **바닐라 스코프 결함 툴팁 자동 정제** (`debug_cleanup_l_*.yml`):
+- **유물(아이템) 툴팁** (`cooltip.gui`):
+  - 불필요한 호버 자동 발화를 방지하고 **수동 낭독(단축키: F 및 스피커 버튼 클릭)** 전용으로 지원
+- **문장 디자이너(Coat of Arms Designer)** (`coa_designer.gui`):
+  - 디버그 모드에서 노출되던 개발용 텍스처 파일명(`pattern_solid.dds`, `ce_lion_rampant.dds` 등) 툴팁 완전 은닉
+- **바닐라 결함 툴팁 및 로컬라이제이션 자동 정제** (`debug_cleanup_l_*.yml`):
   - **새로운 왕국 수립**: 단절 영지 툴팁의 `king_aspirant` 누락 에러를 `founder` 스코프로 교정 (인게임 붉은색 `ERROR:[...]` 완전 소거)
   - **수도회 창설**: 미생성 타이틀 참조 에러 없는 안전한 고정 명사("수도회") 툴팁 보장
   - **궁정 모략 발견**: `targeted_courtier` 누락 시 "나의 인 ERROR:[...]" 비문 방어 및 안전한 폴백 명사 제공
+  - **Blocker 조건 헤더**: `Need 하나 이상:` 바닐라 미번역 영문을 `필요 조건 (하나 이상):`으로 교정
+  - **잠재적 경쟁자**: 패러독스 바닐라 누락 영문(`... is marked as a potential rival for ...`) 한국어 교정
+  - **벼농사 전통 파라미터**: `rice_cultivators_can_construct...` 누락 키 정의로 `자바 문화는 벼농사 전통을 보유함` 정상 표시
+  - **논밭 지역 식별자**: 바닐라 단/복수 오타(`paddy_fields_region` vs `paddy_field_region`) 매핑으로 `논밭` 지역 정상 표시
 
 ---
 

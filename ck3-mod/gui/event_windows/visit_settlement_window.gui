@@ -1,4 +1,4 @@
-big_event_window = {
+﻿big_event_window = {
 	name = "visit_settlement_window"
 
 	blockoverride "transition" {

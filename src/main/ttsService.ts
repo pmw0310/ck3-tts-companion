@@ -599,9 +599,12 @@ export const synthesizeWithElevenLabs = async (
 export const processTtsRequest = async (
   request: SynthesizeRequest
 ): Promise<SynthesizeResult> => {
-  const { text, settings: rawSettings, voiceOverride, promptOverride } = request;
+  const { text: rawText, settings: rawSettings, voiceOverride, promptOverride } = request;
 
-  if (!text || text.trim().length === 0) {
+  // 별표(*) 등 TTS 엔진이 '별표' 등으로 잘못 발음하는 특수 기호 최종 방어 정제
+  const text = rawText ? rawText.replace(/[*＊]+/g, ' ').replace(/\s{2,}/g, ' ').trim() : '';
+
+  if (!text || text.length === 0) {
     return {
       isSuccess: false,
       errorMessage: '낭독할 텍스트가 비어 있습니다.'

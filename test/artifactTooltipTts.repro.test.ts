@@ -10,7 +10,7 @@ describe('유물 툴팁(Artifact Tooltip) TTS 연동 및 텍스트 정제 무결
     'ck3-mod/gui/shared/cooltip.gui'
   );
 
-  it('1. [결함 재현 - GUI 검증] cooltip.gui의 artifact_tooltip에 TTS 발화 트리거(state) 및 스피커 버튼이 구현되어 있어야 한다', () => {
+  it('1. [결함 재현 - GUI 검증] cooltip.gui의 artifact_tooltip에 TTS 수동 스피커 버튼 및 F 단축키가 구현되어 있고 자동 재생은 비활성화되어야 한다', () => {
     const content = fs.readFileSync(cooltipGuiPath, 'utf8');
 
     // artifact_tooltip 위젯 영역 추출
@@ -25,13 +25,11 @@ describe('유물 툴팁(Artifact Tooltip) TTS 연동 및 텍스트 정제 무결
       artifactTooltipIndex + 5000
     );
 
-    // TTS 발화 state 존재 여부 검증
-    const hasTtsState =
-      artifactTooltipChunk.includes('##CK3_TTS##') ||
-      artifactTooltipChunk.includes('tts_artifact_auto_play');
-    assert.ok(
-      hasTtsState,
-      'artifact_tooltip 내에 TTS 자동 발화 state (tts_artifact_auto_play 또는 ##CK3_TTS##)가 구현되어 있어야 합니다.'
+    // TTS 자동 재생 비활성화 검증
+    assert.strictEqual(
+      artifactTooltipChunk.includes('tts_artifact_auto_play'),
+      false,
+      'artifact_tooltip 내에 자동 재생 state(tts_artifact_auto_play)가 없어야 합니다 (수동 전용 정책).'
     );
 
     // F 단축키 및 스피커 버튼 존재 여부 검증

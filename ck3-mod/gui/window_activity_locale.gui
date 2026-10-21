@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "activity_locale_window"
 
 	datacontext = "[GetPlayer]"

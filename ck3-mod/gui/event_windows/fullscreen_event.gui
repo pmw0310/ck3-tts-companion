@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "fullscreen_event"
 	size = { 100% 100% }
 	movable = no

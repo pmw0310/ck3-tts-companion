@@ -1,4 +1,4 @@
-scheme_conclusion_window = {
+﻿scheme_conclusion_window = {
 	name = "scheme_conclusion_event_no_header"
 
 	blockoverride "result_header" {

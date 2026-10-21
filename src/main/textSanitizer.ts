@@ -77,8 +77,26 @@ const JOMINI_SCRIPT_GARBAGE_PATTERNS: readonly RegExp[] = [
   /\bFlag\s+'[^']+'\s+is\s+set\s+but\s+is\s+never\s+used\b/i,
   /\bNote\s+that\s+use\s+in\s+localization\s+doesn't\s+count\b/i,
   /\bUse\s+in\s+unused\s+scripted\s+triggers\s+and\s+effects\b/i,
-  /\bdoes\s+not\s+count\s+setting\s+it\b/i
+  /\bdoes\s+not\s+count\s+setting\s+it\b/i,
+  /\buntyped\s+trigger\b/i,
+  /\bScoped\s+object\b/i,
+  /\bScript\s+location\b/i,
+  /\bScript\s+system\s+error\b/i,
+  /\bCharacter_memory\b/i,
+  /\b\(expanded\s+from\s+file:[^)]*\)/i,
+  /\b(?:Unknown\s+trigger|Unknown\s+command)\b/i
 ] as const;
+
+/** 로그 라인 시작 타임스탬프 패턴 (예: [12:34:56]) */
+const LOG_TIMESTAMP_PREFIX_PATTERN = /^\[\d{2}:\d{2}:\d{2}\]/;
+
+/** error.log 복원 시 제외해야 할 Jomini 엔진 시스템 에러 헤더 패턴 */
+const ENGINE_ERROR_HEADER_PATTERN =
+  /^(?:Error|Script location|Script system error|Flag|Variable|Event target)\b/i;
+
+/** error.log 복원 시 제외해야 할 스크립트 실행/평가 에러 인라인 키워드 패턴 */
+const ENGINE_ERROR_INLINE_KEYWORD_PATTERN =
+  /\b(?:untyped trigger|Scoped object of type)\b/i;
 
 /**
  * 주어진 텍스트가 TTS로 낭독 가능한 정상적인 게임 내러티브 텍스트인지 검증합니다.
@@ -398,6 +416,10 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = cleaned.replace(/(?:^|\s)[LGV];?\s*(?=['"`‘“「『가-힣\d])/gi, ' ');
   cleaned = cleaned.replace(/^[LGV]\s+/i, '');
 
+  // 3.8. 별표(asterisk) 및 장식용 특수 기호 제거 (TTS에서 '별표', '별표 하' 등으로 낭독되는 현상 방지)
+  // 예: "*한숨*", "* 하...", "**강조**", "* 효과", "***", "*하" 등
+  cleaned = cleaned.replace(/[*＊]+/g, ' ');
+
   // 4. 단어 뒤에 분리되어 붙거나 결합된 태그 닫기 느낌표 잔여물 제거 (예: "야로미르 ! ! !", "성직 지역!! 안에", "수도!!가", "파벌 ! !이", "봉신 ! !들이나", "살해 ! !하는")
   // - 마지막 '!' 바로 뒤에 공백 없이 한글/괄호가 이어지는 경우는 로컬라이제이션 원문에서 조사/어미가 바로 붙어 있던 것이므로 공백 없이 직결
   // - 마지막 '!' 뒤에 공백이나 문장 끝이 오는 경우는 단어 간 띄어쓰기 공백(' ') 유지
@@ -424,9 +446,11 @@ export const sanitizeCk3Text = (rawText: string): string => {
   cleaned = cleaned.replace(/(\d+)\s+(명|개|세|살|번|곳|마리|척|채|권|장|병|잔|배|가지|년|월|일)(?=[의을를이가은는에서로와과도만부터까지,]|\s|$)/g, '$1$2');
 
   // 8. 따옴표 내부 불필요한 공백 정리 (예: "' 엽사 '" -> "'엽사'", "“ 영주 ”" -> "“영주”")
+  // 닫는 따옴표 앞 공백을 정리하되, 대화 시작을 알리는 여는 따옴표 앞 공백(예: "내쉬며 \"알겠습니다.\"")이 파괴되지 않도록
+  // 뒤에 단어가 바로 이어지지 않는(닫는 성격의) 따옴표에 한해 공백 정리
   cleaned = cleaned
     .replace(/(['"‘“「『])\s+([가-힣a-zA-Z0-9])/g, '$1$2')
-    .replace(/([가-힣a-zA-Z0-9])\s+(['"’”」』])/g, '$1$2');
+    .replace(/([가-힣a-zA-Z0-9])\s+(['"’”」』])(?![가-힣a-zA-Z0-9])/g, '$1$2');
 
   // 9. 문장 부호 앞 공백 및 연속 공백 정리
   return cleaned
@@ -788,9 +812,20 @@ const recoverEventsFromErrorLog = (
       if (trimmed.length === 0) {
         continue;
       }
-      if (!/^\[\d{2}:\d{2}:\d{2}\]/.test(trimmed)) {
-        currentTokens.push(trimmed);
+      // 타임스탬프 또는 엔진 에러 헤더/로그 패턴이 유입되면 콘솔 본문 파편이 아니므로 수집 취소
+      const isEngineErrorLog =
+        LOG_TIMESTAMP_PREFIX_PATTERN.test(trimmed) ||
+        ENGINE_ERROR_HEADER_PATTERN.test(trimmed) ||
+        ENGINE_ERROR_INLINE_KEYWORD_PATTERN.test(trimmed);
+
+      if (isEngineErrorLog) {
+        currentTokens = [];
+        isCollecting = false;
+        hasSeenUnknownEffect = false;
+        continue;
       }
+
+      currentTokens.push(trimmed);
     } else if (isCollecting && (!trimmed.includes('Unknown effect:') || trimmed.length === 0)) {
       if (hasSeenUnknownEffect && currentTokens.length > 0) {
         pushRecoveredPayload(currentTokens.join(' '));

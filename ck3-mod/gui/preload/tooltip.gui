@@ -1,4 +1,4 @@
-template DefaultTooltipText
+﻿template DefaultTooltipText
 {
 	#using = FontNormal
 	default_format = "#medium"

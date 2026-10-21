@@ -64,3 +64,7 @@
  hostile_scheme_discovery.1001.desc_no_spymaster_other_target:0 "심각한 소식이 전해졌다. 내 [ROOT.Char.Custom2('RelationToMe', SCOPE.sC('agent'))]인 [agent.GetTitledFirstName](이)가 내 [AddTextIf( SCOPE.sC('targeted_courtier').IsValid, Concatenate( ROOT.Char.Custom2('RelationToMe', SCOPE.sC('targeted_courtier')), ' ' ) )][Select_CString( SCOPE.sC('targeted_courtier').IsValid, SCOPE.sC('targeted_courtier').GetTitledFirstName, '궁정 신하' )](을)를 대상으로 모략을 꾸미는 중이라 한다!"
  hostile_scheme_discovery.1001.close_relation_no_spymaster_other_target:0 "심각한 소식을 들었다. 다른 사람도 아니고 나의 [ROOT.Char.Custom2('RelationToMe', SCOPE.sC('agent'))]인 [agent.GetTitledFirstName](이)가 내 [AddTextIf( SCOPE.sC('targeted_courtier').IsValid, Concatenate( ROOT.Char.Custom2('RelationToMe', SCOPE.sC('targeted_courtier')), ' ' ) )][Select_CString( SCOPE.sC('targeted_courtier').IsValid, SCOPE.sC('targeted_courtier').GetTitledFirstName, '궁정 신하' )](을)를 대상으로 모략을 꾸미고 있다!"
   consecrate_kingdom_additional_duchy_exclave_tt:0 "[additional_duchy.GetName](을)를 [founder.GetShortUINamePossessive] 새로운 [kingdom|E]의 [de_jure|E]에 추가할 수 있음 #EMP #weak (추가하지 않으면 현재 왕국 내의 단절 영지가 됨)#!#!"
+ TRIGGER_BLOCKER_GROUP:0 "필요 조건 ($BLOCKER|l$)"
+ has_relation_potential_rival_trigger:0 "[TARGET_CHARACTER.GetShortUIName](은)는 [CHARACTER.GetShortUIName]의 잠재적 경쟁자로 표기됨"
+ rice_cultivators_can_construct_paddy_fields_in_hills_and_jungle_name:0 "#V $tradition_tgp_rice_cultivators_name$#!"
+ paddy_fields_region:0 "$paddy_field_region$"
