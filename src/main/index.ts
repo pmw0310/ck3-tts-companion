@@ -8,6 +8,8 @@ import { processTtsRequest } from '@/main/ttsService';
 import {
   getAppMetadata,
   checkForAppUpdates,
+  downloadUpdateBinary,
+  installAndRestartUpdate,
   isSafeExternalUrl
 } from '@/main/updateService';
 import {
@@ -15,6 +17,10 @@ import {
   clearAudioCache,
   openCacheDirectory
 } from '@/main/audioCacheService';
+import {
+  getModVersionStatus,
+  syncModFiles
+} from '@/main/modSyncService';
 import type {
   AppInfo,
   AppSettings,
@@ -313,6 +319,31 @@ const initializeIpcAndShortcuts = (): void => {
     return await checkForAppUpdates();
   });
 
+  // 최신 버전 바이너리 인앱 백그라운드 다운로드
+  ipcMain.handle(
+    'ck3:start-download-update',
+    async (_event, downloadUrl: unknown) => {
+      if (typeof downloadUrl !== 'string' || !isSafeExternalUrl(downloadUrl)) {
+        return { isSuccess: false, errorMessage: '유효하지 않은 다운로드 URL입니다.' };
+      }
+
+      return await downloadUpdateBinary(downloadUrl, (progress) => {
+        sendToRenderer('ck3:update-download-progress', progress);
+      });
+    }
+  );
+
+  // 다운로드된 최신 업데이트 적용 및 재실행
+  ipcMain.handle(
+    'ck3:install-and-restart',
+    async (_event, downloadedFilePath: unknown): Promise<boolean> => {
+      if (typeof downloadedFilePath !== 'string') {
+        return false;
+      }
+      return await installAndRestartUpdate(downloadedFilePath);
+    }
+  );
+
   // 안전한 외부 링크 브라우저 실행
   ipcMain.handle('ck3:open-external', async (_event, url: unknown): Promise<boolean> => {
     if (typeof url !== 'string' || !isSafeExternalUrl(url)) {
@@ -336,6 +367,16 @@ const initializeIpcAndShortcuts = (): void => {
   // 로컬 오디오 캐시 폴더 탐색기로 열기
   ipcMain.handle('ck3:open-cache-dir', async (): Promise<boolean> => {
     return await openCacheDirectory();
+  });
+
+  // CK3 모드 버전 및 동기화 상태 조회
+  ipcMain.handle('ck3:get-mod-version-status', async () => {
+    return await getModVersionStatus();
+  });
+
+  // CK3 모드 파일 실제 게임 폴더로 동기화
+  ipcMain.handle('ck3:sync-mod-files', async () => {
+    return await syncModFiles();
   });
 
   // 전역 단축키 등록 (Windows: Ctrl+Shift+S / macOS: Cmd+Shift+S)

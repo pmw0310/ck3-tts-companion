@@ -169,6 +169,23 @@ export type AppInfo = {
   readonly repoUrl: string;
 };
 
+/** 릴리스 파일 에셋 메타데이터 */
+export type UpdateAssetInfo = {
+  readonly name: string;
+  readonly downloadUrl: string;
+  readonly sizeBytes: number;
+  readonly platform: 'win32' | 'darwin' | 'unknown';
+  readonly arch?: string;
+};
+
+/** 실시간 다운로드 진행률 정보 */
+export type UpdateDownloadProgress = {
+  readonly totalBytes: number;
+  readonly downloadedBytes: number;
+  readonly percent: number;
+  readonly speedBytesPerSec: number;
+};
+
 /** GitHub 릴리스 업데이트 검사 결과 인터페이스 */
 export type UpdateCheckResult = {
   readonly hasUpdate: boolean;
@@ -178,6 +195,28 @@ export type UpdateCheckResult = {
   readonly releaseTitle?: string;
   readonly releaseNotes?: string;
   readonly publishedAt?: string;
+  readonly matchedAsset?: UpdateAssetInfo;
+  readonly errorMessage?: string;
+};
+
+/** CK3 모드 버전 검사 상태 인터페이스 */
+export type ModVersionStatus = {
+  readonly isInstalled: boolean;
+  readonly isSynced: boolean;
+  readonly appVersion: string;
+  readonly installedVersion: string | null;
+  readonly targetModDir: string;
+  readonly sourceModDir: string;
+  readonly errorMessage?: string;
+};
+
+/** CK3 모드 파일 동기화 결과 인터페이스 */
+export type ModSyncResult = {
+  readonly isSuccess: boolean;
+  readonly copiedFilesCount: number;
+  readonly removedFilesCount: number;
+  readonly targetModDir: string;
+  readonly syncedVersion: string;
   readonly errorMessage?: string;
 };
 
@@ -199,5 +238,14 @@ export type ElectronApiBridge = {
   readonly getCacheStats: () => Promise<CacheStats>;
   readonly clearCache: () => Promise<boolean>;
   readonly openCacheDir: () => Promise<boolean>;
+  readonly getModVersionStatus: () => Promise<ModVersionStatus>;
+  readonly syncModFiles: () => Promise<ModSyncResult>;
+  readonly startDownloadUpdate: (
+    downloadUrl: string
+  ) => Promise<{ isSuccess: boolean; filePath?: string; errorMessage?: string }>;
+  readonly installAndRestartUpdate: (downloadedFilePath: string) => Promise<boolean>;
+  readonly onUpdateDownloadProgress: (
+    callback: (progress: UpdateDownloadProgress) => void
+  ) => () => void;
 };
 

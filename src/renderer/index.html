@@ -27,6 +27,7 @@
             <div class="brand-title-row">
               <h1 class="brand-title">CK3 TTS COMPANION</h1>
               <span id="app-version-badge" class="version-badge" title="현재 애플리케이션 버전">v1.4.0</span>
+              <span id="mod-version-badge" class="version-badge mod-badge-loading" title="CK3 게임 모드 버전 동기화 상태">모드 확인 중...</span>
             </div>
             <span class="brand-subtitle">
               실시간 인게임 나레이션 보이스 엔진 • <span id="app-author-tag" class="author-tag">제작: BlackOlf</span>
@@ -49,14 +50,40 @@
           <div class="update-banner-text">
             <strong id="update-banner-title">새로운 버전이 출시되었습니다!</strong>
             <span id="update-banner-desc" class="update-banner-desc">최신 업데이트를 확인해 보세요.</span>
+            <!-- 다운로드 진행률 바 -->
+            <div id="update-progress-container" class="update-progress-box option-hidden">
+              <div class="update-progress-track">
+                <div id="update-progress-bar" class="update-progress-fill" style="width: 0%;"></div>
+              </div>
+              <div class="update-progress-meta">
+                <span id="update-progress-text">다운로드 중... (0 MB)</span>
+                <span id="update-progress-percent" class="gold-text">0%</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="update-banner-actions">
           <button type="button" id="btn-update-download" class="btn btn-sm btn-gold">
-            새 버전 다운로드 ↗
+            ⬇️ 원클릭 자동 업데이트
           </button>
           <button type="button" id="btn-update-dismiss" class="btn-icon btn-sm" aria-label="알림 닫기" title="닫기">
             ✕
+          </button>
+        </div>
+      </aside>
+
+      <!-- CK3 모드 버전 불일치 / 동기화 안내 배너 -->
+      <aside id="mod-sync-banner" class="update-banner mod-banner banner-hidden" aria-live="polite">
+        <div class="update-banner-content">
+          <span class="update-banner-icon" id="mod-banner-icon">⚠️</span>
+          <div class="update-banner-text">
+            <strong id="mod-banner-title">CK3 모드 버전 동기화 필요</strong>
+            <span id="mod-banner-desc" class="update-banner-desc">설치된 모드와 프로그램 버전이 다릅니다.</span>
+          </div>
+        </div>
+        <div class="update-banner-actions">
+          <button type="button" id="btn-sync-mod" class="btn btn-sm btn-gold">
+            🔄 모드 지금 동기화
           </button>
         </div>
       </aside>
@@ -544,9 +571,12 @@
                   <img src="./assets/mod-thumbnail.png" alt="Mod Thumbnail" class="mod-thumbnail-img" />
                   <div class="mod-preview-details">
                     <div class="mod-title">CK3 TTS Companion Bridge</div>
-                    <div class="mod-status-text">✅ 패러독스 게임 모드 폴더 동기화 완료</div>
-                    <div class="mod-subtext">런처 모드 플레이셋에서 본 모드를 활성화해 주세요.</div>
+                    <div id="modal-mod-status-text" class="mod-status-text">확인 중...</div>
+                    <div id="modal-mod-subtext" class="mod-subtext">런처 모드 플레이셋에서 본 모드를 활성화해 주세요.</div>
                   </div>
+                  <button type="button" id="btn-modal-sync-mod" class="btn btn-secondary btn-sm" style="margin-left: auto;">
+                    🔄 모드 파일 동기화
+                  </button>
                 </div>
               </div>
 

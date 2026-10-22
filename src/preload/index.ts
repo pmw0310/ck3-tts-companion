@@ -7,7 +7,8 @@ import type {
   ExecutionSoundEvent,
   SynthesizeRequest,
   SynthesizeResult,
-  UpdateCheckResult
+  UpdateCheckResult,
+  UpdateDownloadProgress
 } from '@/shared/types';
 
 /**
@@ -58,6 +59,38 @@ const electronApi: ElectronApiBridge = {
 
   openCacheDir: async (): Promise<boolean> => {
     return await ipcRenderer.invoke('ck3:open-cache-dir');
+  },
+
+  getModVersionStatus: async () => {
+    return await ipcRenderer.invoke('ck3:get-mod-version-status');
+  },
+
+  syncModFiles: async () => {
+    return await ipcRenderer.invoke('ck3:sync-mod-files');
+  },
+
+  startDownloadUpdate: async (downloadUrl: string) => {
+    return await ipcRenderer.invoke('ck3:start-download-update', downloadUrl);
+  },
+
+  installAndRestartUpdate: async (downloadedFilePath: string) => {
+    return await ipcRenderer.invoke('ck3:install-and-restart', downloadedFilePath);
+  },
+
+  onUpdateDownloadProgress: (
+    callback: (progress: UpdateDownloadProgress) => void
+  ): (() => void) => {
+    const listener = (
+      _ipcEvent: Electron.IpcRendererEvent,
+      progress: UpdateDownloadProgress
+    ): void => {
+      callback(progress);
+    };
+
+    ipcRenderer.on('ck3:update-download-progress', listener);
+    return () => {
+      ipcRenderer.removeListener('ck3:update-download-progress', listener);
+    };
   },
 
   onEventDetected: (
