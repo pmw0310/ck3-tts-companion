@@ -1,14 +1,15 @@
-name: Steam Workshop Auto Update
+name: Steam Workshop Auto Update (Manual Only)
 
 on:
-  push:
-    paths:
-      - 'ck3-mod/**'
-    branches:
-      - main
-  release:
-    types: [published]
-  workflow_dispatch:
+  # push 및 release 자동 트리거는 스팀 가드 15일 쿨다운 해제 전까지 비활성화합니다.
+  # push:
+  #   paths:
+  #     - 'ck3-mod/**'
+  #   branches:
+  #     - main
+  # release:
+  #   types: [published]
+  workflow_dispatch: # Actions 탭에서 수동 실행(Run workflow)할 때만 동작
 
 jobs:
   upload-workshop:
