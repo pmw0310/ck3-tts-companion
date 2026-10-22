@@ -72,7 +72,8 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   isCacheEnabled: true,
   maxCacheSizeMb: 500,
   isExecutionSoundEnabled: true,
-  executionSoundVolume: 0.8
+  executionSoundVolume: 0.8,
+  appLanguage: 'ko'
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -90,11 +91,17 @@ const isValidAppSettings = (data: unknown): data is AppSettings => {
   }
   const candidate = data as Record<string, unknown>;
   const validProviders = ['edge', 'gemini', 'openai', 'elevenlabs', 'system'];
+  const validLanguages = ['ko', 'en'];
+  const isLanguageValid =
+    candidate.appLanguage === undefined ||
+    (typeof candidate.appLanguage === 'string' && validLanguages.includes(candidate.appLanguage));
+
   return (
     typeof candidate.provider === 'string' &&
     validProviders.includes(candidate.provider) &&
     typeof candidate.edgeVoice === 'string' &&
-    typeof candidate.isAutoPlayEnabled === 'boolean'
+    typeof candidate.isAutoPlayEnabled === 'boolean' &&
+    isLanguageValid
   );
 };
 

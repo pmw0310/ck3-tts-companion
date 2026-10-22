@@ -32,11 +32,16 @@ export type ElevenLabsModelName =
   | 'eleven_turbo_v2_5'
   | 'eleven_flash_v2_5';
 
-/** Edge-TTS 한국어 음성 프리셋 */
+/** Edge-TTS 음성 프리셋 (한국어 및 영어) */
 export type EdgeVoiceName =
   | 'ko-KR-SunHiNeural'
   | 'ko-KR-InJoonNeural'
-  | 'ko-KR-HyunsuNeural';
+  | 'ko-KR-HyunsuNeural'
+  | 'en-US-GuyNeural'
+  | 'en-US-JennyNeural'
+  | 'en-US-ChristopherNeural'
+  | 'en-GB-RyanNeural'
+  | 'en-GB-SoniaNeural';
 
 /** 지원하는 시스템(로컬 OS) 내장 음성 식별자 */
 export type SystemVoiceName =
@@ -128,6 +133,7 @@ export type AppSettings = {
   readonly maxCacheSizeMb: number;
   readonly isExecutionSoundEnabled: boolean;
   readonly executionSoundVolume: number;
+  readonly appLanguage?: 'ko' | 'en';
 };
 
 /** TTS 합성 요청 매개변수 */

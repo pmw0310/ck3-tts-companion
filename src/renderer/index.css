@@ -219,6 +219,44 @@ body.platform-darwin .app-header,
   -webkit-app-region: no-drag;
 }
 
+/* === 언어 전환 세그먼트 토글 === */
+.lang-switch-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(18, 20, 24, 0.65);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.lang-switch-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.lang-switch-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lang-switch-btn.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(180, 130, 20, 0.35));
+  color: var(--gold-primary);
+  border: 1px solid var(--gold-border);
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
+}
+
 .btn-icon {
   background: transparent;
   border: 1px solid var(--border-subtle);

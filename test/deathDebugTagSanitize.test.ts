@@ -1,7 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
 import { sanitizeCk3Text, extractCk3EventsFromChunk } from '@/main/textSanitizer';
 
 /**

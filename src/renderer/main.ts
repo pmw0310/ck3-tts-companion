@@ -24,6 +24,12 @@ import { isTextFragmentOf, shouldPlayEvent } from "@/shared/eventDeduplicator";
 import { buildFallbackToastMessage } from "@/shared/fallbackMessageFormatter";
 import { initAudioVisualizer } from "@/renderer/audioVisualizer";
 import { playExecutionSound } from "@/renderer/executionSoundManager";
+import {
+   t,
+   setLanguage,
+   getCurrentLocale,
+   type SupportedLocale,
+} from "@/renderer/i18n";
 
 // macOS 환경 감지 시 네이티브 신호등(트래픽 라이트) 버튼 안전 여백 클래스 즉시 부여
 if (
@@ -56,9 +62,13 @@ const GEMINI_TONE_PRESETS: Record<string, string> = {
       "An awe-inspiring sovereign monarch proclaiming a royal edict from the high throne. Regal, commanding, grand, and commanding absolute respect. 위엄 있고 당당한 제왕의 칙령 낭독 어조로 읽어라.",
 };
 
-/** 테스트용 샘플 중세 나레이션 문장 */
-const SAMPLE_TEST_TEXT =
+/** 테스트용 샘플 중세 나레이션 문장 (한국어 및 영어) */
+const SAMPLE_TEST_TEXT_KO =
    "폐하, 국경 지대에서 가신들이 비밀리에 반란을 모의하고 있다는 밀서가 당도하였습니다. 신속한 결단이 필요하옵니다.";
+const SAMPLE_TEST_TEXT_EN =
+   "Sire, a secret message has arrived revealing that your vassals are covertly plotting a rebellion on the border. A swift decision is required.";
+const getSampleTestText = (): string =>
+   getCurrentLocale() === "en" ? SAMPLE_TEST_TEXT_EN : SAMPLE_TEST_TEXT_KO;
 
 /** 렌더러 애플리케이션 상태 */
 type RendererState = {
@@ -102,6 +112,7 @@ const state: RendererState = {
       maxCacheSizeMb: 500,
       isExecutionSoundEnabled: true,
       executionSoundVolume: 0.8,
+      appLanguage: "ko",
    },
    currentEvent: null,
    history: [],
@@ -518,10 +529,14 @@ const updateCacheStatsUi = async (): Promise<void> => {
       const stats = await window.electronAPI.getCacheStats();
       lastKnownCacheStats = stats;
       if (cacheStatFiles) {
-         cacheStatFiles.textContent = `${stats.totalFiles.toLocaleString()}개`;
+         cacheStatFiles.textContent = t("cache.unitFiles", {
+            count: stats.totalFiles.toLocaleString(),
+         });
       }
       if (cacheStatHits) {
-         cacheStatHits.textContent = `${stats.hitCount.toLocaleString()}회`;
+         cacheStatHits.textContent = t("cache.unitHits", {
+            count: stats.hitCount.toLocaleString(),
+         });
       }
 
       const currentMb = (stats.totalSizeBytes / 1024 / 1024).toFixed(1);
@@ -578,17 +593,27 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       "visualizer-playing",
    );
 
+   const isEn = getCurrentLocale() === "en";
+
    switch (status) {
       case "synthesizing": {
          ttsStatusIndicator.classList.add("status-synthesizing");
          const defaultText =
             state.settings.provider === "gemini"
-               ? "Gemini AI 음성 생성 중..."
+               ? isEn
+                  ? "Generating Gemini AI voice..."
+                  : "Gemini AI 음성 생성 중..."
                : state.settings.provider === "openai"
-                 ? "OpenAI 고음질 음성 생성 중..."
+                 ? isEn
+                    ? "Generating OpenAI voice..."
+                    : "OpenAI 고음질 음성 생성 중..."
                  : state.settings.provider === "elevenlabs"
-                   ? "ElevenLabs 프리미엄 음성 생성 중..."
-                   : "음성 합성 중...";
+                   ? isEn
+                      ? "Generating ElevenLabs voice..."
+                      : "ElevenLabs 프리미엄 음성 생성 중..."
+                   : isEn
+                     ? "Synthesizing speech..."
+                     : "음성 합성 중...";
          ttsStatusText.textContent = detailText ?? defaultText;
          audioVisualizer.classList.add("visualizer-synthesizing");
          btnStopAudio.disabled = false; // 통신 중에도 중지(취소) 가능!
@@ -599,7 +624,8 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
 
       case "playing": {
          ttsStatusIndicator.classList.add("status-playing");
-         ttsStatusText.textContent = detailText ?? "낭독 중";
+         ttsStatusText.textContent =
+            detailText ?? (isEn ? "Speaking" : "낭독 중");
          audioVisualizer.classList.add("visualizer-playing");
          btnStopAudio.disabled = false;
          btnReplay.disabled = true;
@@ -609,7 +635,8 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
 
       case "error": {
          ttsStatusIndicator.classList.add("status-error");
-         ttsStatusText.textContent = detailText ?? "오류 발생";
+         ttsStatusText.textContent =
+            detailText ?? (isEn ? "Error" : "오류 발생");
          audioVisualizer.classList.add("visualizer-idle");
          btnStopAudio.disabled = true;
          btnReplay.disabled = state.currentEvent === null;
@@ -620,7 +647,7 @@ const setTtsUiState = (status: TtsUiStatus, detailText?: string): void => {
       case "idle":
       default: {
          ttsStatusIndicator.classList.add("status-idle");
-         ttsStatusText.textContent = "대기 중";
+         ttsStatusText.textContent = isEn ? "Idle" : "대기 중";
          audioVisualizer.classList.add("visualizer-idle");
          btnStopAudio.disabled = true;
          btnReplay.disabled = state.currentEvent === null;
@@ -658,7 +685,7 @@ const syncAudioPlaybackRate = (): void => {
  */
 const showToast = (
    message: string,
-   type: 'info' | 'error' | 'warning' | 'success' = 'info'
+   type: "info" | "error" | "warning" | "success" = "info",
 ): void => {
    let container = document.getElementById("toast-container");
    if (!container) {
@@ -699,7 +726,7 @@ const applyAppInfoToUi = (info: AppInfo): void => {
       appVersionBadge.textContent = `v${info.version}`;
    }
    if (appAuthorTag) {
-      appAuthorTag.textContent = `제작: ${info.author}`;
+      appAuthorTag.textContent = info.author;
    }
    if (modalAppVersion) {
       modalAppVersion.textContent = `v${info.version}`;
@@ -718,11 +745,16 @@ const displayUpdateBanner = (result: UpdateCheckResult): void => {
       return;
    }
    latestUpdateResult = result;
+   const isEn = getCurrentLocale() === "en";
    if (updateBannerTitle) {
-      updateBannerTitle.textContent = `🚀 새로운 버전(${result.releaseTitle ?? `v${result.latestVersion}`})이 출시되었습니다!`;
+      updateBannerTitle.textContent = isEn
+         ? `🚀 A new version (${result.releaseTitle ?? `v${result.latestVersion}`}) is available!`
+         : `🚀 새로운 버전(${result.releaseTitle ?? `v${result.latestVersion}`})이 출시되었습니다!`;
    }
    if (updateBannerDesc) {
-      updateBannerDesc.textContent = `현재 버전 v${result.currentVersion} → 최신 버전 v${result.latestVersion}`;
+      updateBannerDesc.textContent = isEn
+         ? `Current version v${result.currentVersion} → Latest version v${result.latestVersion}`
+         : `현재 버전 v${result.currentVersion} → 최신 버전 v${result.latestVersion}`;
    }
    updateBanner.classList.remove("banner-hidden");
 };
@@ -741,9 +773,11 @@ const hideUpdateBanner = (): void => {
  * @param isManual - 사용자가 직접 버튼을 클릭해 호출했는지 여부
  */
 const checkAppUpdates = async (isManual = false): Promise<void> => {
+   const isEn = getCurrentLocale() === "en";
+
    if (isManual && manualUpdateStatus) {
       manualUpdateStatus.className = "update-status-msg";
-      manualUpdateStatus.textContent = "확인 중...";
+      manualUpdateStatus.textContent = isEn ? "Checking..." : "확인 중...";
       btnManualCheckUpdate.disabled = true;
    }
 
@@ -756,10 +790,14 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
          if (isManual) {
             if (manualUpdateStatus) {
                manualUpdateStatus.className = "update-status-msg status-new";
-               manualUpdateStatus.textContent = `🎉 최신 v${result.latestVersion} 출시됨`;
+               manualUpdateStatus.textContent = isEn
+                  ? `🎉 New v${result.latestVersion} available`
+                  : `🎉 최신 v${result.latestVersion} 출시됨`;
             }
             showToast(
-               `🎉 새로운 버전 v${result.latestVersion}이 출시되었습니다!`,
+               isEn
+                  ? `🎉 A new version v${result.latestVersion} is available!`
+                  : `🎉 새로운 버전 v${result.latestVersion}이 출시되었습니다!`,
                "info",
             );
          }
@@ -767,11 +805,14 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
          if (isManual) {
             if (manualUpdateStatus) {
                manualUpdateStatus.className = "update-status-msg status-error";
-               manualUpdateStatus.textContent =
-                  "확인 실패 (네트워크 연결 확인)";
+               manualUpdateStatus.textContent = isEn
+                  ? "Check failed (Network error)"
+                  : "확인 실패 (네트워크 연결 확인)";
             }
             showToast(
-               `⚠️ 업데이트 확인 실패: ${result.errorMessage}`,
+               isEn
+                  ? `⚠️ Update check failed: ${result.errorMessage}`
+                  : `⚠️ 업데이트 확인 실패: ${result.errorMessage}`,
                "warning",
             );
          }
@@ -781,10 +822,14 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
             if (manualUpdateStatus) {
                manualUpdateStatus.className =
                   "update-status-msg status-success";
-               manualUpdateStatus.textContent = `✅ 최신 버전(v${result.currentVersion}) 사용 중`;
+               manualUpdateStatus.textContent = isEn
+                  ? `✅ Latest version (v${result.currentVersion}) in use`
+                  : `✅ 최신 버전(v${result.currentVersion}) 사용 중`;
             }
             showToast(
-               `✅ 현재 최신 버전(v${result.currentVersion})을 사용하고 계십니다.`,
+               isEn
+                  ? `✅ You are using the latest version (v${result.currentVersion}).`
+                  : `✅ 현재 최신 버전(v${result.currentVersion})을 사용하고 계십니다.`,
                "info",
             );
          }
@@ -793,7 +838,9 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
       console.warn("⚠️ [UpdateCheck] 버전 검사 오류:", error);
       if (isManual && manualUpdateStatus) {
          manualUpdateStatus.className = "update-status-msg status-error";
-         manualUpdateStatus.textContent = "네트워크 오류 발생";
+         manualUpdateStatus.textContent = isEn
+            ? "Network error occurred"
+            : "네트워크 오류 발생";
       }
    } finally {
       if (isManual) {
@@ -814,99 +861,144 @@ const checkModSyncStatus = async (isManual = false): Promise<void> => {
    try {
       const status = await window.electronAPI.getModVersionStatus();
 
+      const isEn = getCurrentLocale() === "en";
+
       if (!status.isInstalled) {
          // 모드 미설치 상태
          modVersionBadge.className = "version-badge mod-badge-missing";
-         modVersionBadge.textContent = "모드 미설치";
-         modVersionBadge.title =
-            "CK3 모드 폴더가 감지되지 않았습니다. 원클릭으로 설치할 수 있습니다.";
+         modVersionBadge.textContent = isEn
+            ? "Mod Not Installed"
+            : "모드 미설치";
+         modVersionBadge.title = isEn
+            ? "CK3 mod directory not detected. Click to install."
+            : "CK3 모드 폴더가 감지되지 않았습니다. 원클릭으로 설치할 수 있습니다.";
 
          if (modSyncBanner) {
             modSyncBanner.classList.remove("banner-hidden");
             if (modBannerTitle) {
-               modBannerTitle.textContent = "CK3 모드가 설치되지 않았습니다";
+               modBannerTitle.textContent = isEn
+                  ? "CK3 Mod Is Not Installed"
+                  : "CK3 모드가 설치되지 않았습니다";
             }
             if (modBannerDesc) {
-               modBannerDesc.textContent =
-                  "원클릭으로 게임 모드 폴더에 자동 설치합니다.";
+               modBannerDesc.textContent = isEn
+                  ? "Click to automatically install into game mod folder."
+                  : "원클릭으로 게임 모드 폴더에 자동 설치합니다.";
             }
          }
          if (modalModStatusText) {
-            modalModStatusText.textContent = "⚪ 게임 모드 미설치";
+            modalModStatusText.textContent = isEn
+               ? "⚪ Game Mod Not Installed"
+               : "⚪ 게임 모드 미설치";
          }
          if (modalModSubtext) {
-            modalModSubtext.textContent =
-               "아래 [모드 설치하기] 버튼을 눌러 모드를 설치해 주세요.";
+            modalModSubtext.textContent = isEn
+               ? "Click [Install Mod Now] below to install the bridge mod."
+               : "아래 [모드 설치하기] 버튼을 눌러 모드를 설치해 주세요.";
          }
          if (btnSyncMod) {
             btnSyncMod.disabled = false;
-            btnSyncMod.textContent = "🚀 모드 지금 설치";
+            btnSyncMod.textContent = isEn
+               ? "🚀 Install Mod Now"
+               : "🚀 모드 지금 설치";
          }
          if (btnModalSyncMod) {
             btnModalSyncMod.disabled = false;
-            btnModalSyncMod.textContent = "🚀 모드 설치하기";
-            btnModalSyncMod.title = "게임 모드 폴더에 최신 모드를 설치합니다.";
+            btnModalSyncMod.textContent = isEn
+               ? "🚀 Install Mod"
+               : "🚀 모드 설치하기";
+            btnModalSyncMod.title = isEn
+               ? "Installs the latest mod files to game folder."
+               : "게임 모드 폴더에 최신 모드를 설치합니다.";
          }
       } else if (!status.isSynced) {
          // 버전 불일치 상태
          modVersionBadge.className = "version-badge mod-badge-warning";
-         modVersionBadge.textContent = `모드 v${status.installedVersion ?? "미상"} (동기화 필요)`;
-         modVersionBadge.title = `설치된 모드(v${status.installedVersion})와 프로그램(v${status.appVersion}) 버전이 다릅니다.`;
+         modVersionBadge.textContent = isEn
+            ? `Mod v${status.installedVersion ?? "?"} (Sync Required)`
+            : `모드 v${status.installedVersion ?? "미상"} (동기화 필요)`;
+         modVersionBadge.title = isEn
+            ? `Installed mod (v${status.installedVersion}) differs from app (v${status.appVersion}).`
+            : `설치된 모드(v${status.installedVersion})와 프로그램(v${status.appVersion}) 버전이 다릅니다.`;
 
          if (modSyncBanner) {
             modSyncBanner.classList.remove("banner-hidden");
             if (modBannerTitle) {
-               modBannerTitle.textContent = "CK3 모드 버전 동기화 필요";
+               modBannerTitle.textContent = isEn
+                  ? "CK3 Mod Sync Required"
+                  : "CK3 모드 버전 동기화 필요";
             }
             if (modBannerDesc) {
-               modBannerDesc.textContent = `설치된 모드: v${status.installedVersion ?? "미상"} ➔ 프로그램: v${status.appVersion}`;
+               modBannerDesc.textContent = isEn
+                  ? `Installed: v${status.installedVersion ?? "?"} ➔ App: v${status.appVersion}`
+                  : `설치된 모드: v${status.installedVersion ?? "미상"} ➔ 프로그램: v${status.appVersion}`;
             }
          }
          if (modalModStatusText) {
-            modalModStatusText.textContent = `⚠️ 버전 불일치 (설치: v${status.installedVersion} / 최신: v${status.appVersion})`;
+            modalModStatusText.textContent = isEn
+               ? `⚠️ Version Mismatch (Installed: v${status.installedVersion} / Latest: v${status.appVersion})`
+               : `⚠️ 버전 불일치 (설치: v${status.installedVersion} / 최신: v${status.appVersion})`;
          }
          if (modalModSubtext) {
-            modalModSubtext.textContent =
-               "최신 모드로 동기화하여 완벽한 GUI 호환성을 유지하세요.";
+            modalModSubtext.textContent = isEn
+               ? "Sync to the latest version for seamless GUI compatibility."
+               : "최신 모드로 동기화하여 완벽한 GUI 호환성을 유지하세요.";
          }
          if (btnSyncMod) {
             btnSyncMod.disabled = false;
-            btnSyncMod.textContent = "🔄 모드 지금 동기화";
+            btnSyncMod.textContent = isEn
+               ? "🔄 Sync Mod Now"
+               : "🔄 모드 지금 동기화";
          }
          if (btnModalSyncMod) {
             btnModalSyncMod.disabled = false;
-            btnModalSyncMod.textContent = "🔄 모드 파일 동기화";
-            btnModalSyncMod.title = "최신 모드 파일로 덮어씁니다.";
+            btnModalSyncMod.textContent = isEn
+               ? "🔄 Sync Mod Files"
+               : "🔄 모드 파일 동기화";
+            btnModalSyncMod.title = isEn
+               ? "Overwrites with latest mod files."
+               : "최신 모드 파일로 덮어씁니다.";
          }
       } else {
          // 정상 동기화 상태 (최신 버전 일치)
          modVersionBadge.className = "version-badge mod-badge-synced";
-         modVersionBadge.textContent = `모드 v${status.installedVersion} 동기화됨`;
-         modVersionBadge.title =
-            "게임 모드가 최신 버전으로 정상 동기화되어 있습니다.";
+         modVersionBadge.textContent = isEn
+            ? `Mod v${status.installedVersion} Synced`
+            : `모드 v${status.installedVersion} 동기화됨`;
+         modVersionBadge.title = isEn
+            ? "Game mod is up to date and fully synced."
+            : "게임 모드가 최신 버전으로 정상 동기화되어 있습니다.";
 
          if (modSyncBanner) {
             modSyncBanner.classList.add("banner-hidden");
          }
          if (modalModStatusText) {
-            modalModStatusText.textContent = `✅ 게임 모드 v${status.installedVersion} 동기화 완료`;
+            modalModStatusText.textContent = isEn
+               ? `✅ Game Mod v${status.installedVersion} Synced`
+               : `✅ 게임 모드 v${status.installedVersion} 동기화 완료`;
          }
          if (modalModSubtext) {
-            modalModSubtext.textContent =
-               "런처 모드 플레이셋에서 본 모드를 활성화해 주세요.";
+            modalModSubtext.textContent = isEn
+               ? "Please ensure this mod is enabled in your Paradox Launcher playset."
+               : "런처 모드 플레이셋에서 본 모드를 활성화해 주세요.";
          }
          if (btnSyncMod) {
             btnSyncMod.disabled = true;
          }
          if (btnModalSyncMod) {
             btnModalSyncMod.disabled = true;
-            btnModalSyncMod.textContent = "✅ 최신 상태 유지됨";
-            btnModalSyncMod.title =
-               "현재 게임에 최신 모드가 설치되어 있습니다.";
+            btnModalSyncMod.textContent = isEn
+               ? "✅ Up to Date"
+               : "✅ 최신 상태 유지됨";
+            btnModalSyncMod.title = isEn
+               ? "Latest mod is already installed."
+               : "현재 게임에 최신 모드가 설치되어 있습니다.";
          }
          if (isManual) {
             showToast(
-               `✅ 모드가 최신 버전(v${status.installedVersion})과 일치합니다.`,
+               isEn
+                  ? `✅ Mod is already up-to-date (v${status.installedVersion}).`
+                  : `✅ 모드가 최신 버전(v${status.installedVersion})과 일치합니다.`,
                "info",
             );
          }
@@ -920,42 +1012,52 @@ const checkModSyncStatus = async (isManual = false): Promise<void> => {
  * 최신 CK3 모드 파일들을 게임 폴더로 동기화합니다.
  */
 const handleSyncModFiles = async (): Promise<void> => {
+   const isEn = getCurrentLocale() === "en";
    if (btnSyncMod) {
       btnSyncMod.disabled = true;
-      btnSyncMod.textContent = "⏳ 동기화 중...";
+      btnSyncMod.textContent = isEn ? "⏳ Syncing..." : "⏳ 동기화 중...";
    }
    if (btnModalSyncMod) {
       btnModalSyncMod.disabled = true;
-      btnModalSyncMod.textContent = "⏳ 동기화 중...";
+      btnModalSyncMod.textContent = isEn ? "⏳ Syncing..." : "⏳ 동기화 중...";
    }
 
    try {
-      showToast("🔄 최신 모드 파일을 게임 폴더로 동기화하는 중...", "info");
+      showToast(t("toast.syncing"), "info");
       const result = await window.electronAPI.syncModFiles();
 
       if (result.isSuccess) {
          showToast(
-            `🎉 모드가 v${result.syncedVersion}으로 성공적으로 동기화되었습니다!`,
+            t("toast.syncSuccess", {
+               copied: result.copiedFilesCount,
+               removed: result.removedFilesCount,
+            }),
             "success",
          );
          await checkModSyncStatus(false);
       } else {
          showToast(
-            `❌ 모드 동기화 실패: ${result.errorMessage ?? "알 수 없는 오류"}`,
+            isEn
+               ? `❌ Mod sync failed: ${result.errorMessage ?? "Unknown error"}`
+               : `❌ 모드 동기화 실패: ${result.errorMessage ?? "알 수 없는 오류"}`,
             "warning",
          );
       }
    } catch (error: unknown) {
       console.error("❌ [ModSync] 동기화 실행 오류:", error);
-      showToast("❌ 모드 동기화 중 오류가 발생했습니다.", "warning");
+      showToast(t("toast.syncError"), "warning");
    } finally {
       if (btnSyncMod) {
          btnSyncMod.disabled = false;
-         btnSyncMod.textContent = "🔄 모드 지금 동기화";
+         btnSyncMod.textContent = isEn
+            ? "🔄 Sync Mod Now"
+            : "🔄 모드 지금 동기화";
       }
       if (btnModalSyncMod) {
          btnModalSyncMod.disabled = false;
-         btnModalSyncMod.textContent = "🔄 모드 파일 동기화";
+         btnModalSyncMod.textContent = isEn
+            ? "🔄 Sync Mod Files"
+            : "🔄 모드 파일 동기화";
       }
    }
 };
@@ -1346,11 +1448,15 @@ const speakText = async (
  * 히스토리 목록 UI를 다시 렌더링합니다.
  */
 const renderHistoryList = (): void => {
+   const isEn = getCurrentLocale() === "en";
    if (state.history.length === 0) {
+      const emptyText = isEn
+         ? "No events recorded yet. In-game events will appear here in real time."
+         : "아직 기록된 사건이 없습니다. 게임 중 이벤트가 발생하면 이곳에 기록됩니다.";
       historyList.innerHTML = `
       <div class="empty-history">
         <span class="empty-icon">📜</span>
-        <span class="empty-text">아직 기록된 사건이 없습니다. 게임 중 이벤트가 발생하면 이곳에 기록됩니다.</span>
+        <span class="empty-text">${emptyText}</span>
       </div>
     `;
       return;
@@ -1367,10 +1473,13 @@ const renderHistoryList = (): void => {
       const headerRow = document.createElement("div");
       headerRow.className = "history-header-row";
 
+      const isEn = getCurrentLocale() === "en";
+      const defaultTitle = isEn ? "Event" : "이벤트";
+
       const titleEl = document.createElement("span");
       titleEl.className = "history-title";
       titleEl.textContent =
-         item.title && item.title.trim().length > 0 ? item.title : "이벤트";
+         item.title && item.title.trim().length > 0 ? item.title : defaultTitle;
 
       const timeEl = document.createElement("span");
       timeEl.className = "history-time";
@@ -1389,12 +1498,14 @@ const renderHistoryList = (): void => {
 
       const playBtn = document.createElement("button");
       playBtn.className = "btn btn-sm btn-secondary history-play-btn";
-      playBtn.innerHTML = "<span>▶</span> 낭독";
-      playBtn.title = "이 사건 다시 낭독하기";
+      playBtn.innerHTML = isEn ? "<span>▶</span> Read" : "<span>▶</span> 낭독";
+      playBtn.title = isEn ? "Read this event again" : "이 사건 다시 낭독하기";
       playBtn.addEventListener("click", () => {
          state.currentEvent = item;
          currentEventTitle.textContent =
-            item.title && item.title.trim().length > 0 ? item.title : "이벤트";
+            item.title && item.title.trim().length > 0
+               ? item.title
+               : defaultTitle;
          currentEventContent.textContent = item.content;
          currentEventContent.classList.remove("placeholder-text");
          btnReplay.disabled = false;
@@ -1876,12 +1987,13 @@ const bindEventListeners = (): void => {
          isAudioDramaEnabled: chkAudioDrama.checked,
       };
 
+      const isEn = getCurrentLocale() === "en";
       btnTestSpeech.disabled = true;
-      btnTestSpeech.textContent = "합성 중...";
+      btnTestSpeech.textContent = isEn ? "Synthesizing..." : "합성 중...";
 
       try {
          const result = await window.electronAPI.synthesizeSpeech({
-            text: SAMPLE_TEST_TEXT,
+            text: getSampleTestText(),
             settings: tempSettings,
          });
 
@@ -1899,13 +2011,15 @@ const bindEventListeners = (): void => {
             setAudioPlayingState(true);
          } else {
             showToast(
-               `[테스트 실패] ${result.errorMessage ?? "오류 발생"}`,
+               isEn
+                  ? `[Test Failed] ${result.errorMessage ?? "An error occurred"}`
+                  : `[테스트 실패] ${result.errorMessage ?? "오류 발생"}`,
                "error",
             );
          }
       } finally {
          btnTestSpeech.disabled = false;
-         btnTestSpeech.textContent = "🎙️ 현재 설정으로 목소리 테스트";
+         btnTestSpeech.textContent = t("voice.testBtn");
       }
    });
 
@@ -2004,6 +2118,7 @@ const bindEventListeners = (): void => {
          executionSoundVolume: rangeExecutionVolume
             ? (parseInt(rangeExecutionVolume.value, 10) || 80) / 100
             : 0.8,
+         appLanguage: getCurrentLocale(),
       };
 
       const isSaved = await window.electronAPI.saveSettings(updatedSettings);
@@ -2011,12 +2126,9 @@ const bindEventListeners = (): void => {
          state.settings = updatedSettings;
          syncSettingsForm();
          closeSettingsModal();
-         showToast("✅ 설정이 안전하게 저장 및 적용되었습니다.", "info");
+         showToast(t("toast.saved"), "info");
       } else {
-         showToast(
-            "❌ 설정 저장에 실패했습니다. 입력값을 확인해 주세요.",
-            "error",
-         );
+         showToast(t("toast.saveError"), "error");
       }
    });
 
@@ -2024,32 +2136,47 @@ const bindEventListeners = (): void => {
    let isDownloadingUpdate = false;
 
    // 실시간 다운로드 진행률 이벤트 수신 구독
-   window.electronAPI.onUpdateDownloadProgress((progress: UpdateDownloadProgress) => {
-      if (updateProgressBar) {
-         updateProgressBar.style.width = `${progress.percent}%`;
-      }
-      if (updateProgressPercent) {
-         updateProgressPercent.textContent = `${progress.percent}%`;
-      }
-      if (updateProgressText) {
-         const mbCurrent = (progress.downloadedBytes / (1024 * 1024)).toFixed(1);
-         const mbTotal = (progress.totalBytes / (1024 * 1024)).toFixed(1);
-         const speedMb = (progress.speedBytesPerSec / (1024 * 1024)).toFixed(1);
-         updateProgressText.textContent = `다운로드 중... ${mbCurrent}MB / ${mbTotal}MB (${speedMb}MB/s)`;
-      }
-   });
+   window.electronAPI.onUpdateDownloadProgress(
+      (progress: UpdateDownloadProgress) => {
+         if (updateProgressBar) {
+            updateProgressBar.style.width = `${progress.percent}%`;
+         }
+         if (updateProgressPercent) {
+            updateProgressPercent.textContent = `${progress.percent}%`;
+         }
+         if (updateProgressText) {
+            const mbCurrent = (
+               progress.downloadedBytes /
+               (1024 * 1024)
+            ).toFixed(1);
+            const mbTotal = (progress.totalBytes / (1024 * 1024)).toFixed(1);
+            const speedMb = (progress.speedBytesPerSec / (1024 * 1024)).toFixed(
+               1,
+            );
+            updateProgressText.textContent = `다운로드 중... ${mbCurrent}MB / ${mbTotal}MB (${speedMb}MB/s)`;
+         }
+      },
+   );
 
    // 상단 업데이트 배너 스마트 인앱 다운로드 및 설치 액션 버튼 클릭
    btnUpdateDownload?.addEventListener("click", async () => {
+      const isEn = getCurrentLocale() === "en";
+
       // 1. 이미 다운로드가 완료된 상태라면 -> 즉시 설치/재실행
       if (downloadedUpdateFilePath) {
          btnUpdateDownload.disabled = true;
-         btnUpdateDownload.textContent = "🚀 업데이트 적용 중...";
-         const isSuccess = await window.electronAPI.installAndRestartUpdate(downloadedUpdateFilePath);
+         btnUpdateDownload.textContent = isEn
+            ? "🚀 Applying Update..."
+            : "🚀 업데이트 적용 중...";
+         const isSuccess = await window.electronAPI.installAndRestartUpdate(
+            downloadedUpdateFilePath,
+         );
          if (!isSuccess) {
-            showToast("❌ 업데이트 파일 실행에 실패했습니다. 수동으로 다운로드해 주세요.", "warning");
+            showToast(t("toast.installFailed"), "warning");
             btnUpdateDownload.disabled = false;
-            btnUpdateDownload.textContent = "📦 설치 파일 다시 열기";
+            btnUpdateDownload.textContent = isEn
+               ? "📦 Open Installer Again"
+               : "📦 설치 파일 다시 열기";
          }
          return;
       }
@@ -2062,36 +2189,59 @@ const bindEventListeners = (): void => {
          }
          isDownloadingUpdate = true;
          btnUpdateDownload.disabled = true;
-         btnUpdateDownload.textContent = "⏳ 다운로드 중...";
+         btnUpdateDownload.textContent = isEn
+            ? "⏳ Downloading..."
+            : "⏳ 다운로드 중...";
          if (updateProgressContainer) {
             updateProgressContainer.classList.remove("option-hidden");
          }
 
-         showToast(`📥 ${asset.name} 다운로드를 시작합니다...`, "info");
-         const result = await window.electronAPI.startDownloadUpdate(asset.downloadUrl);
+         showToast(t("toast.downloadStart", { name: asset.name }), "info");
+         const result = await window.electronAPI.startDownloadUpdate(
+            asset.downloadUrl,
+         );
 
          isDownloadingUpdate = false;
          if (result.isSuccess && result.filePath) {
             downloadedUpdateFilePath = result.filePath;
             btnUpdateDownload.disabled = false;
             if (updateProgressText) {
-               updateProgressText.textContent = "✅ 다운로드 완료!";
+               updateProgressText.textContent = isEn
+                  ? "✅ Download Complete!"
+                  : "✅ 다운로드 완료!";
             }
 
             const isWindows = navigator.userAgent.includes("Windows");
             if (isWindows) {
-               btnUpdateDownload.textContent = "🚀 지금 적용 및 재시작";
-               btnUpdateDownload.title = "새 버전 프로세스를 실행하고 현재 앱을 종료합니다.";
-               showToast("🎉 다운로드가 완료되었습니다! 버튼을 눌러 새 버전을 실행하세요.", "success");
+               btnUpdateDownload.textContent = isEn
+                  ? "🚀 Restart & Apply"
+                  : "🚀 지금 적용 및 재시작";
+               btnUpdateDownload.title = isEn
+                  ? "Launches new version and exits."
+                  : "새 버전 프로세스를 실행하고 현재 앱을 종료합니다.";
+               showToast(t("toast.downloadSuccessWin"), "success");
             } else {
-               btnUpdateDownload.textContent = "📦 최신 설치 파일 열기";
-               btnUpdateDownload.title = "최신 DMG 설치 파일을 열어 Applications로 교체합니다.";
-               showToast("🎉 다운로드가 완료되었습니다! 버튼을 눌러 DMG를 열어주세요.", "success");
+               btnUpdateDownload.textContent = isEn
+                  ? "📦 Open DMG Installer"
+                  : "📦 최신 설치 파일 열기";
+               btnUpdateDownload.title = isEn
+                  ? "Opens latest DMG to drag to Applications."
+                  : "최신 DMG 설치 파일을 열어 Applications로 교체합니다.";
+               showToast(t("toast.downloadSuccessMac"), "success");
             }
          } else {
             btnUpdateDownload.disabled = false;
-            btnUpdateDownload.textContent = "⬇️ 원클릭 자동 업데이트";
-            showToast(`❌ 다운로드 실패: ${result.errorMessage ?? "알 수 없는 오류"}`, "warning");
+            btnUpdateDownload.textContent = isEn
+               ? "⬇️ One-Click Auto Update"
+               : "⬇️ 원클릭 자동 업데이트";
+            showToast(
+               t("toast.downloadFailed", {
+                  error:
+                     result.errorMessage ??
+                     (isEn ? "Unknown error" : "알 수 없는 오류"),
+               }),
+               "warning",
+            );
          }
          return;
       }
@@ -2175,19 +2325,49 @@ const bindEventListeners = (): void => {
 
    // 캐시 전체 비우기 버튼
    btnClearCache?.addEventListener("click", async () => {
-      const confirmed = confirm(
-         "정말로 저장된 모든 로컬 오디오 캐시를 삭제하시겠습니까?\n삭제 후 동일한 이벤트는 외부 API를 다시 호출하여 생성하게 됩니다.",
-      );
+      const confirmMsg =
+         getCurrentLocale() === "en"
+            ? "Are you sure you want to delete all cached audio files?\nIdentical events will require fresh synthesis."
+            : "정말로 저장된 모든 로컬 오디오 캐시를 삭제하시겠습니까?\n삭제 후 동일한 이벤트는 외부 API를 다시 호출하여 생성하게 됩니다.";
+      const confirmed = confirm(confirmMsg);
       if (!confirmed) {
          return;
       }
       const isCleared = await window.electronAPI.clearCache();
       if (isCleared) {
          await updateCacheStatsUi();
-         showToast("🗑️ 로컬 오디오 캐시가 깨끗이 비워졌습니다.", "info");
+         showToast(t("toast.cacheCleared"), "info");
       } else {
-         showToast("❌ 캐시 비우기에 실패했습니다.", "error");
+         showToast(t("toast.cacheClearError"), "error");
       }
+   });
+
+   // 언어 전환 버튼 리스너 (KO / EN)
+   const btnLangKo = document.getElementById("btn-lang-ko");
+   const btnLangEn = document.getElementById("btn-lang-en");
+
+   const handleLanguageChange = async (
+      targetLang: SupportedLocale,
+   ): Promise<void> => {
+      if (getCurrentLocale() === targetLang) {
+         return;
+      }
+      setLanguage(targetLang);
+      state.settings = { ...state.settings, appLanguage: targetLang };
+      await window.electronAPI.saveSettings(state.settings);
+      checkModSyncStatus(false).catch(console.error);
+      updateCacheStatsUi().catch(console.error);
+      renderHistoryList();
+      if (currentAppInfo) {
+         applyAppInfoToUi(currentAppInfo);
+      }
+   };
+
+   btnLangKo?.addEventListener("click", () => {
+      handleLanguageChange("ko").catch(console.error);
+   });
+   btnLangEn?.addEventListener("click", () => {
+      handleLanguageChange("en").catch(console.error);
    });
 };
 
@@ -2222,6 +2402,14 @@ const initializeApp = async (): Promise<void> => {
 
    // 기존 설정 로드
    state.settings = await window.electronAPI.getSettings();
+
+   // 언어 설정 복원 및 UI 전체 번역 적용
+   const savedLang =
+      (localStorage.getItem("ck3_tts_lang") as SupportedLocale | null) ??
+      state.settings.appLanguage ??
+      "ko";
+   setLanguage(savedLang);
+
    syncSettingsForm();
 
    // 비동기 백그라운드 자동 업데이트 확인 실행 (앱 시작 시점)
