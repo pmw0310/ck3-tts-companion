@@ -21,10 +21,10 @@ jobs:
       - name: Update Steam Workshop
         uses: hmlendea/steam-workshop-update@latest
         with:
-          appid: 1158310
-          itemid: 3824371603
-          path: './ck3-mod'
-          changenote: 'Automated update via GitHub Actions (${{ github.sha }})'
+          appid: '1158310'
+          itemid: '3824371603'
+          path: 'ck3-mod'
+          changenote: 'Automated update via GitHub Actions'
         env:
           STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
           STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
