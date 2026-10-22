@@ -151,6 +151,16 @@ const main = () => {
   try {
     syncDirectory(sourceModDir, targetModDir);
     syncLauncherThumbnail(targetModDir);
+
+    // 런처 모드 생성 도구로 만든 폴더가 존재하는 경우 해당 배포 폴더도 함께 동기화
+    const modParentDir = path.dirname(targetModDir);
+    const namedModDir = path.join(modParentDir, 'CK3 Event Voice Reader (TTS Companion)');
+    if (fs.existsSync(namedModDir) && namedModDir !== targetModDir) {
+      console.log(`🎯 [Mod Sync] 창작마당 업로드 폴더 추가 동기화: ${namedModDir}`);
+      syncDirectory(sourceModDir, namedModDir);
+      syncLauncherThumbnail(namedModDir);
+    }
+
     console.log('✅ [Mod Sync] 실제 게임 모드 폴더로 모든 파일이 성공적으로 동기화되었습니다!');
   } catch (error) {
     console.error('❌ [Mod Sync] 동기화 중 오류 발생:', error);

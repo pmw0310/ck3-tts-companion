@@ -112,7 +112,7 @@ export const TRANSLATIONS = {
 
       // 3. 게임 연동 & 시스템 탭
       "system.modLabel": "연동 CK3 모드 (패러독스 런처)",
-      "system.modTitle": "CK3 TTS Companion Bridge",
+      "system.modTitle": "CK3 Event Voice Reader (TTS Companion)",
       "system.modSubtext": "런처 모드 플레이셋에서 본 모드를 활성화해 주세요.",
       "system.btnSyncMod": "🔄 모드 파일 동기화",
       "system.softwareInfoLabel": "소프트웨어 정보 & 업데이트",
@@ -120,6 +120,7 @@ export const TRANSLATIONS = {
       "system.authorLabel": "제작자:",
       "system.btnCheckUpdate": "🔄 최신 버전 확인",
       "system.btnOpenRepo": "🌐 GitHub 저장소 ↗",
+      "system.btnOpenWorkshop": "🎮 Steam 창작마당 ↗",
 
       // 4. 캐시 탭
       "cache.title": "⚡ 로컬 오디오 캐시",
@@ -272,7 +273,7 @@ export const TRANSLATIONS = {
 
       // 3. Game & System Tab
       "system.modLabel": "Linked CK3 Mod (Paradox Launcher)",
-      "system.modTitle": "CK3 TTS Companion Bridge",
+      "system.modTitle": "CK3 Event Voice Reader (TTS Companion)",
       "system.modSubtext":
          "Please ensure this mod is enabled in your Paradox Launcher playset.",
       "system.btnSyncMod": "🔄 Sync Mod Files",
@@ -281,6 +282,7 @@ export const TRANSLATIONS = {
       "system.authorLabel": "Author:",
       "system.btnCheckUpdate": "🔄 Check for Updates",
       "system.btnOpenRepo": "🌐 GitHub Repository ↗",
+      "system.btnOpenWorkshop": "🎮 Steam Workshop ↗",
 
       // 4. Cache Tab
       "cache.title": "⚡ Local Audio Cache",

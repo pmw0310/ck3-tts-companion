@@ -409,6 +409,9 @@ const btnManualCheckUpdate = document.getElementById(
 const btnOpenRepo = document.getElementById(
    "btn-open-repo",
 ) as HTMLButtonElement;
+const btnOpenWorkshop = document.getElementById(
+   "btn-open-workshop",
+) as HTMLButtonElement;
 const manualUpdateStatus = document.getElementById(
    "manual-update-status",
 ) as HTMLSpanElement;
@@ -2265,6 +2268,11 @@ const bindEventListeners = (): void => {
    // 설정 모달 내 GitHub 저장소 바로가기 버튼 클릭
    btnOpenRepo?.addEventListener("click", async () => {
       await window.electronAPI.openExternal(currentAppInfo.repoUrl);
+   });
+
+   // 설정 모달 내 Steam 창작마당 바로가기 버튼 클릭
+   btnOpenWorkshop?.addEventListener("click", async () => {
+      await window.electronAPI.openExternal("https://steamcommunity.com/sharedfiles/filedetails/?id=3824371603");
    });
 
    // 상단 알림 배너 및 설정 모달 내 CK3 모드 파일 동기화 버튼 클릭

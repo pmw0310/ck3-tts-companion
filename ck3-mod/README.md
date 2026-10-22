@@ -34,7 +34,7 @@ C:\Users\<사용자명>\Documents\Paradox Interactive\Crusader Kings III\mod/ck3
 
 1. **Paradox Launcher**를 실행합니다.
 2. 좌측 메뉴에서 **플레이셋(Playsets)**을 선택합니다.
-3. **모드 추가(Add More Mods)**를 클릭하고 **CK3 TTS Companion Bridge**를 체크하여 활성화합니다.
+3. **모드 추가(Add More Mods)**를 클릭하고 **CK3 Event Voice Reader (TTS Companion)**를 체크하여 활성화합니다.
 4. 스팀 시작 옵션에 `-debug_mode`를 설정할 필요 없이 바로 게임을 실행하면 됩니다.
 
 ---

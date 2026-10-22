@@ -3,6 +3,13 @@
 > **크루세이더 킹즈 3(Crusader Kings III) 실시간 음성(TTS) 나레이션 컴패니언**  
 > 인게임에서 발생하는 사건, 결단, 결투, 외교, 전쟁, 승계, 알현실 이벤트를 실시간으로 감지하여 **자연스러운 한국어 음성**으로 낭독해 주는 데스크톱 애플리케이션 및 모드입니다.
 
+[![Steam Workshop](https://img.shields.io/badge/Steam_Workshop-CK3_Event_Voice_Reader-1b2838?style=flat&logo=steam)](https://steamcommunity.com/sharedfiles/filedetails/?id=3824371603)
+[![GitHub Release](https://img.shields.io/github/v/release/pmw0310/ck3-tts-companion?color=blue)](https://github.com/pmw0310/ck3-tts-companion/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+🎮 **Steam 창작마당 모드 구독:** [CK3 Event Voice Reader (TTS Companion)](https://steamcommunity.com/sharedfiles/filedetails/?id=3824371603)  
+📥 **데스크톱 앱 다운로드:** [GitHub Releases](https://github.com/pmw0310/ck3-tts-companion/releases)
+
 ---
 
 ## 🌟 핵심 특징
@@ -82,7 +89,7 @@ npm run sync:mod
 
 ### 3단계: 패러독스 런처에서 모드 활성화 (`-debug_mode` 불필요!)
 
-1. **Paradox 런처** 실행 ➔ **[플레이셋(Playsets)]** ➔ **CK3 TTS Companion Bridge** 모드 활성화 후 게임 시작
+1. **Paradox 런처** 실행 ➔ **[플레이셋(Playsets)]** ➔ **CK3 Event Voice Reader (TTS Companion)** 모드 활성화 후 게임 시작
 2. **일반 모드 / 철인 모드 완벽 지원**: 스팀 시작 옵션에 `-debug_mode`를 설정할 필요가 없습니다. 클립보드 브릿지(`CopyStringToClipboard`)와 비디버그 엔진 브릿지(`CloseGameView` / `error.log`)를 통해 일반 모드에서도 모든 TTS 낭독, 창 닫기 정지(`STOP`), 처형 효과음이 100% 작동합니다.
 
 ---
