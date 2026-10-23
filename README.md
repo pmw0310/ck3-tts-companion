@@ -5,7 +5,7 @@
 
 [![Steam Workshop](https://img.shields.io/badge/Steam_Workshop-CK3_Event_Voice_Reader-1b2838?style=flat&logo=steam)](https://steamcommunity.com/sharedfiles/filedetails/?id=3824371603)
 [![GitHub Release](https://img.shields.io/github/v/release/pmw0310/ck3-tts-companion?color=blue)](https://github.com/pmw0310/ck3-tts-companion/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-orange.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 🎮 **Steam 창작마당 모드 구독:** [CK3 Event Voice Reader (TTS Companion)](https://steamcommunity.com/sharedfiles/filedetails/?id=3824371603)  
 📥 **데스크톱 앱 다운로드:** [GitHub Releases](https://github.com/pmw0310/ck3-tts-companion/releases)

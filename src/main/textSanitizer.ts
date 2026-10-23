@@ -152,7 +152,9 @@ type JosaParticleType =
   | '이라/라'
   | '이든/든'
   | '이며/며'
-  | '이다/다';
+  | '이다/다'
+  | '이여/여'
+  | '이시여/시여';
 
 type JosaRule = {
   readonly pattern: RegExp;
@@ -167,14 +169,24 @@ const KOREAN_JOSA_RULES: readonly JosaRule[] = [
     pattern: /\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/,
     type: '이다/다'
   },
+  // 1.2. 이시여/시여 (호격 존칭 - 이/가 규칙보다 앞서 매칭하여 '(이)시여'가 '가시여'로 오변환되는 것을 원천 방지)
+  {
+    pattern: /(?:\((?:이\s*[/]\s*시여|시여\s*[/]\s*이|이)\)시여|\((?:이\s*[/]\s*시여|시여\s*[/]\s*이)\))/,
+    type: '이시여/시여'
+  },
+  // 1.3. 이여/여 (호격 조사 - 이/가 규칙보다 앞서 매칭하여 '(이)여'가 '가여'로 오변환되는 것을 원천 방지)
+  {
+    pattern: /(?:\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여|이)\)여|\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여)\))/,
+    type: '이여/여'
+  },
   // 2. 은/는
   {
     pattern: /\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/,
     type: '은/는'
   },
-  // 3. 이/가 (뒤에 '다'가 오는 서술격 조사는 매칭하지 않도록 lookahead 적용)
+  // 3. 이/가 (뒤에 '다', '여', '시여'가 오는 조사는 선점하지 않도록 lookahead 적용)
   {
-    pattern: /\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/,
+    pattern: /\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*(?:다|여|시여))/,
     type: '이/가'
   },
   // 4. 을/를
@@ -240,7 +252,9 @@ type CompiledJosaRule = {
 const COMPILED_JOSA_RULES: readonly CompiledJosaRule[] = KOREAN_JOSA_RULES.map(
   (rule) => ({
     regex: new RegExp(
-      `([가-힣a-zA-Z0-9]+)([\\x27"’”」』\\]]*)\\s*` + rule.pattern.source,
+      `([가-힣a-zA-Z0-9]+)([\\x27"’”」』\\]]*)\\s*(?:` +
+        rule.pattern.source +
+        `)`,
       'g'
     ),
     type: rule.type,
@@ -266,6 +280,10 @@ const resolveKoreanParticles = (text: string): string => {
         particle = hasBatchim(word) ? '이며' : '며';
       } else if (rule.type === '이다/다') {
         particle = hasBatchim(word) ? '이다' : '다';
+      } else if (rule.type === '이여/여') {
+        particle = hasBatchim(word) ? '이여' : '여';
+      } else if (rule.type === '이시여/시여') {
+        particle = hasBatchim(word) ? '이시여' : '시여';
       } else {
         const withJosa = josa(word, rule.type);
         particle = withJosa.slice(word.length);
@@ -286,15 +304,21 @@ const resolveKoreanParticles = (text: string): string => {
   resolved = resolved
     .replace(/(^|\s)\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/g, '$1다')
     .replace(/\((?:이\s*[/]\s*다|다\s*[/]\s*이|이|다)\)다/g, '다')
+    .replace(/(^|\s)\((?:이\s*[/]\s*시여|시여\s*[/]\s*이|이)\)시여/g, '$1시여')
+    .replace(/\((?:이\s*[/]\s*시여|시여\s*[/]\s*이|이)\)시여/g, '시여')
+    .replace(/(^|\s)\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여|이)\)여/g, '$1여')
+    .replace(/\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여|이)\)여/g, '여')
+    .replace(/(^|\s)\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여)\)/g, '$1여')
+    .replace(/\((?:이\s*[/]\s*여|여\s*[/]\s*이|이여\s*[/]\s*여|여\s*[/]\s*이여)\)/g, '여')
     .replace(/(^|\s)\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/g, '$1는')
-    .replace(/(^|\s)\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/g, '$1가')
+    .replace(/(^|\s)\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*(?:다|여|시여))/g, '$1가')
     .replace(/(^|\s)\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?/g, '$1를')
     .replace(/(^|\s)\((?:과\s*[/]\s*와|와\s*[/]\s*과|과|와)\)(?:과|와)?/g, '$1와')
     .replace(/(^|\s)\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/g, '$1로서')
     .replace(/(^|\s)\((?:으\s*[/]\s*로|로\s*[/]\s*으|으|로)\)(?:으|로)?/g, '$1로')
     .replace(/(^|\s)\((?:아\s*[/]\s*야|야\s*[/]\s*아|아|야)\)(?:아|야)?/g, '$1야')
     .replace(/\((?:은\s*[/]\s*는|는\s*[/]\s*은|은|는)\)(?:은|는)?/g, '는')
-    .replace(/\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*다)/g, '가')
+    .replace(/\((?:이\s*[/]\s*가|가\s*[/]\s*이|이|가)\)(?:이|가)?(?!\s*(?:다|여|시여))/g, '가')
     .replace(/\((?:을\s*[/]\s*를|를\s*[/]\s*을|을|를)\)(?:을|를)?/g, '를')
     .replace(/\((?:과\s*[/]\s*와|와\s*[/]\s*과|과|와)\)(?:과|와)?/g, '와')
     .replace(/\((?:으\s*[/]\s*로서|로서\s*[/]\s*으|으)\)로서/g, '로서')
