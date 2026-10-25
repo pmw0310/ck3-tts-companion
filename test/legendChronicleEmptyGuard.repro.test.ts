@@ -23,7 +23,7 @@ test('전설 연대기 데이터 미바인딩 공백 이벤트 및 "이벤트" �
     );
   });
 
-  await t.test('2. [GUI 구조 검증] window_legend_chronicle.gui에 trigger_when 데이터 준비 가드가 구현되어 있어야 함', () => {
+  await t.test('2. [GUI 구조 검증] window_legend_chronicle.gui에 자동 재생 배제 및 수동 다이렉트 발화가 구현되어 있어야 함', () => {
     const guiPath = path.resolve('ck3-mod/gui/window_legend_chronicle.gui');
     assert.ok(fs.existsSync(guiPath), 'window_legend_chronicle.gui 파일이 존재해야 합니다.');
     const content = fs.readFileSync(guiPath, 'utf8');
@@ -37,13 +37,20 @@ test('전설 연대기 데이터 미바인딩 공백 이벤트 및 "이벤트" �
       '_show의 on_start에서 0프레임에 빈 데이터를 즉각 발화하지 않아야 합니다.'
     );
 
-    // 2. Legend.GetNameNoTooltip이 비어있지 않을 때 트리거되는 안전한 auto_play state가 구현되어야 함
-    assert.ok(
-      content.includes('trigger_when = "[And(Not(StringIsEmpty(Legend.GetNameNoTooltip))'),
-      'Legend.GetNameNoTooltip이 준비되었을 때만 트리거되는 trigger_when state가 있어야 합니다.'
+    // 2. 조기 취소를 유발하는 자동 재생 상태 머신이 배제되어 있어야 함 (궁정/튜토리얼형 수동 전용)
+    assert.strictEqual(
+      content.includes('name = tts_legend_auto_play'),
+      false,
+      '불안정한 자동 재생 상태 머신은 수동 전용 정책에 따라 배제되어야 합니다.'
     );
 
-    // 3. 중괄호 쌍 일치
+    // 3. 스피커 버튼에 안전한 다이렉트 CloseGameView가 구현되어 있어야 함
+    assert.ok(
+      content.includes("CloseGameView(Concatenate('##CK3_TTS_FORCE## "),
+      '스피커 버튼에 다이렉트 CloseGameView가 연동되어 있어야 합니다.'
+    );
+
+    // 4. 중괄호 쌍 일치
     let openCount = 0;
     let closeCount = 0;
     for (const char of content) {

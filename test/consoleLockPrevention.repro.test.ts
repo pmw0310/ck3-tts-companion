@@ -74,11 +74,10 @@ describe('Jomini 콘솔 잠금 방어 및 logWatcher 스트림 안정성 검증'
       'event_windows/scheme_preparations_event.gui',
       'event_windows/visit_settlement_window.gui',
       'window_war_results.gui',
-      'window_legend_chronicle.gui',
       'window_activity_locale.gui',
       'window_activity.gui',
-      'window_succession_event.gui',
-      'window_tutorial.gui'
+      'window_succession_event.gui'
+      // 참고: window_tutorial.gui, window_legend_chronicle.gui, window_court_events.gui는 자동 발화가 배제된 수동 낭독 전용 창임
     ];
 
     for (const relativePath of targetFiles) {

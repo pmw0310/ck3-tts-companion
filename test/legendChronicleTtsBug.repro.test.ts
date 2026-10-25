@@ -16,20 +16,22 @@ test('전설 연대기(Legend Chronicle) TTS 미작동 및 따옴표 결함 재�
     '아리따운 여인이 사악한 기사에게 위협받고 있었다. 카트린(은)는 결투를 벌여 상대를 물리쳤고, 피가 고인 웅덩이 속에서 새하얀 swan(이)가 탄생했다. ' +
     '그녀가 여인에게 남긴 말은 다음과 같다. "제 이름은 묻지 마십시오. 그건 제가 드릴 수 있는 게 아닙니다."';
 
-  await t.test('1. [GUI 검증] window_legend_chronicle.gui에 주인공 유효성 안전 가드(IsValid)가 구현되어 있어야 함', () => {
+  await t.test('1. [GUI 검증] window_legend_chronicle.gui의 스피커 버튼 및 F 단축키에 안전한 다이렉트 CloseGameView 및 안내 라벨이 구현되어 있어야 함', () => {
     const guiPath = path.resolve('ck3-mod/gui/window_legend_chronicle.gui');
     assert.ok(fs.existsSync(guiPath), 'window_legend_chronicle.gui 파일이 존재해야 합니다.');
     const content = fs.readFileSync(guiPath, 'utf8');
 
-    // 주인공(Legend.GetProtagonist)이 유효하지 않은 경우에도 CDataSystem Null Object 접근 크래시 없이
-    // '##CK3_TTS_END##'로 안전하게 종결되도록 IsValid 가드가 감싸져 있어야 함
-    const hasProtagonistGuard = content.includes(
-      "Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' )"
+    // 스피커 버튼에 안전한 다이렉트 CloseGameView(##CK3_TTS_FORCE##) 바인딩 확인
+    assert.ok(
+      content.includes("CloseGameView(Concatenate('##CK3_TTS_FORCE## "),
+      '스피커 버튼에 다이렉트 CloseGameView 바인딩이 구현되어 있어야 합니다.'
     );
 
-    assert.ok(
-      hasProtagonistGuard,
-      'window_legend_chronicle.gui의 성별 판별식에 Legend.GetProtagonist.IsValid 가드가 구현되어 있어야 합니다.'
+    // 안내 라벨 확인
+    assert.match(
+      content,
+      /text_single\s*=\s*\{[\s\S]*?name\s*=\s*"tts_speak_label"[\s\S]*?raw_text\s*=\s*"음성 듣기 \(단축키: F\)"[\s\S]*?\}/,
+      '헤더에 "음성 듣기 (단축키: F)" 안내 라벨(tts_speak_label)이 배치되어 있어야 합니다.'
     );
   });
 

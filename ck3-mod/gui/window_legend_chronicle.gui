@@ -16,22 +16,8 @@
 	}
 
 	state = {
-		name = tts_legend_auto_play
-		trigger_when = "[And(Not(StringIsEmpty(Legend.GetNameNoTooltip)), Not(GetVariableSystem.HasValue('tts_last_legend_name', Legend.GetNameNoTooltip)))]"
-		delay = 0.1
-		on_start = "[GetVariableSystem.Set('tts_last_legend_name', Legend.GetNameNoTooltip)]"
-		next = tts_legend_console_play
-	}
-
-	state = {
-		name = tts_legend_console_play
-		on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) )))))))))))))]"
-	}
-
-	state = {
 		name = _hide
 		using = Animation_FadeOut_Quick
-		on_start = "[GetVariableSystem.Clear('tts_last_legend_name')]"
 	}
 
 	hbox = {
@@ -229,6 +215,15 @@
 						max_width = 440
 					}
 
+					text_single = {
+						name = "tts_speak_label"
+						raw_text = "음성 듣기 (단축키: F)"
+						align = nobaseline
+						default_format = "#weak"
+						fontsize = 13
+						margin_right = 6
+					}
+
 					button_round = {
 						name = "tts_speak_button"
 						size = { 38 38 }
@@ -242,7 +237,7 @@
 							alwaystransparent = yes
 						}
 
-						onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)1' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)2' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)3' ), Concatenate(' ', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)4' ), Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) )))))))))))))]"
+						onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), '##CK3_TTS_END##')))))]"
 					}
 				}
 

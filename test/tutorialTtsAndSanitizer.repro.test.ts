@@ -56,24 +56,20 @@ describe('튜토리얼 자동 TTS 상태 머신 무결성 및 TUT 마커·조사
     );
   });
 
-  it('2. 튜토리얼 자동 감지 및 지연 낭독 state는 루트 tutorial_window의 위치 애니메이션(center 등)에 선점되지 않도록 전용 자식 widget 내부에 격리되어야 한다', () => {
+  it('2. 튜토리얼 수동 낭독은 C++ 위치 애니메이션 선점 및 상태 취소를 방지하기 위해 지연 트래커 없이 버튼 onclick에서 직접 발화되어야 한다', () => {
     const content = fs.readFileSync(tutorialGuiPath, 'utf-8');
 
-    // 전용 자식 위젯(tts_tutorial_step_detector 등) 내부에 배치되어 있는지 확인
-    assert.match(
-      content,
-      /widget\s*=\s*\{\s*name\s*=\s*"tts_tutorial_step_detector"[\s\S]*?name\s*=\s*tutorial_step_tts_trigger/,
-      'tutorial_step_tts_trigger가 전용 자식 위젯(tts_tutorial_step_detector) 내부에 격리되어 있어야 합니다.'
+    // 불안정한 지연 force 트래커가 배제되었는지 확인
+    assert.strictEqual(
+      content.includes('name = "tts_tutorial_deferred_force_tracker"'),
+      false,
+      'tts_tutorial_deferred_force_tracker는 제거되어야 합니다.'
     );
-    assert.match(
-      content,
-      /widget\s*=\s*\{\s*name\s*=\s*"tts_tutorial_deferred_auto_tracker"[\s\S]*?name\s*=\s*tutorial_tts_deferred_auto/,
-      'tutorial_tts_deferred_auto가 전용 자식 위젯(tts_tutorial_deferred_auto_tracker) 내부에 격리되어 있어야 합니다.'
-    );
-    assert.match(
-      content,
-      /widget\s*=\s*\{\s*name\s*=\s*"tts_tutorial_deferred_force_tracker"[\s\S]*?name\s*=\s*tutorial_tts_deferred_force/,
-      'tutorial_tts_deferred_force가 전용 자식 위젯(tts_tutorial_deferred_force_tracker) 내부에 격리되어 있어야 합니다.'
+
+    // 스피커 버튼과 F 단축키가 다이렉트로 CloseGameView를 호출하는지 확인
+    assert.ok(
+      content.includes("onclick = \"[CloseGameView(Concatenate('##CK3_TTS_FORCE## '"),
+      '스피커 버튼 및 단축키에 다이렉트 CloseGameView가 바인딩되어 있어야 합니다.'
     );
   });
 

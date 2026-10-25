@@ -48,20 +48,26 @@ describe('CK3 모드 호환성 리베이스 및 Jomini State 무결성 검증 (m
     );
   });
 
-  it('2. [window_legend_chronicle.gui / window_succession_event.gui] TTS state 단일 on_start 체이닝 검증', () => {
+  it('2. [window_legend_chronicle.gui / window_succession_event.gui] 전설 연대기 수동 낭독(스피커 버튼/F 단축키) 및 승계 창 단일 on_start 체이닝 검증', () => {
     const legendText = fs.readFileSync(path.join(modGuiDir, 'window_legend_chronicle.gui'), 'utf8');
-    const legendAutoMatch = legendText.match(
-      /state\s*=\s*\{\s*name\s*=\s*tts_legend_auto_play[\s\S]*?\r?\n\t\}/
-    );
-    assert.ok(legendAutoMatch, 'tts_legend_auto_play 블록이 존재해야 합니다.');
+
+    // 전설 연대기는 자동 재생이 배제되고 수동 스피커 버튼 및 F 단축키(army_split_half) 다이렉트 바인딩으로 전환됨
     assert.strictEqual(
-      (legendAutoMatch[0].match(/^\s*on_start\s*=/gm) ?? []).length,
-      1,
-      'tts_legend_auto_play는 단일 on_start만 가져야 합니다.'
+      legendText.includes('name = tts_legend_auto_play'),
+      false,
+      'window_legend_chronicle.gui에 자동 재생 state(tts_legend_auto_play)가 없어야 합니다 (수동 전용 전환).'
     );
     assert.ok(
-      legendAutoMatch[0].includes('next = tts_legend_console_play'),
-      'tts_legend_auto_play는 tts_legend_console_play로 체이닝되어야 합니다.'
+      legendText.includes('shortcut = "army_split_half"'),
+      'window_legend_chronicle.gui에 수동 낭독 단축키(F)가 존재해야 합니다.'
+    );
+    assert.ok(
+      legendText.includes('name = "tts_speak_button"'),
+      'window_legend_chronicle.gui에 스피커 버튼(tts_speak_button)이 존재해야 합니다.'
+    );
+    assert.ok(
+      legendText.includes('onclick = "[CloseGameView('),
+      'window_legend_chronicle.gui 스피커 버튼에 다이렉트 onclick CloseGameView 실행 명령이 구현되어 있어야 합니다.'
     );
 
     const successionText = fs.readFileSync(path.join(modGuiDir, 'window_succession_event.gui'), 'utf8');
