@@ -32,7 +32,7 @@ const RECENT_FRAGMENT_TTL_MS = 10000;
 /** error.log 파편을 클립보드 원문 도착 이후에 검사하기 위한 지연 시간 (ms) */
 const ERROR_LOG_DEFER_MS = 600;
 /** 클립보드에 실린 모드 페이로드 식별 마커 목록 */
-const CLIPBOARD_PAYLOAD_MARKERS = ['##CK3_TTS', '[CK3_TTS'] as const;
+const CLIPBOARD_PAYLOAD_MARKERS = ['##CK3_TTS', '[CK3_TTS', '##CK3_EXECUTION'] as const;
 
 /**
  * 게임 GUI가 EventWindowData.CopyStringToClipboard로 넘긴 원문을 읽고 사용자 클립보드를 복구하기 위한 추상화
@@ -81,6 +81,39 @@ const updateRecentEventCache = (
     const oldestKey = cache.keys().next().value;
     if (oldestKey) {
       cache.delete(oldestKey);
+    }
+  }
+};
+
+/**
+ * Windows NTFS에서 ck3.exe가 열린 파일 핸들에 로그를 기록할 때 디렉터리 엔트리(GetFileAttributesExW)가
+ * 지연 캐싱되어 fs.statSync(path)가 이전 크기를 반환하는 문제를 우회하기 위해,
+ * 읽기 전용 파일 디스크립터를 열어 실시간 FCB(File Control Block)의 실제 바이트 크기를 조회합니다.
+ * @param targetFilePath - 크기를 조회할 파일 경로
+ * @returns 파일의 실시간 바이트 크기 (파일이 없거나 실패 시 null)
+ */
+export const getLiveFileSize = (targetFilePath: string): number | null => {
+  if (!fs.existsSync(targetFilePath)) {
+    return null;
+  }
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(targetFilePath, 'r');
+    const stats = fs.fstatSync(fd);
+    return stats.size;
+  } catch {
+    try {
+      return fs.statSync(targetFilePath).size;
+    } catch {
+      return null;
+    }
+  } finally {
+    if (fd !== null) {
+      try {
+        fs.closeSync(fd);
+      } catch {
+        // 핸들 닫기 예외 안전 무시
+      }
     }
   }
 };
@@ -194,11 +227,23 @@ export const extractExecutionSoundsFromChunk = (chunk: string): ExecutionSoundEv
       continue;
     }
 
+    const matchIndex = match.index ?? 0;
+    const lineStartIndex = chunk.lastIndexOf('\n', matchIndex) + 1;
+    const linePrefix = chunk.slice(lineStartIndex, matchIndex);
+    const timeMatch = /\[(\d{2}:\d{2}:\d{2})\]/.exec(linePrefix);
+    const logTimestamp = timeMatch?.[1];
+    const isConsoleEcho =
+      linePrefix.includes('[console.cpp:') ||
+      linePrefix.includes('Running console command:') ||
+      linePrefix.includes('console_success:');
+
     results.push({
       type,
       gender,
       rawName,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...(logTimestamp ? { logTimestamp } : {}),
+      ...(isConsoleEcho ? { isConsoleEcho: true } : {})
     });
   }
 
@@ -206,7 +251,7 @@ export const extractExecutionSoundsFromChunk = (chunk: string): ExecutionSoundEv
 };
 
 /**
- * 지정된 CK3 debug.log 및 동일 디렉터리의 error.log를 실시간 동시 감시하며, 이벤트 텍스트가 추가되면 콜백을 실행합니다.
+ * 지정된 CK3 debug.log 및 동일 디렉터리의 error.log, game.log를 실시간 동시 감시하며, 이벤트 텍스트가 추가되면 콜백을 실행합니다.
  * @param logFilePath - 기본 감시할 debug.log의 절대 경로
  * @param onEvent - 유효한 이벤트 감지 시 호출될 콜백 함수
  * @param onStatusChange - 파일 감시 상태 변경 시 호출될 콜백 함수
@@ -230,17 +275,68 @@ export const startWatchingLogFile = <TSnapshot>(
   let isStopped = false;
   const deferredEmitTimers = new Set<ReturnType<typeof setTimeout>>();
   const recentEventCache = new Map<string, number>();
-  const recentExecutionSoundCache = new Map<string, number>();
+  const recentExecutionSoundCache = new Map<
+    string,
+    { time: number; logTimestamp?: string }
+  >();
   const pendingBuffers = new Map<string, string>();
   const activeReadStreams = new Set<string>();
   const pendingReadRequests = new Set<string>();
-  const crossChannelCache = new Map<string, { channel: EventChannel; time: number }>();
+  const crossChannelCache = new Map<string, { channel: EventChannel; time: number; isForceReplay: boolean }>();
+  const recentEventMetaCache = new Map<string, { time: number; isForceReplay: boolean }>();
+  const recentLegendChronicleCache = new Map<string, { chapters: string[]; time: number; isForceReplay: boolean }>();
   const recentTitleCache = new Map<string, { channel: EventChannel; time: number; content: string }>();
   let lastEventEmitTime = 0;
   let lastEventEmitChannel: EventChannel | null = null;
   let lastStopEmitTime = 0;
   let lastStopEmitChannel: EventChannel | null = null;
   let lastUserSnapshot: TSnapshot | null = null;
+
+  /**
+   * 추출된 처형 효과음 이벤트를 인게임 로그 시각([HH:MM:SS]) 및 콘솔 에코 여부에 따라 정밀 중복 제거하여 방출합니다.
+   * - 동일 실행에서 파생된 이중 채널(info_log + error_log) 및 3개 로그 파일(debug/error/game) 동시 기록은 동일 [HH:MM:SS] 시각으로 5초간 완벽히 차단합니다.
+   * - 반면 플레이어가 1~5초 간격으로 죄수를 연속 처형한 경우([12:02:05] -> [12:02:10] 등)에는 로그 시각이 다르므로 쿨다운에 삼켜지지 않고 즉시 재생됩니다.
+   * @param executionSounds - 추출된 처형 효과음 이벤트 목록
+   */
+  const emitExecutionSounds = (executionSounds: readonly ExecutionSoundEvent[]): void => {
+    if (isStopped || executionSounds.length === 0) {
+      return;
+    }
+    const currentExecutionTime = Date.now();
+    for (const [cachedKey, cachedEntry] of recentExecutionSoundCache.entries()) {
+      if (currentExecutionTime - cachedEntry.time > 5000) {
+        recentExecutionSoundCache.delete(cachedKey);
+      }
+    }
+    const emittedInBatch = new Set<string>();
+    for (const sound of executionSounds) {
+      const soundCacheKey = `${sound.type}_${sound.gender}`;
+      const batchKey = `${soundCacheKey}_${sound.logTimestamp ?? ''}`;
+      if (emittedInBatch.has(batchKey)) {
+        continue;
+      }
+      const lastSeen = recentExecutionSoundCache.get(soundCacheKey);
+      if (lastSeen) {
+        const elapsedMs = currentExecutionTime - lastSeen.time;
+        const isSameLogSecond =
+          Boolean(sound.logTimestamp) &&
+          Boolean(lastSeen.logTimestamp) &&
+          sound.logTimestamp === lastSeen.logTimestamp;
+        // 1) C++ 콘솔 지연 에코(console.cpp:1193)이거나 동일한 인게임 로그 시각([HH:MM:SS])의 다중 파일 분할 플러시인 경우 5초간 차단
+        // 2) 서로 다른 시각에 발생한 연속 처형(예: [12:02:05] -> [12:02:10])은 450ms 초고속 중복 가드만 적용하여 누락 없이 재생
+        const debounceWindowMs = sound.isConsoleEcho || isSameLogSecond ? 5000 : 450;
+        if (elapsedMs < debounceWindowMs) {
+          continue;
+        }
+      }
+      emittedInBatch.add(batchKey);
+      recentExecutionSoundCache.set(soundCacheKey, {
+        time: currentExecutionTime,
+        logTimestamp: sound.logTimestamp
+      });
+      onExecutionSound?.(sound);
+    }
+  };
 
   /**
    * 채널 간 중복 및 지연 STOP 경합을 방어하며 정지 신호를 방출합니다.
@@ -272,22 +368,19 @@ export const startWatchingLogFile = <TSnapshot>(
     onStop?.();
   };
 
-  // 감시할 파일 목록 구성 (기본 debug.log 및 비디버그 모드/파서 에러가 기록되는 error.log 상시 동시 감시)
+  // 감시할 파일 목록 구성 (기본 debug.log, error.log 및 [E]/[D] 100,000건 쿼터 소진 시에도 [I] info_log가 기록되는 game.log 상시 동시 감시)
   const debugLogPath = path.resolve(logFilePath);
   const logDir = path.dirname(debugLogPath);
   const errorLogPath = path.join(logDir, 'error.log');
+  const gameLogPath = path.join(logDir, 'game.log');
 
-  const watchPaths: string[] = [debugLogPath, errorLogPath];
+  const watchPaths: string[] = [debugLogPath, errorLogPath, gameLogPath];
 
   // 기존 파일 크기 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
   for (const targetPath of watchPaths) {
-    if (fs.existsSync(targetPath)) {
-      try {
-        const stats = fs.statSync(targetPath);
-        filePositions.set(targetPath, stats.size);
-      } catch (err: unknown) {
-        console.warn(`⚠️ [LogWatcher] 초기 파일 크기 확인 실패 (${targetPath}):`, err);
-      }
+    const initialSize = getLiveFileSize(targetPath);
+    if (initialSize !== null) {
+      filePositions.set(targetPath, initialSize);
     }
   }
 
@@ -326,7 +419,44 @@ export const startWatchingLogFile = <TSnapshot>(
       }
     }
 
-    for (const event of parsedEvents) {
+    for (const rawParsedEvent of parsedEvents) {
+      let event = rawParsedEvent;
+      if (event.eventType === 'legend_chronicle') {
+        const legendEntry = recentLegendChronicleCache.get(event.title);
+        const isForce = Boolean(event.isForceReplay);
+        if (
+          legendEntry &&
+          now - legendEntry.time < 1200 &&
+          (legendEntry.isForceReplay === isForce || !isForce)
+        ) {
+          const joinedExisting = legendEntry.chapters.join(' ');
+          if (joinedExisting.includes(event.content) || legendEntry.chapters.some((ch) => ch.includes(event.content))) {
+            if (!isForce || legendEntry.isForceReplay) {
+              continue;
+            }
+          } else {
+            const subIdx = legendEntry.chapters.findIndex((ch) => event.content.includes(ch));
+            if (subIdx !== -1) {
+              legendEntry.chapters[subIdx] = event.content;
+            } else {
+              legendEntry.chapters.push(event.content);
+            }
+            legendEntry.time = now;
+            legendEntry.isForceReplay = legendEntry.isForceReplay || isForce;
+            event = {
+              ...event,
+              content: legendEntry.chapters.join(' '),
+              isForceReplay: legendEntry.isForceReplay
+            };
+          }
+        } else {
+          recentLegendChronicleCache.set(event.title, {
+            chapters: [event.content],
+            time: now,
+            isForceReplay: isForce
+          });
+        }
+      }
       // ⚠️ [전 채널 파편 덮어쓰기 방어 (Cross-channel Subset Guard)]
       // 이미 다른 채널(예: 클립보드)에서 온전한 원본을 수신한 상태에서,
       // 뒤늦게 debug.log 또는 error.log에서 유입된 잘린 하위 파편(Subset)이 온전한 본문을 덮어쓰지 않도록 차단합니다.
@@ -353,26 +483,28 @@ export const startWatchingLogFile = <TSnapshot>(
         }
       }
 
-      if (isDuplicateFragment) {
+      if (isDuplicateFragment && !event.isForceReplay && event.eventType !== 'legend_chronicle') {
         console.log(`ℹ️ [LogWatcher] 더 완전한 원본이 이미 활성화되어 있어 하위 파편 유입을 차단했습니다 (${channel}):`, event.title);
         continue;
       }
 
       // 채널 간 중복: 다른 채널에서 5초 내 동일 본문이 이미 전달되었다면 같은 클릭/표시의 중복 수신으로 판단
       const crossEntry = crossChannelCache.get(event.content);
-      if (crossEntry && crossEntry.channel !== channel) {
+      if (crossEntry && crossEntry.channel !== channel && (!event.isForceReplay || (crossEntry.isForceReplay && now - crossEntry.time < 1000))) {
         continue;
       }
 
       // 콘솔 echo 방지: 수동 강제 재낭독은 1초, 자동 감지는 2초 쿨다운 적용
       const lastSeenTime = recentEventCache.get(event.content);
       const cooldownMs = event.isForceReplay ? 1000 : 2000;
-      if (lastSeenTime && now - lastSeenTime < cooldownMs) {
+      const lastSeenMeta = recentEventMetaCache.get(event.content);
+      if (lastSeenTime && now - lastSeenTime < cooldownMs && (!event.isForceReplay || Boolean(lastSeenMeta?.isForceReplay))) {
         continue;
       }
 
       updateRecentEventCache(recentEventCache, event.content, now);
-      crossChannelCache.set(event.content, { channel, time: now });
+      recentEventMetaCache.set(event.content, { time: now, isForceReplay: Boolean(event.isForceReplay) });
+      crossChannelCache.set(event.content, { channel, time: now, isForceReplay: Boolean(event.isForceReplay) });
       recentTitleCache.set(event.title, { channel, time: now, content: event.content });
       lastEventEmitTime = now;
       lastEventEmitChannel = channel;
@@ -411,22 +543,25 @@ export const startWatchingLogFile = <TSnapshot>(
     }
 
     try {
-      const currentStats = fs.statSync(normalizedPath);
+      const liveSize = getLiveFileSize(normalizedPath);
+      if (liveSize === null) {
+        return;
+      }
       let filePosition = filePositions.get(normalizedPath) ?? 0;
 
       // 게임 재시작 등으로 파일이 새로 쓰여 크기가 줄어든 경우 (truncate 또는 새 파일 생성)
-      if (currentStats.size < filePosition) {
+      if (liveSize < filePosition) {
         filePosition = 0;
       }
 
-      if (currentStats.size === filePosition) {
+      if (liveSize === filePosition) {
         return;
       }
 
       activeReadStreams.add(normalizedPath);
-      const targetSize = currentStats.size;
+      const targetSize = liveSize;
 
-      // createReadStream의 end는 inclusive(포함)이므로 정확한 바이트 경계를 위해 currentStats.size - 1 지정
+      // createReadStream의 end는 inclusive(포함)이므로 정확한 바이트 경계를 위해 targetSize - 1 지정
       const readEnd = Math.max(filePosition, targetSize - 1);
       const stream = fs.createReadStream(normalizedPath, {
         start: filePosition,
@@ -451,6 +586,23 @@ export const startWatchingLogFile = <TSnapshot>(
 
       stream.on('end', () => {
         try {
+          // Fast-Path: 신규 청크와 대기 버퍼 모두에 CK3_TTS / CK3_EXECUTION 마커가 전혀 없으면 정규식 파싱 즉시 생략
+          const hasPendingForPath =
+            pendingBuffers.has(normalizedPath) ||
+            pendingBuffers.has(debugLogPath) ||
+            pendingBuffers.has(errorLogPath);
+          if (
+            !hasPendingForPath &&
+            !bufferText.includes('CK3_TTS') &&
+            !bufferText.includes('CK3_EXECUTION')
+          ) {
+            return;
+          }
+
+          // 처형 효과음 태그(##CK3_EXECUTION##)는 단문 완결형이므로, 앞선 미완성 ##CK3_TTS 태그 절단(slice)에
+          // 삼켜지지 않도록 pendingBuffers 결합 및 절단 전에 신규 청크에서 즉시 우선 추출합니다.
+          emitExecutionSounds(extractExecutionSoundsFromChunk(bufferText));
+
           // 이전 미완성 청크 버퍼가 있다면 이번 청크 앞에 결합
           const previousPending = pendingBuffers.get(normalizedPath) ?? '';
           bufferText = previousPending + bufferText;
@@ -472,21 +624,21 @@ export const startWatchingLogFile = <TSnapshot>(
               pendingBuffers.set(normalizedPath, tail);
               pendingOpenIndex = lastOpenIndex;
               bufferText = bufferText.slice(0, lastOpenIndex);
+              const targetChannel: EventChannel = normalizedPath === errorLogPath ? 'error' : 'debug';
+              const fallbackTimer = setTimeout(() => {
+                deferredEmitTimers.delete(fallbackTimer);
+                const stillPending = pendingBuffers.get(normalizedPath);
+                if (stillPending === tail) {
+                  pendingBuffers.delete(normalizedPath);
+                  const synthesizedEnd = tail.includes('[CK3_TTS') ? '[CK3_TTS_END]' : '##CK3_TTS_END##';
+                  const fallbackEvents = extractCk3EventsFromChunk(`${stillPending}${synthesizedEnd}`);
+                  if (fallbackEvents.length > 0) {
+                    emitParsedEvents(fallbackEvents, targetChannel, stillPending);
+                  }
+                }
+              }, 450);
+              deferredEmitTimers.add(fallbackTimer);
             }
-          }
-
-          // 처형 효과음 태그(##CK3_EXECUTION##) 감지 시 디바운스 (500ms로 빠른 연속 처형 보장)
-          const executionSounds = extractExecutionSoundsFromChunk(bufferText);
-          const currentExecutionTime = Date.now();
-          for (const sound of executionSounds) {
-            const soundCacheKey = `${sound.type}_${sound.gender}`;
-            const lastSeen = recentExecutionSoundCache.get(soundCacheKey);
-            // C++ 콘솔 3중 에코 및 후속 창 팝업 시점의 분할 플러시 방어 (5초 쿨다운)
-            if (lastSeen && currentExecutionTime - lastSeen < 5000) {
-              continue;
-            }
-            recentExecutionSoundCache.set(soundCacheKey, currentExecutionTime);
-            onExecutionSound?.(sound);
           }
 
           const stopTagHash = '##CK3_TTS_STOP##';
@@ -607,22 +759,26 @@ export const startWatchingLogFile = <TSnapshot>(
     onStatusChange?.(false, logFilePath);
   });
 
-  // 장시간 실행 시 게임 재시작이나 파일 회전/재생성으로 인한 감시 유실(Drift) 방지 자가 치유 폴링 타이머
+  // 장시간 실행 시 게임 재시작이나 파일 회전/재생성 및 Windows NTFS 열린 파일 핸들 메타데이터 캐싱으로 인한 감시 유실(Drift) 방지 자가 치유 폴링 타이머
   const healIntervalTimer = setInterval(() => {
     try {
       const activeWatchTargets = [path.resolve(logFilePath)];
       const currentLogDir = path.dirname(activeWatchTargets[0] ?? '');
       const currentErrorPath = path.join(currentLogDir, 'error.log');
+      const currentGamePath = path.join(currentLogDir, 'game.log');
       if (fs.existsSync(currentErrorPath)) {
         activeWatchTargets.push(currentErrorPath);
       }
+      if (fs.existsSync(currentGamePath)) {
+        activeWatchTargets.push(currentGamePath);
+      }
 
       for (const normalizedTarget of activeWatchTargets) {
-        if (fs.existsSync(normalizedTarget)) {
-          const stats = fs.statSync(normalizedTarget);
+        const liveSize = getLiveFileSize(normalizedTarget);
+        if (liveSize !== null) {
           const lastPos = filePositions.get(normalizedTarget);
           // 파일이 새로 생성되었거나 크기가 변경되었는데 watcher가 놓친 경우 자가 치유
-          if (lastPos === undefined || stats.size !== lastPos) {
+          if (lastPos === undefined || liveSize !== lastPos) {
             if (watcher) {
               watcher.add(normalizedTarget);
             }
@@ -643,7 +799,7 @@ export const startWatchingLogFile = <TSnapshot>(
     } catch (healError: unknown) {
       // 헬스체크 중 일시적 접근 경합 안전 무시
     }
-  }, 1500);
+  }, 500);
 
   onStatusChange?.(true, logFilePath);
 
@@ -679,6 +835,8 @@ export const startWatchingLogFile = <TSnapshot>(
           lastUserSnapshot = clipboardBridge.takeSnapshot();
           return;
         }
+
+        emitExecutionSounds(extractExecutionSoundsFromChunk(currentText));
 
         const parsedClipboardEvents = extractCk3EventsFromChunk(currentText);
         const lastClipStop = Math.max(
@@ -718,6 +876,8 @@ export const startWatchingLogFile = <TSnapshot>(
         clearTimeout(deferredTimer);
       }
       deferredEmitTimers.clear();
+      recentExecutionSoundCache.clear();
+      pendingBuffers.clear();
       if (watcher) {
         await watcher.close();
         watcher = null;

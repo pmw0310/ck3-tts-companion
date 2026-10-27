@@ -505,7 +505,8 @@ const EVENT_TYPE_MARKER_PATTERN = /\|{1,3}\s*TYPE:([A-Za-z_]+)/gi;
 
 /** 메타 토큰 값 → 이벤트 유형 매핑 */
 const EVENT_TYPE_MARKER_MAP: Readonly<Record<string, Ck3EventType>> = {
-  WAR_RESULTS: 'war_results'
+  WAR_RESULTS: 'war_results',
+  LEGEND_CHRONICLE: 'legend_chronicle'
 };
 
 /**
@@ -730,6 +731,23 @@ const recoverEventsFromErrorLog = (
     }
 
     // 중복 방어: 이미 복원된 이벤트와 동일하거나 상호 포함 관계인 경우 단일 이벤트로 압축
+    if (recovered.eventType === 'legend_chronicle') {
+      const sameChapterIdx = recoveredEvents.findIndex(
+        (existing) =>
+          existing.eventType === 'legend_chronicle' &&
+          existing.title === recovered.title &&
+          (existing.content.includes(recovered.content) || recovered.content.includes(existing.content))
+      );
+      if (sameChapterIdx !== -1) {
+        const existing = recoveredEvents[sameChapterIdx];
+        if (existing && recovered.content.length > existing.content.length) {
+          recoveredEvents[sameChapterIdx] = recovered;
+        }
+        return;
+      }
+      recoveredEvents.push(recovered);
+      return;
+    }
     const duplicateIdx = recoveredEvents.findIndex(
       (existing) =>
         existing.content === recovered.content ||
@@ -1046,7 +1064,37 @@ export const extractCk3EventsFromChunk = (
 
   // 동일한 청크 내 중복 또는 파편이 존재할 경우, 더 완전하고 긴 본문을 우선 채택
   // (단, 튜토리얼 1/2 -> 2/2처럼 제목은 같지만 본문이 전혀 다른 별개 단계는 각각 보존)
+  const legendChaptersByTitle = new Map<string, string[]>();
   for (const candidate of candidateEvents) {
+    if (candidate.eventType === 'legend_chronicle') {
+      const sameLegendIndex = events.findIndex(
+        (e) => e.eventType === 'legend_chronicle' && e.title === candidate.title
+      );
+      if (sameLegendIndex === -1) {
+        legendChaptersByTitle.set(candidate.title, [candidate.content]);
+        events.push(candidate);
+      } else {
+        const existing = events[sameLegendIndex]!;
+        const chapters = legendChaptersByTitle.get(candidate.title) ?? [existing.content];
+        const isAlreadyIncluded = chapters.some((ch) => ch.includes(candidate.content));
+        if (!isAlreadyIncluded) {
+          const subsetIdx = chapters.findIndex((ch) => candidate.content.includes(ch));
+          if (subsetIdx !== -1) {
+            chapters[subsetIdx] = candidate.content;
+          } else {
+            chapters.push(candidate.content);
+          }
+          legendChaptersByTitle.set(candidate.title, chapters);
+        }
+        events[sameLegendIndex] = {
+          ...existing,
+          content: chapters.join(' '),
+          isForceReplay: Boolean(existing.isForceReplay || candidate.isForceReplay),
+          speakerGender: existing.speakerGender ?? candidate.speakerGender
+        };
+      }
+      continue;
+    }
     const existingIndex = events.findIndex(
       (e) =>
         candidate.content.includes(e.content) ||

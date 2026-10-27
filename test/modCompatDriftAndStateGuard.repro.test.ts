@@ -66,7 +66,7 @@ describe('CK3 모드 호환성 리베이스 및 Jomini State 무결성 검증 (m
       'window_legend_chronicle.gui에 스피커 버튼(tts_speak_button)이 존재해야 합니다.'
     );
     assert.ok(
-      legendText.includes('onclick = "[CloseGameView('),
+      legendText.includes("onclick = \"[PdxGuiTriggerAllAnimations('tts_legend_speak_force')]\""),
       'window_legend_chronicle.gui 스피커 버튼에 다이렉트 onclick CloseGameView 실행 명령이 구현되어 있어야 합니다.'
     );
 

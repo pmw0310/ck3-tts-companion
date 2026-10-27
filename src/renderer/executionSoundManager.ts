@@ -62,6 +62,83 @@ const executionAudioPool: HTMLAudioElement[] = [];
 /** 모두 재생 중일 때 다음으로 재사용할 풀 인덱스 (가장 오래된 것부터 순환) */
 let nextPoolIndex = 0;
 
+/** 오디오 엘리먼트별 활성 페이드아웃 타이머 맵 */
+const activeFadeTimers = new WeakMap<HTMLAudioElement, ReturnType<typeof setInterval>>();
+
+/**
+ * 지정된 오디오 엘리먼트에 걸려 있는 페이드 타이머를 안전하게 해제합니다.
+ * @param audio 대상 오디오 엘리먼트
+ */
+const clearAudioFadeTimer = (audio: HTMLAudioElement): void => {
+  const existingTimer = activeFadeTimers.get(audio);
+  if (existingTimer !== undefined) {
+    clearInterval(existingTimer);
+    activeFadeTimers.delete(audio);
+  }
+};
+
+/**
+ * 재생 중인 이전 오디오 엘리먼트의 볼륨을 부드럽게 줄인 뒤 정지시켜,
+ * 연속 처형 시 이전 트랙이 중간에 뚝 끊기며 전체 음량이 급락하는 현상을 방지합니다.
+ * @param audio 페이드아웃할 오디오 엘리먼트
+ * @param durationMs 페이드아웃 지속 시간 (밀리초)
+ */
+const fadeOutAndStopAudio = (audio: HTMLAudioElement, durationMs: number = 320): void => {
+  clearAudioFadeTimer(audio);
+  const startVolume = audio.volume;
+  if (audio.paused || audio.ended || startVolume <= 0.01) {
+    audio.pause();
+    return;
+  }
+  const steps = 8;
+  const stepIntervalMs = Math.max(20, Math.floor(durationMs / steps));
+  let currentStep = 0;
+  const timer = setInterval(() => {
+    currentStep++;
+    if (audio.paused || audio.ended || currentStep >= steps) {
+      clearAudioFadeTimer(audio);
+      audio.volume = 0;
+      audio.pause();
+      return;
+    }
+    const ratio = 0.5 * (1 + Math.cos((Math.PI * currentStep) / steps));
+    audio.volume = Math.max(0, Number((startVolume * ratio).toFixed(3)));
+  }, stepIntervalMs);
+  activeFadeTimers.set(audio, timer);
+};
+
+/**
+ * 장시간 지속되는 처형 효과음(화형 등)의 마지막 구간에서 코사인 곡선으로 자연스럽게 여운이 사라지도록
+ * 엔벨로프 타이머를 부착합니다.
+ * @param audio 재생 중인 오디오 엘리먼트
+ * @param baseVolume 사용자 설정 기본 볼륨 (0.0 ~ 1.0)
+ */
+const attachNaturalTailEnvelope = (audio: HTMLAudioElement, baseVolume: number): void => {
+  clearAudioFadeTimer(audio);
+  const tailFadeSeconds = 1.25;
+  const minTrackDurationForTailFade = 3.5;
+  const timer = setInterval(() => {
+    if (audio.paused || audio.ended) {
+      clearAudioFadeTimer(audio);
+      return;
+    }
+    const duration = audio.duration;
+    const currentTime = audio.currentTime;
+    if (
+      !Number.isFinite(duration) ||
+      duration < minTrackDurationForTailFade ||
+      currentTime < duration - tailFadeSeconds
+    ) {
+      return;
+    }
+    const remaining = Math.max(0, duration - currentTime);
+    const progress = Math.min(1, Math.max(0, 1 - remaining / tailFadeSeconds));
+    const cosineGain = 0.5 * (1 + Math.cos(Math.PI * progress));
+    audio.volume = Math.max(0, Math.min(1, Number((baseVolume * cosineGain).toFixed(3))));
+  }, 50);
+  activeFadeTimers.set(audio, timer);
+};
+
 /**
  * 처형음 재생에 사용할 HTMLAudioElement를 반환합니다.
  * DOM의 #execution-audio-player를 풀의 첫 요소로 사용하고, 재생 중이면 추가 인스턴스를 사용합니다.
@@ -113,8 +190,8 @@ export const playExecutionSound = (
     const now = Date.now();
     const lastPlayed = lastPlayedSoundMap.get(soundKey);
 
-    // 500ms 이내 동일 사운드 중복 실행만 방어 (초고속 연타 클릭 방어 및 연속 처형 보장)
-    if (lastPlayed && now - lastPlayed < 500) {
+    // 350ms 이내 동일 사운드 중복 실행만 방어 (초고속 연타 클릭 방어 및 연속 처형 보장)
+    if (lastPlayed && now - lastPlayed < 350) {
       console.info(
         `ℹ️ [ExecutionSound] 최근 재생된 사운드 중복 방어로 건너뜀: soundKey=${soundKey}`
       );
@@ -130,7 +207,16 @@ export const playExecutionSound = (
       return;
     }
 
+    // 다른 풀 슬롯에서 이미 재생 중인 이전 처형음이 있다면 부드럽게 크로스페이드 아웃하여
+    // 새 처형음 재생 도중 이전 트랙이 끝나며 음량이 갑자기 반토막 나는 현상을 방어합니다.
+    for (const poolAudio of executionAudioPool) {
+      if (poolAudio !== audio && !poolAudio.paused && !poolAudio.ended) {
+        fadeOutAndStopAudio(poolAudio, 320);
+      }
+    }
+
     // 재사용되는 요소는 처음부터 재생되도록 초기화
+    clearAudioFadeTimer(audio);
     audio.pause();
     audio.currentTime = 0;
 
@@ -138,6 +224,7 @@ export const playExecutionSound = (
     const clampedVolume = Math.max(0, Math.min(1, volume));
     audio.volume = clampedVolume;
     audio.src = soundUrl;
+    attachNaturalTailEnvelope(audio, clampedVolume);
 
     console.info(
       `⚔️ [ExecutionSound] 사운드 재생 시작: type=${event.type}, gender=${event.gender}, soundKey=${soundKey}, volume=${clampedVolume}`

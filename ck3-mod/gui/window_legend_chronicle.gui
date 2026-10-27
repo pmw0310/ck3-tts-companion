@@ -1,4 +1,4 @@
-﻿window = {
+window = {
 	name = "legend_chronicle"
 	parentanchor = center
 	position = { 0 20 }
@@ -12,7 +12,13 @@
 
 	state = {
 		name = _show
+		next = tts_legend_auto_trigger
 		using = Animation_FadeIn_Quick
+	}
+
+	state = {
+		name = tts_legend_auto_trigger
+		on_start = "[PdxGuiTriggerAllAnimations('tts_legend_speak_auto')]"
 	}
 
 	state = {
@@ -237,7 +243,7 @@
 							alwaystransparent = yes
 						}
 
-						onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(Legend.GetChapterDescriptionByIndex( '(int32)0' ), '##CK3_TTS_END##')))))]"
+						onclick = "[PdxGuiTriggerAllAnimations('tts_legend_speak_force')]"
 					}
 				}
 
@@ -286,6 +292,41 @@
 											autoresize = yes
 
 											text = "[CString.GetString]"
+
+											state = {
+												name = tts_legend_speak_auto
+												trigger_on_create = yes
+												delay = 0.05
+												next = tts_legend_speak_auto_emit
+											}
+
+											state = {
+												name = tts_legend_speak_auto_emit
+												on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END##', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END##' ))))))]"
+												next = tts_legend_idle
+											}
+
+											state = {
+												name = tts_legend_speak_auto_info
+											# 비디버그 순수 브릿지(CloseGameView)로 일원화하여 다중 챕터 ExecuteConsoleCommand 콘솔 파서 락 원천 차단
+												next = tts_legend_idle
+											}
+
+											state = {
+												name = tts_legend_speak_force
+												on_start = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END##', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END##' ))))))]"
+												next = tts_legend_idle
+											}
+
+											state = {
+												name = tts_legend_speak_force_info
+											# 비디버그 순수 브릿지(CloseGameView)로 일원화하여 다중 챕터 ExecuteConsoleCommand 콘솔 파서 락 원천 차단
+												next = tts_legend_idle
+											}
+
+											state = {
+												name = tts_legend_idle
+											}
 
 											default_format = "#light_background"
 											using = Text_Light_Background_Overrides

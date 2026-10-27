@@ -181,7 +181,7 @@ describe('비디버그 모드(-debug_mode 미사용) TTS·STOP·처형 사운드
     );
     const infoExecMatches = prisonEffects.match(/info_log\s*=\s*"##CK3_EXECUTION##[^"]+"/g) ?? [];
     const errorExecMatches = prisonEffects.match(/error_log\s*=\s*"##CK3_EXECUTION##[^"]+"/g) ?? [];
-    assert.strictEqual(infoExecMatches.length, 0, '디버그 전용 info_log는 제거되어야 합니다.');
+    assert.strictEqual(infoExecMatches.length, 14, '[E] 100,000건 쿼터 차단에 대비해 info_log 처형 훅도 14개 모두 병행 유지되어야 합니다.');
     assert.strictEqual(
       errorExecMatches.length,
       14,

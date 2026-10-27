@@ -28,6 +28,7 @@ import {
    t,
    setLanguage,
    getCurrentLocale,
+   detectSystemLocale,
    type SupportedLocale,
 } from "@/renderer/i18n";
 
@@ -112,7 +113,7 @@ const state: RendererState = {
       maxCacheSizeMb: 500,
       isExecutionSoundEnabled: true,
       executionSoundVolume: 0.8,
-      appLanguage: "ko",
+      appLanguage: detectSystemLocale(),
    },
    currentEvent: null,
    history: [],
@@ -1605,7 +1606,7 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
    currentEventContent.classList.remove("placeholder-text");
    btnReplay.disabled = false;
 
-   if (state.settings.isAutoPlayEnabled) {
+   if (state.settings.isAutoPlayEnabled || event.isForceReplay) {
       lastAutoSpokenText = event.content;
       lastAutoSpokenTime = now;
       speakText(event.content, event.speakerGender, event.eventType);
@@ -2412,10 +2413,11 @@ const initializeApp = async (): Promise<void> => {
    state.settings = await window.electronAPI.getSettings();
 
    // 언어 설정 복원 및 UI 전체 번역 적용
-   const savedLang =
-      (localStorage.getItem("ck3_tts_lang") as SupportedLocale | null) ??
-      state.settings.appLanguage ??
-      "ko";
+
+
+
+   // 언어 설정 복원 (메인 프로세스 설정/시스템 언어 우선 적용 후 UI 번역 반영)
+   const savedLang = state.settings.appLanguage ?? detectSystemLocale();
    setLanguage(savedLang);
 
    syncSettingsForm();

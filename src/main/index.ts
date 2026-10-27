@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, globalShortcut, shell } from 'electron';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import fs from 'node:fs';
 import { resolveCk3LogPath } from '@/main/pathResolver';
@@ -31,12 +32,50 @@ import type {
   UpdateCheckResult
 } from '@/shared/types';
 
+// Windows 개발/콘솔 실행 환경에서 UTF-8 한글 및 이모지 로그가 CP949로 깨지는 현상(Mojibake) 방지
+if (process.platform === 'win32' && !app.isPackaged) {
+  try {
+    spawnSync('chcp.com', ['65001'], { stdio: 'ignore' });
+  } catch {
+    // 비콘솔 환경 무시
+  }
+}
+
 // Chromium 백그라운드 절전 및 오클루전(가려진 창) 스로틀링 원천 비활성화
 // 게임(CK3)이 전체화면/포커스를 가져가더라도 백그라운드 오디오 버퍼 언더런(드드득 끊김) 방지
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
+/**
+ * 운영체제(OS) 시스템 언어를 감지하여 지원 로케일('ko' | 'en')로 반환합니다.
+ * 한국어('ko*') 환경이면 'ko', 그 외 언어 환경이면 'en'을 반환합니다.
+ * @returns 감지된 기본 앱 언어 ('ko' | 'en')
+ */
+const resolveDefaultAppLanguage = (): 'ko' | 'en' => {
+  try {
+    const candidates = [
+      ...(typeof app?.getPreferredSystemLanguages === 'function'
+        ? app.getPreferredSystemLanguages()
+        : []),
+      typeof app?.getSystemLocale === 'function' ? app.getSystemLocale() : '',
+      typeof app?.getLocale === 'function' ? app.getLocale() : '',
+      Intl.DateTimeFormat().resolvedOptions().locale,
+      process.env.LC_ALL ?? '',
+      process.env.LANG ?? ''
+    ];
+    const primaryLocale = candidates.find(
+      (loc) => typeof loc === 'string' && loc.trim().length > 0
+    );
+    if (primaryLocale && primaryLocale.toLowerCase().startsWith('ko')) {
+      return 'ko';
+    }
+    return 'en';
+  } catch {
+    return 'ko';
+  }
+};
 
 /** 애플리케이션 기본 설정 값 */
 const DEFAULT_APP_SETTINGS: AppSettings = {
@@ -73,7 +112,7 @@ const DEFAULT_APP_SETTINGS: AppSettings = {
   maxCacheSizeMb: 500,
   isExecutionSoundEnabled: true,
   executionSoundVolume: 0.8,
-  appLanguage: 'ko'
+  appLanguage: resolveDefaultAppLanguage()
 };
 
 let mainWindow: BrowserWindow | null = null;
@@ -138,12 +177,12 @@ const loadStoredSettings = (): AppSettings => {
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(data) as Partial<AppSettings>;
-      return { ...DEFAULT_APP_SETTINGS, ...parsed };
+      return { ...DEFAULT_APP_SETTINGS, appLanguage: resolveDefaultAppLanguage(), ...parsed };
     }
   } catch (error: unknown) {
     console.warn('⚠️ [Settings] 설정 불러오기 실패, 기본값 사용:', error);
   }
-  return { ...DEFAULT_APP_SETTINGS };
+  return { ...DEFAULT_APP_SETTINGS, appLanguage: resolveDefaultAppLanguage() };
 };
 
 /**

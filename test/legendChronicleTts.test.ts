@@ -42,10 +42,30 @@ describe('전설 연대기(Legend Chronicle) TTS 연동 및 조사 정제 검증
     assert.ok(content.includes('name = "tts_speak_button"'), 'tts_speak_button 위젯이 존재해야 합니다');
     assert.ok(content.includes('shortcut = "army_split_half"'), 'F 단축키가 바인딩되어 있어야 합니다');
     assert.ok(content.includes("CloseGameView(Concatenate('##CK3_TTS_FORCE## "), '버튼 클릭 시 ##CK3_TTS_FORCE## 강제 재생이 연동되어야 합니다');
+    assert.ok(!content.includes('GetChapterDescriptionByIndex'), '존재하지 않는 GetChapterDescriptionByIndex 함수 호출이 없어야 합니다');
+    assert.ok(content.includes('name = tts_legend_speak_auto_emit'), '전설 연대기 챕터 자동 낭독 state가 존재해야 합니다');
+    assert.ok(content.includes('name = tts_legend_speak_force'), '전설 연대기 챕터 수동 낭독 state가 존재해야 합니다');
 
     // 3. 중괄호 쌍 일치 검증
     const openBraces = (content.match(/\{/g) || []).length;
     const closeBraces = (content.match(/\}/g) || []).length;
     assert.strictEqual(openBraces, closeBraces, '열린 중괄호와 닫힌 중괄호의 개수가 일치해야 합니다');
+  });
+
+  it('다중 챕터 전설 연대기(TYPE:LEGEND_CHRONICLE) 방출 시 모든 챕터가 누락이나 덮어쓰기 없이 순서대로 하나의 본문으로 병합되어야 한다', () => {
+    const multiChapterChunk = [
+      `[20:10:00][E][interface_data_hooks.cpp:613]: unknown game view '##CK3_TTS## 용맹한 수호자|||위대하고 거대하며, 그의 업적은 견줄 데가 없다. 김 궁예(은)는 어려운 업적을 세우겠노라 뜻을 세웠다.|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##'`,
+      `[20:10:00][E][interface_data_hooks.cpp:613]: unknown game view '##CK3_TTS## 용맹한 수호자|||하지만 이게 이야기의 끝은 아니다. 김 궁예(이)가 고향으로 돌아왔을 때 그는 위기에 처한 사람들을 도왔다.|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##'`,
+      `[20:10:00][I][jomini_effect_impl.cpp:92]: ##CK3_TTS## 용맹한 수호자|||위대하고 거대하며, 그의 업적은 견줄 데가 없다. 김 궁예(은)는 어려운 업적을 세우겠노라 뜻을 세웠다.|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##`,
+      `[20:10:00][I][jomini_effect_impl.cpp:92]: ##CK3_TTS## 용맹한 수호자|||하지만 이게 이야기의 끝은 아니다. 김 궁예(이)가 고향으로 돌아왔을 때 그는 위기에 처한 사람들을 도왔다.|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##`
+    ].join('\n');
+
+    const events = extractCk3EventsFromChunk(multiChapterChunk);
+    assert.strictEqual(events.length, 1, '다중 챕터와 이중 채널(CloseGameView + info_log) 로그가 단일 전설 연대기 이벤트로 병합되어야 합니다.');
+    assert.strictEqual(events[0]?.title, '용맹한 수호자');
+    assert.strictEqual(events[0]?.eventType, 'legend_chronicle');
+    assert.strictEqual(events[0]?.speakerGender, 'male');
+    assert.ok(events[0]?.content.includes('김 궁예는 어려운 업적을 세우겠노라 뜻을 세웠다.'), '1장 본문이 포함되어야 합니다.');
+    assert.ok(events[0]?.content.includes('김 궁예가 고향으로 돌아왔을 때 그는 위기에 처한 사람들을 도왔다.'), '2장 본문이 이어서 병합되어야 합니다.');
   });
 });

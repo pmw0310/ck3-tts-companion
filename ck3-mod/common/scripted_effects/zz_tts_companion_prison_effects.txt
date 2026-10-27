@@ -1,4 +1,4 @@
-﻿# [CK3 TTS Companion] Scripted Effect Override for Execution Sound Logging
+# [CK3 TTS Companion] Scripted Effect Override for Execution Sound Logging
 execute_prisoner_effect = {
 
 	$VICTIM$ = {
@@ -891,9 +891,11 @@ execute_prisoner_effect = {
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## burned|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## burned|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## burned|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## burned|||GENDER:M##"
 				}
 			}
@@ -905,23 +907,36 @@ execute_prisoner_effect = {
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## kennel|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## kennel|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## kennel|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## kennel|||GENDER:M##"
 				}
 			}
-			# 3. 식인 포식형 (선택 옵션)
+			# 3. 식인 포식형 / 식량 도축형 (선택 옵션)
 			else_if = {
 				limit = {
-					exists = scope:execution_devour
+					OR = {
+						AND = {
+							exists = scope:execution_devour
+							scope:execution_devour = yes
+						}
+						AND = {
+							exists = scope:execution_provisions
+							scope:execution_provisions = yes
+						}
+					}
 					scope:execution_devour = yes
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## devour|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## devour|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## devour|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## devour|||GENDER:M##"
 				}
 			}
@@ -940,9 +955,11 @@ execute_prisoner_effect = {
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## sacrifice|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## sacrifice|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## sacrifice|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## sacrifice|||GENDER:M##"
 				}
 			}
@@ -954,9 +971,11 @@ execute_prisoner_effect = {
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## public|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## public|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## public|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## public|||GENDER:M##"
 				}
 			}
@@ -968,9 +987,11 @@ execute_prisoner_effect = {
 				}
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## beheading|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## beheading|||GENDER:M##"
 				}
 			}
@@ -978,9 +999,11 @@ execute_prisoner_effect = {
 			else = {
 				if = {
 					limit = { scope:victim = { is_female = yes } }
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:F##"
 					error_log = "##CK3_EXECUTION## beheading|||GENDER:F##"
 				}
 				else = {
+					info_log = "##CK3_EXECUTION## beheading|||GENDER:M##"
 					error_log = "##CK3_EXECUTION## beheading|||GENDER:M##"
 				}
 			}

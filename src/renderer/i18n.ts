@@ -331,8 +331,20 @@ export const TRANSLATIONS = {
    },
 } as const;
 
-/** 현재 적용된 활성 로케일 (기본: ko) */
-let activeLocale: SupportedLocale = "ko";
+
+/**
+ * 브라우저/시스템 기본 언어를 감지하여 지원 로케일('ko' | 'en')로 반환합니다.
+ * @returns 감지된 기본 로케일 ('ko' | 'en')
+ */
+export const detectSystemLocale = (): SupportedLocale => {
+   if (typeof navigator !== "undefined" && typeof navigator.language === "string") {
+      return navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en";
+   }
+   return "ko";
+};
+
+/** 현재 적용된 활성 로케일 (기본: 시스템 언어) */
+let activeLocale: SupportedLocale = detectSystemLocale();
 
 /**
  * 현재 활성화된 로케일을 반환합니다.

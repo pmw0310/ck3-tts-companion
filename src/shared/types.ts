@@ -78,13 +78,15 @@ export type ExecutionSoundEvent = {
   readonly gender: 'male' | 'female';
   readonly rawName: string;
   readonly timestamp: number;
+  readonly logTimestamp?: string;
+  readonly isConsoleEcho?: boolean;
 };
 
 /**
  * CK3 이벤트 유형
  * - letter: 편지(발신자 단일 보이스), war_results: 전쟁 결과창(동일 본문 연속 전쟁 허용), character/default: 일반
  */
-export type Ck3EventType = 'letter' | 'character' | 'war_results' | 'default';
+export type Ck3EventType = 'letter' | 'character' | 'war_results' | 'legend_chronicle' | 'default';
 
 /** 감지된 CK3 게임 이벤트 데이터 */
 export type Ck3EventMessage = {

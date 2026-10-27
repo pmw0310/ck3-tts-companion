@@ -75,7 +75,7 @@ describe('전설 연대기 창 수동 낭독(스피커 버튼/F 단축키) 다�
     // 다이렉트 CloseGameView 바인딩 확인
     assert.match(
       speakBlock,
-      /onclick\s*=\s*"\[CloseGameView\(Concatenate\('##CK3_TTS_FORCE## ', Concatenate\(Legend\.GetNameNoTooltip, Concatenate\('\|\|\|', Concatenate\(Legend\.GetChapterDescriptionByIndex\(\s*'\s*\(int32\)0\s*'\s*\),\s*'##CK3_TTS_END##'\)\)\)\)\)\]"/,
+      /onclick\s*=\s*"\[PdxGuiTriggerAllAnimations\('tts_legend_speak_force'\)\]"/,
       '스피커 버튼에 안전한 다이렉트 CloseGameView가 바인딩되어야 합니다.'
     );
   });
