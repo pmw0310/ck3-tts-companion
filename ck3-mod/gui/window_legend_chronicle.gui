@@ -1,4 +1,4 @@
-window = {
+﻿window = {
 	name = "legend_chronicle"
 	parentanchor = center
 	position = { 0 20 }
@@ -14,10 +14,17 @@ window = {
 		name = _show
 		next = tts_legend_auto_trigger
 		using = Animation_FadeIn_Quick
+		on_start = "[ClearErrorLog]"
 	}
 
 	state = {
 		name = tts_legend_auto_trigger
+		next = tts_legend_auto_trigger_fire
+		on_start = "[GetVariableSystem.Clear('tts_clipboard')]"
+	}
+
+	state = {
+		name = tts_legend_auto_trigger_fire
 		on_start = "[PdxGuiTriggerAllAnimations('tts_legend_speak_auto')]"
 	}
 
@@ -139,6 +146,7 @@ window = {
 					blockoverride "button_close"
 					{
 						onclick = "[LegendChronicleWindow.Close]"
+						onclick = "[ClearErrorLog]"
 						onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 					}
 					margin_right = 18
@@ -243,6 +251,8 @@ window = {
 							alwaystransparent = yes
 						}
 
+						onclick = "[ClearErrorLog]"
+						onclick = "[GetVariableSystem.Clear('tts_clipboard')]"
 						onclick = "[PdxGuiTriggerAllAnimations('tts_legend_speak_force')]"
 					}
 				}
@@ -303,24 +313,36 @@ window = {
 											state = {
 												name = tts_legend_speak_auto_emit
 												on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END##', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END##' ))))))]"
-												next = tts_legend_idle
+												next = tts_legend_speak_auto_info
 											}
 
 											state = {
 												name = tts_legend_speak_auto_info
-											# 비디버그 순수 브릿지(CloseGameView)로 일원화하여 다중 챕터 ExecuteConsoleCommand 콘솔 파서 락 원천 차단
+												on_start = "[GetVariableSystem.Set('tts_clipboard', Concatenate(GetVariableSystem.Get('tts_clipboard'), Concatenate('##CK3_TTS## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END## ', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END## ' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END## ' )))))))]"
+												next = tts_legend_speak_auto_copy
+											}
+
+											state = {
+												name = tts_legend_speak_auto_copy
+												on_start = "[CopyBuildVersionInfoToClipboard]"
 												next = tts_legend_idle
 											}
 
 											state = {
 												name = tts_legend_speak_force
 												on_start = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END##', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END##' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END##' ))))))]"
-												next = tts_legend_idle
+												next = tts_legend_speak_force_info
 											}
 
 											state = {
 												name = tts_legend_speak_force_info
-											# 비디버그 순수 브릿지(CloseGameView)로 일원화하여 다중 챕터 ExecuteConsoleCommand 콘솔 파서 락 원천 차단
+												on_start = "[GetVariableSystem.Set('tts_clipboard', Concatenate(GetVariableSystem.Get('tts_clipboard'), Concatenate('##CK3_TTS_FORCE## ', Concatenate(Legend.GetNameNoTooltip, Concatenate('|||', Concatenate(CString.GetString, Select_CString( Legend.GetProtagonist.IsValid, Select_CString( Legend.GetProtagonist.IsFemale, '|||TYPE:LEGEND_CHRONICLE|||GENDER:F##CK3_TTS_END## ', '|||TYPE:LEGEND_CHRONICLE|||GENDER:M##CK3_TTS_END## ' ), '|||TYPE:LEGEND_CHRONICLE##CK3_TTS_END## ' )))))))]"
+												next = tts_legend_speak_force_copy
+											}
+
+											state = {
+												name = tts_legend_speak_force_copy
+												on_start = "[CopyBuildVersionInfoToClipboard]"
 												next = tts_legend_idle
 											}
 
@@ -444,6 +466,7 @@ window = {
 
 							onclick = "[PostCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							onclick = "[LegendChronicleWindow.Close]"
+							onclick = "[ClearErrorLog]"
 							onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 							enabled = "[IsValidCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							tooltip = "[GetCommandDesc( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"

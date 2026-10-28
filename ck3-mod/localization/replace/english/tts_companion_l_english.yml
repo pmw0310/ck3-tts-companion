@@ -3,3 +3,4 @@
  switch_adventurer:0 "Switch to Adventurer"
  switch_adventurer_desc:0 "Switch to playing as this adventurer character."
  switch_adventurer_tooltip:0 "Switch to playing as this character as an adventurer."
+ CLIPBOARD_GAME_MODULE_VERSION_INFO:0 "[Select_CString( GetVariableSystem.Exists( 'tts_clipboard' ), GetVariableSystem.Get( 'tts_clipboard' ), '' )]\n$MODULE$ version:\n   Branch: $BRANCH$\n   Commit: $HASH_LONG$\n   Timestamp: $TIMESTAMP$\n   Commit Number: $COMMIT_COUNT$\n   MP Checksum: [GetMPChecksum]"

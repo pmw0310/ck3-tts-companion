@@ -268,6 +268,7 @@ const createMainWindow = (): void => {
     title: 'CK3 TTS Companion',
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     backgroundColor: '#0c0f17',
+    autoHideMenuBar: true,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 20, y: 25 },
     vibrancy: 'under-window',
@@ -278,6 +279,12 @@ const createMainWindow = (): void => {
       backgroundThrottling: false
     }
   });
+
+  // Windows/Linux 환경에서 상단 기본 메뉴 바(File, Edit, View, Window, Help) 완전 제거
+  mainWindow.setMenuBarVisibility(false);
+  if (process.platform !== 'darwin') {
+    mainWindow.removeMenu();
+  }
 
   // HMR 개발 서버 또는 빌드 파일 로드
   if (process.env.ELECTRON_RENDERER_URL) {

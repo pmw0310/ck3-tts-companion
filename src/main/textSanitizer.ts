@@ -12,7 +12,7 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /(?:\[|##)CK3_TTS(?:_END|_STOP|_FORCE)?(?:\]|##)/gi,        // TTS 제어 마커 잔여물 제거
   /\[(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\]]*\]/gi, // [TOOLTIP:...] 대괄호 서식 태그
   /\b(?:ONCLICK|TOOLTIP|SCALED_STATIC_MODIFIER):[^\s"'\]]+/gi, // ONCLICK:CHARACTER,12345 및 TOOLTIP:NICKNAME,key,id 등 태그 및 ID 파편 제거
-  /\b(?:EMP|TUT);?\b/gi,                                      // EMP 강조 서식 및 TUT 튜토리얼 서식 마커
+  /\b(?:EMP|TUT|TUT_KW);?\b/gi,                               // EMP 강조 서식 및 TUT/TUT_KW 튜토리얼 서식 마커
   /\b[GLEIPBVN];\s*/gi,                                         // G;, L;, E;, I;, P;, B;, V;, N; 링크/게임컨셉/수치/아이콘 마커
   /(?:^|\s)[GIEPLBVN];?\s+(?=[가-힣a-zA-Z0-9'"`‘“「『\(\[])/gi, // 단독 G, I, E, L, P, B, V, N 마커 (예: "G 강령술사", "V; 3", "L ' 엽사 '", "I 승전")
   /#+[A-Za-z0-9_]+\s*(?:DEBUG|디버그)\s*#!?/gi,              // #D 디버그#! 등 복합 서식 태그 디버그 문구
@@ -21,9 +21,11 @@ const CK3_TAG_PATTERNS: readonly RegExp[] = [
   /\b(?:DEBUG|디버그)\s*:\s*/gi,                               // 디버그 접두사
   /\b(?:DEBUG|디버그)\b/gi,                                    // 디버그 단독 키워드 잔여물
   /#+(?:[a-zA-Z0-9_]+|!)+/g,                                 // #bold, #italic, #high, #! 등 서식 태그
-  /(?:^|\s)(?:high|bold|italic|flavor|weak|tut|color_[a-z0-9_]+)\b\s*/gi, // high, bold, tut 등 폰트 서식 키워드 잔여물
+  /(?:^|\s)(?:emp|tut|tut_kw|color_[a-z0-9_]+)\b\s*/gi,       // emp, tut, tut_kw, color_* 등 비영단어 서식 토큰 제거
+  /(?:^|\s)(?:high|bold|italic|emphasis|flavor|weak)\b\s*(?=[가-힣0-9'"`‘“「『(\[+-])/gi, // 영문 일반 단어 오삭제 방지를 위해 한글·수치·부호 앞 서식 키워드만 제거
   /\[[a-zA-Z0-9_.]+\([^)]*\)\]/g,                            // 스크립트 함수 호출
   /@[a-zA-Z0-9_!]+!/g,                                      // @skill_martial_icon! 등 아이콘
+  /\b[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)+!+/g,                     // @ 또는 \x16 접두사가 소실된 스네이크 케이스 아이콘 식별자 (예: ra_admin_troops_1!)
   /\b(?:indent_newline:\d|positive_value|negative_value)\b/g, // 들여쓰기 및 수치 변수
   /\b(?:COLOR_[A-Z0-9_]+)\b/g,                              // 컬러 상수
   /\s*\(BUG:.*?\binstead\)/gi,                                // (BUG: ... line: 506 (set_focus), using '...' instead) 엔진 중첩 디버그 경고
@@ -328,7 +330,8 @@ const resolveKoreanParticles = (text: string): string => {
   // 3. 인게임 스코프 결함(ERROR:[...]) 제거 후 붕 뜬 관형사/조사 결합 자연 복원 (예: "나의 (은)는" -> "나의 신하는")
   resolved = resolved
     .replace(/(?:^|\s)나의\s+(?:은|는)(?=\s|$)/g, ' 나의 신하는')
-    .replace(/(?:^|\s)나의\s+(?:이|가)(?=\s|$)/g, ' 나의 신하가');
+    .replace(/(?:^|\s)나의\s+(?:이|가)(?=\s|$)/g, ' 나의 신하가')
+    .replace(/(^|\s)(그녀|그|자신|당신|우리|누군가|모두)(를|을|가|는|도|의|에게)\3(?=\s|[,.?!]|$)/g, '$1$2$3');
 
   return resolved;
 };
@@ -346,7 +349,11 @@ export const sanitizeCk3Text = (rawText: string): string => {
   let cleaned = rawText;
 
   // 0. 패러독스 엔진 텍스트 서식 닫기 마커 제어문자(\x15!\x15! 등) 및 내부 서식/색상 구분용 제어 문자 제거 (\t, \n, \r 등 정상 공백 보존)
-  cleaned = cleaned.replace(/(?:[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+!|![\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+)/g, ' ');
+  cleaned = cleaned.replace(/\x16[a-zA-Z0-9_!]+!?/g, ' ');
+  cleaned = cleaned.replace(/\x15(?:TOOLTIP|ONCLICK|SCALED_STATIC_MODIFIER):[^\s\x15]+\s*/gi, '');
+  cleaned = cleaned.replace(/\x15[a-zA-Z_][a-zA-Z0-9_:.]*;?\s*/g, '');
+  cleaned = cleaned.replace(/(?:[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+!)+(?=[가-힣(,.?!:;'"’”」』)\]])/g, '');
+  cleaned = cleaned.replace(/(?:[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+!)+/g, ' ');
   cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   // 0.5. 관형사형('~인') 뒤 ERROR:[...] 런타임 결함 태그 및 조건부 조사가 이어지는 경우(예: "주군인 ERROR:[preacher_liege.GeTitledFirstName](이)가"),
@@ -465,7 +472,7 @@ export const sanitizeCk3Text = (rawText: string): string => {
 
   // 7. 태그 및 특수문자 제거 후 발생한 조사/접미사 앞 불필요한 공백 정리 (예: "수드레이야르 의" -> "수드레이야르의", "작위 를" -> "작위를")
   // 단, '이'는 지시관형사(예: "이 녀석", "이 결정")로 쓰일 수 있으므로 뒤에 또 다른 한글 단어가 오는 경우(\s+[가-힣])에는 앞 단어와 붙이지 않음
-  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에|에서|로|으로|와|과|도|만|부터|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야|들(?:이|은|을|의|에게|과|와|도|만|이나|이라도|조차|마저)?)(?=[^\w가-힣]|$)/g, '$1$2');
+  cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+(의|가|을|를|은|는|에서는|에서도|에서부터|에서|에는|에도|에의|에게서|에게는|에게도|에게로|에게|에|으로의|로의|으로는|로는|으로도|로도|으로서의|로서의|으로서|로서|으로써|로써|로|으로|와의|과의|와|과|도|만의|만이|만은|만을|만으로도|만으로|만|부터는|부터도|부터|까지는|까지도|까지|이다|다|임이|임은|임도|임에|이며|이고|이나|이란|이라|이든|이라도|이야|들(?:이|은|을|의|에게|과|와|도|만|이나|이라도|조차|마저)?)(?=[^\w가-힣]|$)/g, '$1$2');
   cleaned = cleaned.replace(/([가-힣a-zA-Z0-9])\s+이(?=[,.?!;:)]|$)/g, '$1이');
 
   // 7.5. 수치 서식 태그 제거 후 발생한 숫자 뒤 단위성 명사 앞 공백 정리 (예: "3 명의" -> "3명의", "10 곳" -> "10곳")

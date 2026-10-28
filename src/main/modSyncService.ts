@@ -495,11 +495,73 @@ export const detectInstalledModLocations = (
    return installations;
 };
 
+/** 텍스트 기반 모드 파일 확장자 집합 (CRLF/LF 줄바꿈 정규화 비교 대상) */
+const TEXT_MOD_EXTENSIONS = new Set([
+   ".gui",
+   ".txt",
+   ".yml",
+   ".mod",
+   ".md",
+   ".shader",
+   ".json",
+]);
+
 /**
- * 원본 소스 모드 디렉터리와 설치된 모드 디렉터리의 파일 구조 및 바이트 내용이 100% 일치하는지 검증합니다.
+ * 두 모드 파일의 내용이 실질적으로 동일한지 비교합니다.
+ * - `descriptor.mod`: 패러독스 런처 및 스팀 워크샵이 `supported_version`, `path`, 줄바꿈을 자동 변형하므로 `version` 일치 여부로 판정합니다.
+ * - 텍스트 파일(`.gui`, `.txt`, `.yml` 등): 바이트가 다를 경우 CRLF(`\r\n`)와 LF(`\n`) 줄바꿈 차이를 정규화하여 비교합니다.
+ * - 바이너리 파일(`.png` 등): 바이트 버퍼(`Buffer.equals`)가 100% 일치해야 합니다.
+ * @param srcPath - 원본 파일 경로
+ * @param destPath - 대상 파일 경로
+ * @param fileName - 파일명
+ * @returns 파일 내용이 실질적으로 동일하면 true
+ */
+const areModFilesEquivalent = (
+   srcPath: string,
+   destPath: string,
+   fileName: string,
+): boolean => {
+   if (fileName.toLowerCase() === "descriptor.mod") {
+      const srcParsed = parseModDescriptorContent(
+         fs.readFileSync(srcPath, "utf-8"),
+      );
+      const destParsed = parseModDescriptorContent(
+         fs.readFileSync(destPath, "utf-8"),
+      );
+      if (srcParsed.version && destParsed.version) {
+         return compareVersions(destParsed.version, srcParsed.version) >= 0;
+      }
+   }
+
+   const srcStat = fs.statSync(srcPath);
+   const destStat = fs.statSync(destPath);
+   const ext = path.extname(fileName).toLowerCase();
+   const isTextModFile = TEXT_MOD_EXTENSIONS.has(ext);
+   if (!isTextModFile && srcStat.size !== destStat.size) {
+      return false;
+   }
+
+   const srcBuf = fs.readFileSync(srcPath);
+   const destBuf = fs.readFileSync(destPath);
+
+   if (srcStat.size === destStat.size && srcBuf.equals(destBuf)) {
+      return true;
+   }
+
+   if (isTextModFile) {
+      const srcText = srcBuf.toString("utf-8").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").trimEnd();
+      const destText = destBuf.toString("utf-8").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").trimEnd();
+      return srcText === destText;
+   }
+
+   return false;
+};
+
+/**
+ * 원본 소스 모드 디렉터리와 설치된 모드 디렉터리의 파일 구조 및 내용이 일치하는지 검증합니다.
  * @param srcDir - 원본 소스 디렉터리 (`ck3-mod`)
  * @param destDir - 설치된 대상 모드 디렉터리
- * @returns 모든 파일이 완벽히 일치하면 true, 하나라도 다르거나 누락되었으면 false
+ * @returns 모든 파일이 실질적으로 일치하면 true, 하나라도 다르거나 누락되었으면 false
  */
 export const areModDirectoriesIdentical = (srcDir: string, destDir: string): boolean => {
    try {
@@ -532,17 +594,8 @@ export const areModDirectoriesIdentical = (srcDir: string, destDir: string): boo
             if (!areModDirectoriesIdentical(srcPath, destPath)) {
                return false;
             }
-         } else {
-            const srcStat = fs.statSync(srcPath);
-            const destStat = fs.statSync(destPath);
-            if (srcStat.size !== destStat.size) {
-               return false;
-            }
-            const srcBuf = fs.readFileSync(srcPath);
-            const destBuf = fs.readFileSync(destPath);
-            if (!srcBuf.equals(destBuf)) {
-               return false;
-            }
+         } else if (!areModFilesEquivalent(srcPath, destPath, srcEntry.name)) {
+            return false;
          }
       }
 
@@ -676,6 +729,15 @@ const mirrorDirectory = (
          copiedCount += subResult.copiedCount;
          removedCount += subResult.removedCount;
       } else {
+         if (srcEntry.name.toLowerCase().endsWith(".yml")) {
+            const rawYml = fs.readFileSync(srcPath);
+            const hasBom = rawYml.length >= 3 && rawYml[0] === 0xef && rawYml[1] === 0xbb && rawYml[2] === 0xbf;
+            const textBody = rawYml.toString("utf-8").replace(/^\uFEFF/, "");
+            const normalizedBody = textBody.replace(/\r?\n/g, "\r\n");
+            if (!hasBom || textBody !== normalizedBody) {
+               fs.writeFileSync(srcPath, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(normalizedBody, "utf-8")]));
+            }
+         }
          let shouldCopy = true;
          if (fs.existsSync(destPath)) {
             const srcStat = fs.statSync(srcPath);

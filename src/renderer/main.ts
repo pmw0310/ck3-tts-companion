@@ -916,32 +916,50 @@ const checkModSyncStatus = async (isManual = false): Promise<void> => {
                : "게임 모드 폴더에 최신 모드를 설치합니다.";
          }
       } else if (!status.isSynced) {
-         // 버전 불일치 상태
+         // 버전 불일치 또는 내부 모드 파일 미동기화 상태
+         const isSameVersionNumber =
+            status.installedVersion !== null &&
+            status.installedVersion === status.appVersion;
+
          modVersionBadge.className = "version-badge mod-badge-warning";
          modVersionBadge.textContent = isEn
             ? `Mod v${status.installedVersion ?? "?"} (Sync Required)`
             : `모드 v${status.installedVersion ?? "미상"} (동기화 필요)`;
-         modVersionBadge.title = isEn
-            ? `Installed mod (v${status.installedVersion}) differs from app (v${status.appVersion}).`
-            : `설치된 모드(v${status.installedVersion})와 프로그램(v${status.appVersion}) 버전이 다릅니다.`;
+         modVersionBadge.title = isSameVersionNumber
+            ? isEn
+               ? `Mod v${status.installedVersion} internal files differ from latest bundle.`
+               : `설치된 모드(v${status.installedVersion})의 내부 스크립트 파일 갱신이 필요합니다.`
+            : isEn
+              ? `Installed mod (v${status.installedVersion}) differs from app (v${status.appVersion}).`
+              : `설치된 모드(v${status.installedVersion})와 프로그램(v${status.appVersion}) 버전이 다릅니다.`;
 
          if (modSyncBanner) {
             modSyncBanner.classList.remove("banner-hidden");
             if (modBannerTitle) {
                modBannerTitle.textContent = isEn
                   ? "CK3 Mod Sync Required"
-                  : "CK3 모드 버전 동기화 필요";
+                  : isSameVersionNumber
+                    ? "CK3 모드 파일 동기화 필요"
+                    : "CK3 모드 버전 동기화 필요";
             }
             if (modBannerDesc) {
-               modBannerDesc.textContent = isEn
-                  ? `Installed: v${status.installedVersion ?? "?"} ➔ App: v${status.appVersion}`
-                  : `설치된 모드: v${status.installedVersion ?? "미상"} ➔ 프로그램: v${status.appVersion}`;
+               modBannerDesc.textContent = isSameVersionNumber
+                  ? isEn
+                     ? `Mod v${status.installedVersion} script files need to be updated.`
+                     : `모드(v${status.installedVersion}) 내부 스크립트 변경이 감지되었습니다.`
+                  : isEn
+                    ? `Installed: v${status.installedVersion ?? "?"} ➔ App: v${status.appVersion}`
+                    : `설치된 모드: v${status.installedVersion ?? "미상"} ➔ 프로그램: v${status.appVersion}`;
             }
          }
          if (modalModStatusText) {
-            modalModStatusText.textContent = isEn
-               ? `⚠️ Version Mismatch (Installed: v${status.installedVersion} / Latest: v${status.appVersion})`
-               : `⚠️ 버전 불일치 (설치: v${status.installedVersion} / 최신: v${status.appVersion})`;
+            modalModStatusText.textContent = isSameVersionNumber
+               ? isEn
+                  ? `⚠️ File Sync Needed (v${status.installedVersion} Script Updated)`
+                  : `⚠️ 파일 갱신 필요 (v${status.installedVersion} 내부 스크립트 변경 감지)`
+               : isEn
+                 ? `⚠️ Version Mismatch (Installed: v${status.installedVersion} / Latest: v${status.appVersion})`
+                 : `⚠️ 버전 불일치 (설치: v${status.installedVersion} / 최신: v${status.appVersion})`;
          }
          if (modalModSubtext) {
             modalModSubtext.textContent = isEn
@@ -1038,7 +1056,6 @@ const handleSyncModFiles = async (): Promise<void> => {
             }),
             "success",
          );
-         await checkModSyncStatus(false);
       } else {
          showToast(
             isEn
@@ -1051,18 +1068,7 @@ const handleSyncModFiles = async (): Promise<void> => {
       console.error("❌ [ModSync] 동기화 실행 오류:", error);
       showToast(t("toast.syncError"), "warning");
    } finally {
-      if (btnSyncMod) {
-         btnSyncMod.disabled = false;
-         btnSyncMod.textContent = isEn
-            ? "🔄 Sync Mod Now"
-            : "🔄 모드 지금 동기화";
-      }
-      if (btnModalSyncMod) {
-         btnModalSyncMod.disabled = false;
-         btnModalSyncMod.textContent = isEn
-            ? "🔄 Sync Mod Files"
-            : "🔄 모드 파일 동기화";
-      }
+      await checkModSyncStatus(false);
    }
 };
 let lastFallbackToastTime = 0;
@@ -1533,6 +1539,8 @@ const sanitizeDisplayText = (text: string): string => {
    }
    return text
       .replace(/(?:\|{1,3}\s*)?GENDER:[A-Za-z_]+(?:\b|(?=["'\s]))/gi, "")
+      .replace(/\b[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)+!+\s*/g, "")
+      .replace(/(?:^|\s)(?:emphasis|emp|tut|tut_kw)\b\s*(?=[가-힣])/gi, " ")
       .replace(/\s*\|{2,}\s*/g, " ")
       .replace(/\s*\|\s*$/g, "")
       .replace(/\s{2,}/g, " ")

@@ -7,3 +7,4 @@
  duchess_landless_adventurer_camp_wanderers:0 "부인"
  duke_landless_adventurer_camp_scholars:0 "부군"
  duchess_landless_adventurer_camp_scholars:0 "부인"
+ CLIPBOARD_GAME_MODULE_VERSION_INFO:0 "[Select_CString( GetVariableSystem.Exists( 'tts_clipboard' ), GetVariableSystem.Get( 'tts_clipboard' ), '' )]\n$MODULE$ 버전:\n   분기: $BRANCH$\n   커밋: $HASH_LONG$\n   일시: $TIMESTAMP$\n   커밋 번호: $COMMIT_COUNT$\n   MP 체크섬: [GetMPChecksum]"

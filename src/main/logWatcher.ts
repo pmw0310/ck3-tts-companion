@@ -118,6 +118,52 @@ export const getLiveFileSize = (targetFilePath: string): number | null => {
   }
 };
 
+/** 실시간 파일 메타데이터 (크기, 수정 시각, 오프셋 0 선두 바이트 서명) */
+type LiveFileMeta = {
+  readonly size: number;
+  readonly mtimeMs: number;
+  readonly headSignature: Buffer;
+};
+
+/** 파일 truncate/덮어쓰기 감지용 오프셋 0 선두 바이트 읽기 상한 */
+const HEAD_SIGNATURE_MAX_BYTES = 512;
+
+/**
+ * 실시간 파일 크기, 수정 시각(mtimeMs) 및 오프셋 0 선두 바이트(최대 512B)를 함께 조회합니다.
+ * [ClearErrorLog] 등으로 error.log가 0바이트로 잘린 직후 이전 filePosition 이상으로 새 로그가 덮어써진 경우,
+ * 선두 바이트 서명 비교를 통해 오프셋 0 재작성을 즉시 감지합니다.
+ * @param targetFilePath - 조회할 파일 경로
+ * @returns 실시간 파일 메타데이터 (파일이 없거나 실패 시 null)
+ */
+const getLiveFileMeta = (targetFilePath: string): LiveFileMeta | null => {
+  if (!fs.existsSync(targetFilePath)) {
+    return null;
+  }
+  let fd: number | null = null;
+  try {
+    fd = fs.openSync(targetFilePath, 'r');
+    const stats = fs.fstatSync(fd);
+    const headLen = Math.min(stats.size, HEAD_SIGNATURE_MAX_BYTES);
+    const headBuf = Buffer.alloc(headLen);
+    const bytesRead = headLen > 0 ? fs.readSync(fd, headBuf, 0, headLen, 0) : 0;
+    return {
+      size: stats.size,
+      mtimeMs: stats.mtimeMs,
+      headSignature: headBuf.subarray(0, bytesRead)
+    };
+  } catch {
+    return null;
+  } finally {
+    if (fd !== null) {
+      try {
+        fs.closeSync(fd);
+      } catch {
+        // 핸들 닫기 예외 안전 무시
+      }
+    }
+  }
+};
+
 /**
  * 인게임 처형 명칭 텍스트를 사운드 타입 식별자로 매핑합니다.
  * 처형과 무관한 일반 상호작용(선물 보내기, 작위 수여 등)인 경우 null을 반환합니다.
@@ -375,12 +421,57 @@ export const startWatchingLogFile = <TSnapshot>(
   const gameLogPath = path.join(logDir, 'game.log');
 
   const watchPaths: string[] = [debugLogPath, errorLogPath, gameLogPath];
+  const fileHeadSignatures = new Map<string, Buffer>();
+  const fileMtimes = new Map<string, number>();
 
-  // 기존 파일 크기 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
+  /**
+   * 파일이 [ClearErrorLog] 또는 게임 재시작 등으로 오프셋 0부터 새로 덮어써졌는지 판별합니다.
+   * @param normalizedPath - 정규화된 파일 경로
+   * @param meta - 현재 파일의 실시간 메타데이터
+   * @param filePosition - 기존 읽기 오프셋
+   * @returns 오프셋 0으로 리셋해야 하면 true
+   */
+  const didFileTruncateOrRewrite = (
+    normalizedPath: string,
+    meta: LiveFileMeta,
+    filePosition: number
+  ): boolean => {
+    if (filePosition === 0) {
+      return false;
+    }
+    if (meta.size < filePosition) {
+      return true;
+    }
+    const prevHead = fileHeadSignatures.get(normalizedPath);
+    if (prevHead && prevHead.length > 0) {
+      const compareLen = Math.min(prevHead.length, meta.headSignature.length);
+      if (
+        compareLen < prevHead.length ||
+        !meta.headSignature.subarray(0, compareLen).equals(prevHead.subarray(0, compareLen))
+      ) {
+        return true;
+      }
+    }
+    const prevMtime = fileMtimes.get(normalizedPath);
+    if (
+      normalizedPath === errorLogPath &&
+      meta.size > 0 &&
+      meta.size === filePosition &&
+      prevMtime !== undefined &&
+      meta.mtimeMs > prevMtime
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  // 기존 파일 크기 및 선두 서명 기록 (앱 시작 시점 이전의 지난 로그는 읽지 않고 건너뜀)
   for (const targetPath of watchPaths) {
-    const initialSize = getLiveFileSize(targetPath);
-    if (initialSize !== null) {
-      filePositions.set(targetPath, initialSize);
+    const initialMeta = getLiveFileMeta(targetPath);
+    if (initialMeta !== null) {
+      filePositions.set(targetPath, initialMeta.size);
+      fileHeadSignatures.set(targetPath, initialMeta.headSignature);
+      fileMtimes.set(targetPath, initialMeta.mtimeMs);
     }
   }
 
@@ -543,15 +634,17 @@ export const startWatchingLogFile = <TSnapshot>(
     }
 
     try {
-      const liveSize = getLiveFileSize(normalizedPath);
-      if (liveSize === null) {
+      const liveMeta = getLiveFileMeta(normalizedPath);
+      if (liveMeta === null) {
         return;
       }
+      const liveSize = liveMeta.size;
       let filePosition = filePositions.get(normalizedPath) ?? 0;
 
-      // 게임 재시작 등으로 파일이 새로 쓰여 크기가 줄어든 경우 (truncate 또는 새 파일 생성)
-      if (liveSize < filePosition) {
+      // 게임 재시작 또는 [ClearErrorLog] 등으로 파일이 오프셋 0부터 새로 쓰인 경우 (truncate 또는 덮어쓰기)
+      if (didFileTruncateOrRewrite(normalizedPath, liveMeta, filePosition)) {
         filePosition = 0;
+        pendingBuffers.delete(normalizedPath);
       }
 
       if (liveSize === filePosition) {
@@ -721,8 +814,10 @@ export const startWatchingLogFile = <TSnapshot>(
             emitParsedEvents(parsedEvents, isFromErrorLog ? 'error' : 'debug', effectiveText);
           }
         } finally {
-          // 스트림 읽기 종료 시점에 항상 바이트 포지션 확정 및 뮤텍스 락 해제 (STOP 조기 반환 시에도 데드락 방지)
+          // 스트림 읽기 종료 시점에 항상 바이트 포지션, 선두 서명, 수정 시각 확정 및 뮤텍스 락 해제 (STOP 조기 반환 시에도 데드락 방지)
           filePositions.set(normalizedPath, targetSize);
+          fileHeadSignatures.set(normalizedPath, liveMeta.headSignature);
+          fileMtimes.set(normalizedPath, liveMeta.mtimeMs);
           activeReadStreams.delete(normalizedPath);
 
           // 스트림 읽기 도중 추가 유입된 변경 요청이 있다면 즉시 1회 순차 소비
@@ -749,6 +844,8 @@ export const startWatchingLogFile = <TSnapshot>(
   watcher.on('unlink', (removedPath: string) => {
     const normalizedRemoved = path.resolve(removedPath);
     filePositions.delete(normalizedRemoved);
+    fileHeadSignatures.delete(normalizedRemoved);
+    fileMtimes.delete(normalizedRemoved);
     if (!fs.existsSync(logFilePath)) {
       onStatusChange?.(false, logFilePath);
     }
@@ -774,11 +871,13 @@ export const startWatchingLogFile = <TSnapshot>(
       }
 
       for (const normalizedTarget of activeWatchTargets) {
-        const liveSize = getLiveFileSize(normalizedTarget);
-        if (liveSize !== null) {
+        const liveMeta = getLiveFileMeta(normalizedTarget);
+        if (liveMeta !== null) {
           const lastPos = filePositions.get(normalizedTarget);
-          // 파일이 새로 생성되었거나 크기가 변경되었는데 watcher가 놓친 경우 자가 치유
-          if (lastPos === undefined || liveSize !== lastPos) {
+          const isRewritten =
+            lastPos !== undefined && didFileTruncateOrRewrite(normalizedTarget, liveMeta, lastPos);
+          // 파일이 새로 생성되었거나 크기가 변경되었거나 ClearErrorLog로 덮어써졌는데 watcher가 놓친 경우 자가 치유
+          if (lastPos === undefined || liveMeta.size !== lastPos || isRewritten) {
             if (watcher) {
               watcher.add(normalizedTarget);
             }
@@ -790,6 +889,8 @@ export const startWatchingLogFile = <TSnapshot>(
         } else {
           if (filePositions.has(normalizedTarget)) {
             filePositions.delete(normalizedTarget);
+            fileHeadSignatures.delete(normalizedTarget);
+            fileMtimes.delete(normalizedTarget);
             if (normalizedTarget === path.resolve(logFilePath)) {
               onStatusChange?.(false, logFilePath);
             }

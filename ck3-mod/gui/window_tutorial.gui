@@ -24,7 +24,10 @@
 			size = { 0 0 }
 			visible = yes
 			shortcut = "army_split_half"
+			onclick = "[ClearErrorLog]"
 			onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+			onclick = "[GetVariableSystem.Set('tts_clipboard', Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+			onclick = "[CopyBuildVersionInfoToClipboard]"
 		}
 
 		icon = {
@@ -178,7 +181,10 @@
 							name = "tts_speak_button"
 							size = { 32 32 }
 							raw_tooltip = "이 튜토리얼 낭독 듣기 (단축키: F)"
+							onclick = "[ClearErrorLog]"
 							onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+							onclick = "[GetVariableSystem.Set('tts_clipboard', Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+							onclick = "[CopyBuildVersionInfoToClipboard]"
 
 							button_icon = {
 								alwaystransparent = yes
@@ -194,7 +200,6 @@
 							default_format = "#weak"
 							fontsize = 13
 							fontsize_min = 10
-							parentanchor = vcenter
 							align = nobaseline
 						}
 
@@ -260,6 +265,7 @@
 					tooltip = "tutorial_lesson_button_read_later"
 					onclick = "[Tutorial.OnClickTransition('read_later')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
+					onclick = "[ClearErrorLog]"
 					onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				}
 			}
@@ -352,10 +358,13 @@
 				button_standard = {
 					size = { 150 33 }
 					visible = "[Tutorial.HasTransition('repeat')]"
+					onclick = "[Tutorial.OnClickTransition('repeat')]"
+					onclick = "[ClearErrorLog]"
+					onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+					onclick = "[GetVariableSystem.Set('tts_clipboard', Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
+					onclick = "[CopyBuildVersionInfoToClipboard]"
 					enabled = "[Tutorial.IsTransitionEnabled('repeat')]"
 					text = "[Tutorial.GetTransitionText('repeat')]"
-					onclick = "[Tutorial.OnClickTransition('repeat')]"
-					onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Tutorial.GetStepName, Concatenate('|||', Concatenate(Tutorial.GetStepText, '##CK3_TTS_END##')))))]"
 				}
 				
 				expand = {}
@@ -367,6 +376,7 @@
 					text = "[Tutorial.GetTransitionText('skip')]"
 					onclick = "[Tutorial.OnClickTransition('skip')]"
 					onclick = "[GetVariableSystem.Clear('tutorial_current_step_text')]"
+					onclick = "[ClearErrorLog]"
 					onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				}
 

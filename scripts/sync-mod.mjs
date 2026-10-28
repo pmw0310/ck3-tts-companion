@@ -175,6 +175,15 @@ const syncDirectory = (src, dest) => {
     if (srcEntry.isDirectory()) {
       syncDirectory(srcPath, destPath);
     } else {
+      if (srcEntry.name.toLowerCase().endsWith('.yml')) {
+        const rawYml = fs.readFileSync(srcPath);
+        const hasBom = rawYml.length >= 3 && rawYml[0] === 0xef && rawYml[1] === 0xbb && rawYml[2] === 0xbf;
+        const textBody = rawYml.toString('utf-8').replace(/^\uFEFF/, '');
+        const normalizedBody = textBody.replace(/\r?\n/g, '\r\n');
+        if (!hasBom || textBody !== normalizedBody) {
+          fs.writeFileSync(srcPath, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(normalizedBody, 'utf-8')]));
+        }
+      }
       let shouldCopy = true;
       if (fs.existsSync(destPath)) {
         const srcStat = fs.statSync(srcPath);

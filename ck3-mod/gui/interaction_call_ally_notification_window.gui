@@ -1,4 +1,4 @@
-﻿######################################################
+######################################################
 ############## INTERACTION NOTIFICATION ##############
 ######################################################
 
@@ -13,9 +13,15 @@ window = {
 
 	state = {
 		name = _show
+		next = tts_call_ally_speak_auto
 		using = Animation_FadeIn_Quick
 		using = Sound_WindowShow_Standard
 		delay = 0.1
+		on_start = "[ClearErrorLog]"
+	}
+
+	state = {
+		name = tts_call_ally_speak_auto
 		on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, '##CK3_TTS_END##')))))]"
 	}
 
@@ -31,7 +37,8 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
-		onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, '##CK3_TTS_END##')))))]"
+		onclick = "[ClearErrorLog]"
+				onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, '##CK3_TTS_END##')))))]"
 	}
 
 	vbox = {
@@ -49,6 +56,7 @@ window = {
 			blockoverride "button_close"
 			{
 				onclick = "[CallAllyInteractionNotificationWindow.Close]"
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
@@ -68,6 +76,7 @@ window = {
 					texture = "gfx/interface/icons/flat_icons/play_sound.dds"
 				}
 
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(CharacterInteractionNotificationWindow.GetContextName, Concatenate('|||', Concatenate(CharacterInteractionNotificationWindow.GetNotificationText, '##CK3_TTS_END##')))))]"
 			}
 		}
@@ -212,6 +221,7 @@ window = {
 				name = "reject_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
 				onclick = "[CharacterInteractionNotificationWindow.Reject]"
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanReject]"
 				using = tooltip_ws
@@ -222,6 +232,7 @@ window = {
 				name = "accept_button"
 				text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
 				onclick = "[CharacterInteractionNotificationWindow.Accept]"
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
 			}

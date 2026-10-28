@@ -6453,7 +6453,10 @@ types InventoryTooltips
 								alwaystransparent = yes
 							}
 
+							onclick = "[ClearErrorLog]"
 							onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##')))))]"
+							onclick = "[GetVariableSystem.Set('tts_clipboard', Concatenate('##CK3_TTS_FORCE## ', Concatenate(Artifact.GetNameNoTooltip, Concatenate('|||', Concatenate(Artifact.GetDesc, '##CK3_TTS_END##')))))]"
+							onclick = "[CopyBuildVersionInfoToClipboard]"
 						}
 					}
 				}

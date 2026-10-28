@@ -43,10 +43,15 @@ window = {
 
 	state = {
 		name = _show
+		next = tts_war_results_speak_auto
 		using = Animation_FadeIn_Quick
 		delay = 0.1
 
 		position = { 0 120 }
+		on_start = "[ClearErrorLog]"
+	}
+	state = {
+		name = tts_war_results_speak_auto
 		on_start = "[CloseGameView(Concatenate('##CK3_TTS## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##')))))))]"
 	}
 	state = {
@@ -67,6 +72,7 @@ window = {
 		size = { 0 0 }
 		visible = yes
 		shortcut = "army_split_half"
+		onclick = "[ClearErrorLog]"
 		onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##')))))))]"
 	}
 
@@ -114,6 +120,7 @@ window = {
 					alwaystransparent = yes
 				}
 
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView(Concatenate('##CK3_TTS_FORCE## ', Concatenate(WarResultsWindow.GetOutcome, Concatenate(': ', Concatenate(WarResultsWindow.GetWarName, Concatenate('|||', Concatenate(Select_CString( WarResultsWindow.IsInvalidated, WarResultsWindow.GetSimpleDescription, WarResultsWindow.GetMessage ), '|||TYPE:WAR_RESULTS##CK3_TTS_END##')))))))]"
 			}
 		}
@@ -517,6 +524,7 @@ window = {
 				name = "close_button"
 				text = "WAR_RESULTS_DISMISS"
 				onclick = "[WarResultsWindow.Dismiss]"
+				onclick = "[ClearErrorLog]"
 				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
