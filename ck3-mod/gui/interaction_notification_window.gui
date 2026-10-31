@@ -48,7 +48,7 @@ window = {
 			{
 				onclick = "[CharacterInteractionNotificationWindow.Close]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
 			button_round = {
@@ -92,7 +92,7 @@ window = {
 					text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
 					onclick = "[CharacterInteractionNotificationWindow.Reject]"
 					onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 					enabled = "[CharacterInteractionNotificationWindow.CanReject]"
 					using = tooltip_ws
 					default_format = "#medium"
@@ -103,7 +103,7 @@ window = {
 					text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
 					onclick = "[CharacterInteractionNotificationWindow.Accept]"
 					onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 					enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
 				}
 			}
@@ -114,7 +114,7 @@ window = {
 				text = "[CharacterInteractionNotificationWindow.GetAnswerAcknowledgeText]"
 				onclick = "[CharacterInteractionNotificationWindow.Acknowledge]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
 			button_standard = {
@@ -122,7 +122,7 @@ window = {
 				text = "[CharacterInteractionNotificationWindow.GetAnswerBlockText]"
 				onclick = "[CharacterInteractionNotificationWindow.Block]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				visible = "[CharacterInteractionNotificationWindow.CanPotentiallyBeBlocked]"
 				enabled = "[CharacterInteractionNotificationWindow.CanBeBlocked]"
 				tooltip = "[CharacterInteractionNotificationWindow.GetCanBeBlockedTooltip]"

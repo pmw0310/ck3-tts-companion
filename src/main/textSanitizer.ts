@@ -496,11 +496,14 @@ export const sanitizeCk3Text = (rawText: string): string => {
 type StartTagPattern = {
   readonly tag: string;
   readonly isForceReplay: boolean;
+  readonly isBackgroundEvent?: boolean;
 };
 
 const START_TAG_PATTERNS: readonly StartTagPattern[] = [
   { tag: '##CK3_TTS_FORCE##', isForceReplay: true },
   { tag: '[CK3_TTS_FORCE]', isForceReplay: true },
+  { tag: '##CK3_TTS_BG##', isForceReplay: false, isBackgroundEvent: true },
+  { tag: '[CK3_TTS_BG]', isForceReplay: false, isBackgroundEvent: true },
   { tag: '##CK3_TTS##', isForceReplay: false },
   { tag: '[CK3_TTS]', isForceReplay: false }
 ];
@@ -542,6 +545,7 @@ const parseRecoveredPayload = (
   title: string;
   content: string;
   isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
   eventType?: Ck3EventType;
 } | null => {
@@ -549,7 +553,7 @@ const parseRecoveredPayload = (
     payload.includes('##CK3_TTS_FORCE##') || payload.includes('[CK3_TTS_FORCE]');
 
   let clean = payload
-    .replace(/(?:\[|##)CK3_TTS(?:_FORCE)?(?:\]|##)/gi, '')
+    .replace(/(?:\[|##)CK3_TTS(?:_FORCE|_BG)?(?:\]|##)/gi, '')
     .trim();
 
   const endIdx = clean.search(/(?:\[|##)CK3_TTS_END(?:\]|##)/i);
@@ -702,6 +706,7 @@ const recoverEventsFromErrorLog = (
   title: string;
   content: string;
   isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
   eventType?: Ck3EventType;
 }> => {
@@ -709,6 +714,7 @@ const recoverEventsFromErrorLog = (
     title: string;
     content: string;
     isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
     eventType?: Ck3EventType;
   }> = [];
@@ -916,6 +922,7 @@ export const extractCk3EventsFromChunk = (
   title: string;
   content: string;
   isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
   speakerGender?: 'male' | 'female' | 'narrator';
   eventType?: Ck3EventType;
 }> => {
@@ -923,6 +930,7 @@ export const extractCk3EventsFromChunk = (
     title: string;
     content: string;
     isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
     eventType?: Ck3EventType;
   }> = [];
@@ -930,6 +938,7 @@ export const extractCk3EventsFromChunk = (
     title: string;
     content: string;
     isForceReplay?: boolean;
+    isBackgroundEvent?: boolean;
     speakerGender?: 'male' | 'female' | 'narrator';
     eventType?: Ck3EventType;
   }> = [];
@@ -937,11 +946,11 @@ export const extractCk3EventsFromChunk = (
   let searchIndex = 0;
   while (searchIndex < chunk.length) {
     // 1. 가장 먼저 등장하는 시작 태그 탐색
-    let bestStart: { index: number; tag: string; isForceReplay: boolean } | null = null;
+    let bestStart: { index: number; tag: string; isForceReplay: boolean; isBackgroundEvent: boolean } | null = null;
     for (const pattern of START_TAG_PATTERNS) {
       const idx = chunk.indexOf(pattern.tag, searchIndex);
       if (idx !== -1 && (bestStart === null || idx < bestStart.index)) {
-        bestStart = { index: idx, tag: pattern.tag, isForceReplay: pattern.isForceReplay };
+        bestStart = { index: idx, tag: pattern.tag, isForceReplay: pattern.isForceReplay, isBackgroundEvent: Boolean(pattern.isBackgroundEvent) };
       }
     }
 
@@ -951,6 +960,7 @@ export const extractCk3EventsFromChunk = (
 
     const startIndex = bestStart.index;
     const isForceReplay = bestStart.isForceReplay;
+    const isBackgroundEvent = bestStart.isBackgroundEvent;
     const prefixLength = bestStart.tag.length;
 
     // 2. 앞선 로그가 ERROR: 로 시작하는 경우 패러독스 파서가 따옴표 등으로 잘라버린 불완전 에러 라인이므로 스킵
@@ -1055,7 +1065,8 @@ export const extractCk3EventsFromChunk = (
           content,
           isForceReplay,
           speakerGender,
-          eventType: typeExtraction.markerType ?? eventType
+          eventType: typeExtraction.markerType ?? eventType,
+          ...(isBackgroundEvent ? { isBackgroundEvent: true } : {})
         });
       } else {
         console.warn('⚠️ [TextSanitizer] 정제 후 비정상 스크립트/무효 텍스트로 판정되어 차단했습니다:', { title, content });
@@ -1104,10 +1115,7 @@ export const extractCk3EventsFromChunk = (
     }
     const existingIndex = events.findIndex(
       (e) =>
-        candidate.content.includes(e.content) ||
-        e.content.includes(candidate.content) ||
-        isFragmentOf(candidate.content, e.content) ||
-        isFragmentOf(e.content, candidate.content)
+        candidate.content.includes(e.content) || e.content.includes(candidate.content) || ((e.title === candidate.title || e.title === '이벤트' || candidate.title === '이벤트') && (isFragmentOf(candidate.content, e.content) || isFragmentOf(e.content, candidate.content)))
     );
     if (existingIndex === -1) {
       events.push(candidate);

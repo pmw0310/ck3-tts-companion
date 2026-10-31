@@ -261,7 +261,7 @@
 
 		onclick = "[VariableSystem.Clear( 'activity_locale_view' )]"
 		onclick = "[ActivityLocaleWindow.Close]"
-		onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+		onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 
 		shortcut = "close_window"
 

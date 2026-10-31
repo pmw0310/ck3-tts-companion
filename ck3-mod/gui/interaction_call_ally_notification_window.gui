@@ -57,7 +57,7 @@ window = {
 			{
 				onclick = "[CallAllyInteractionNotificationWindow.Close]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
 			# CK3 TTS Companion: 전쟁 소집 서신 낭독 버튼
@@ -222,7 +222,7 @@ window = {
 				text = "[CharacterInteractionNotificationWindow.GetAnswerRejectText]"
 				onclick = "[CharacterInteractionNotificationWindow.Reject]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanReject]"
 				using = tooltip_ws
 				default_format = "#medium"
@@ -233,7 +233,7 @@ window = {
 				text = "[CharacterInteractionNotificationWindow.GetAnswerAcceptText]"
 				onclick = "[CharacterInteractionNotificationWindow.Accept]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 				enabled = "[CharacterInteractionNotificationWindow.CanAccept]"
 			}
 		}

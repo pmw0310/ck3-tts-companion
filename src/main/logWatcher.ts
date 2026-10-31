@@ -332,6 +332,14 @@ export const startWatchingLogFile = <TSnapshot>(
   const recentEventMetaCache = new Map<string, { time: number; isForceReplay: boolean }>();
   const recentLegendChronicleCache = new Map<string, { chapters: string[]; time: number; isForceReplay: boolean }>();
   const recentTitleCache = new Map<string, { channel: EventChannel; time: number; content: string }>();
+  const pendingBackgroundEvents: Array<{
+    event: ParsedCk3Event;
+    channel: EventChannel;
+    rawText: string;
+    queuedAt: number;
+  }> = [];
+  const MAX_PENDING_BACKGROUND_EVENTS = 15;
+  const PENDING_BACKGROUND_TTL_MS = 120_000;
   let lastEventEmitTime = 0;
   let lastEventEmitChannel: EventChannel | null = null;
   let lastStopEmitTime = 0;
@@ -384,11 +392,22 @@ export const startWatchingLogFile = <TSnapshot>(
     }
   };
 
+  // 감시할 파일 목록 구성 (기본 debug.log, error.log 및 [E]/[D] 100,000건 쿼터 소진 시에도 [I] info_log가 기록되는 game.log 상시 동시 감시)
+  const debugLogPath = path.resolve(logFilePath);
+  const logDir = path.dirname(debugLogPath);
+  const errorLogPath = path.join(logDir, 'error.log');
+  const gameLogPath = path.join(logDir, 'game.log');
+
+  const watchPaths: string[] = [debugLogPath, errorLogPath, gameLogPath];
+  const fileHeadSignatures = new Map<string, Buffer>();
+  const fileMtimes = new Map<string, number>();
+
   /**
    * 채널 간 중복 및 지연 STOP 경합을 방어하며 정지 신호를 방출합니다.
    * @param channel - STOP 신호가 감지된 채널
+   * @param sourceTimestampMs - 파일 채널인 경우 로그 파일의 수정 시각(mtimeMs)
    */
-  const emitStopSignal = (channel: EventChannel): void => {
+  const emitStopSignal = (channel: EventChannel, sourceTimestampMs?: number): void => {
     if (isStopped) {
       return;
     }
@@ -401,28 +420,80 @@ export const startWatchingLogFile = <TSnapshot>(
     ) {
       return;
     }
-    // 2) 다른 채널(예: 클립보드)에서 새 이벤트가 방출된 직후(800ms 이내) 뒤늦게 도착한 이전 창의 지연 STOP 신호는 새 오디오를 끊지 않도록 무시
+    // 2) 클립보드로 새 이벤트가 방출된 직후(800ms 이내), 그 이벤트 방출 시점보다 이전에 기록된(sourceTimestampMs < lastEventEmitTime)
+    //    이전 창의 지연 로그 STOP 신호만 무시하고, 이벤트 방출 이후 사용자가 창을 닫아 발생한 STOP 신호는 즉시 통과시킵니다.
     if (
-      lastEventEmitChannel !== null &&
-      lastEventEmitChannel !== channel &&
-      now - lastEventEmitTime < 800
+      channel !== 'clipboard' &&
+      lastEventEmitChannel === 'clipboard' &&
+      now - lastEventEmitTime < 800 &&
+      sourceTimestampMs !== undefined &&
+      sourceTimestampMs < lastEventEmitTime
     ) {
       return;
     }
+
+    // 3) 클립보드로 STOP을 먼저 처리하는 시점에 error.log 선두에 함께 기록된 동일 STOP 라인을 즉시 소비(포지션 전진)하여,
+    //    이후 승격된 하위 창의 초상화/스크립트 경고가 error.log에 추가(mtimeMs 갱신)되더라도 이전 STOP이 재발화되어 승격 TTS를 끊지 않도록 방어합니다.
+    if (channel === 'clipboard' && !activeReadStreams.has(errorLogPath)) {
+      const errorMeta = getLiveFileMeta(errorLogPath);
+      if (errorMeta !== null) {
+        const headStr = errorMeta.headSignature.toString('utf8');
+        const stopIdx = Math.max(
+          headStr.lastIndexOf('##CK3_TTS_STOP##'),
+          headStr.lastIndexOf('[CK3_TTS_STOP]')
+        );
+        if (stopIdx !== -1) {
+          const lineEndIdx = headStr.indexOf('\n', stopIdx);
+          const consumedBytes =
+            lineEndIdx !== -1
+              ? Buffer.byteLength(headStr.slice(0, lineEndIdx + 1), 'utf8')
+              : errorMeta.size;
+          filePositions.set(errorLogPath, Math.min(errorMeta.size, consumedBytes));
+          fileHeadSignatures.set(errorLogPath, errorMeta.headSignature);
+          fileMtimes.set(errorLogPath, errorMeta.mtimeMs);
+        }
+      }
+    }
+
+    // 창이 닫혔으므로 이전 이벤트의 미완성 버퍼 및 지연 방출 타이머(fallbackTimer, ERROR_LOG_DEFER_MS 등)를 즉시 일괄 취소하여
+    // 닫힌 창의 텍스트 파편이 STOP 이후 뒤늦게 재방출되는 현상을 차단합니다.
+    for (const timer of deferredEmitTimers) {
+      clearTimeout(timer);
+    }
+    deferredEmitTimers.clear();
+    pendingBuffers.clear();
+
     lastStopEmitTime = now;
     lastStopEmitChannel = channel;
     onStop?.();
+
+    // 최상단 이벤트 창이 닫힌(STOP) 뒤 대기열에 쌓여 있던 하위 배경(BG) 이벤트가 있다면,
+    // 인게임 GUI(tts_on_top_tracker, delay=0.25s)의 직접 발화를 먼저 기다린 후 미발화 시 320ms 시점에 순차 승격 방출합니다.
+    if (pendingBackgroundEvents.length > 0) {
+      const stopTimeSnapshot = now;
+      const promoteTimer = setTimeout(() => {
+        deferredEmitTimers.delete(promoteTimer);
+        if (isStopped || pendingBackgroundEvents.length === 0) {
+          return;
+        }
+        if (lastEventEmitTime > stopTimeSnapshot) {
+          return;
+        }
+        const promoteNow = Date.now();
+        while (
+          pendingBackgroundEvents.length > 0 &&
+          promoteNow - (pendingBackgroundEvents[0]?.queuedAt ?? 0) > PENDING_BACKGROUND_TTL_MS
+        ) {
+          pendingBackgroundEvents.shift();
+        }
+        const nextQueued = pendingBackgroundEvents.shift();
+        if (nextQueued) {
+          emitParsedEvents([nextQueued.event], nextQueued.channel, nextQueued.rawText);
+        }
+      }, 320);
+      deferredEmitTimers.add(promoteTimer);
+    }
   };
-
-  // 감시할 파일 목록 구성 (기본 debug.log, error.log 및 [E]/[D] 100,000건 쿼터 소진 시에도 [I] info_log가 기록되는 game.log 상시 동시 감시)
-  const debugLogPath = path.resolve(logFilePath);
-  const logDir = path.dirname(debugLogPath);
-  const errorLogPath = path.join(logDir, 'error.log');
-  const gameLogPath = path.join(logDir, 'game.log');
-
-  const watchPaths: string[] = [debugLogPath, errorLogPath, gameLogPath];
-  const fileHeadSignatures = new Map<string, Buffer>();
-  const fileMtimes = new Map<string, number>();
 
   /**
    * 파일이 [ClearErrorLog] 또는 게임 재시작 등으로 오프셋 0부터 새로 덮어써졌는지 판별합니다.
@@ -512,6 +583,76 @@ export const startWatchingLogFile = <TSnapshot>(
 
     for (const rawParsedEvent of parsedEvents) {
       let event = rawParsedEvent;
+      // 다중 이벤트 중첩 시 최하단/배경 창(##CK3_TTS_BG##, Not(EventWindow.IsOnTop))에서 유입된 이벤트는
+      // 현재 최상단(IsOnTop) 이벤트를 덮어쓰거나 가로채지 않도록 대기열에 보관하고 즉시 방출을 보류합니다.
+      if (event.isBackgroundEvent && !event.isForceReplay) {
+        const lastSeenFgTime = recentEventCache.get(event.content);
+        if (lastSeenFgTime && now - lastSeenFgTime < CACHE_TTL_MS) {
+          continue;
+        }
+        while (
+          pendingBackgroundEvents.length > 0 &&
+          now - (pendingBackgroundEvents[0]?.queuedAt ?? 0) > PENDING_BACKGROUND_TTL_MS
+        ) {
+          pendingBackgroundEvents.shift();
+        }
+        const isAlreadyQueued = pendingBackgroundEvents.some(
+          (item) =>
+            item.event.content === event.content ||
+            ((item.event.title === event.title || item.event.title === '이벤트' || event.title === '이벤트') && isFragmentOf(event.content, item.event.content))
+        );
+        if (!isAlreadyQueued) {
+          if (pendingBackgroundEvents.length >= MAX_PENDING_BACKGROUND_EVENTS) {
+            pendingBackgroundEvents.shift();
+          }
+          pendingBackgroundEvents.push({
+            event: { ...event, isBackgroundEvent: false },
+            channel,
+            rawText,
+            queuedAt: now
+          });
+          // 현재 활성화된 전경(최상단) 이벤트가 전혀 없는 상태에서 400ms 이내에 전경 이벤트가 도착하지 않으면,
+          // 동시 팝업 경합 등으로 전경 페이로드가 유실되어 두 이벤트 모두 침묵하는 현상을 막기 위해 대기열 선두를 자동 승격합니다.
+          if (pendingBackgroundEvents.length === 1 && lastEventEmitTime <= lastStopEmitTime) {
+            const bgQueueSnapshot = lastEventEmitTime;
+            const orphanTimer = setTimeout(() => {
+              deferredEmitTimers.delete(orphanTimer);
+              if (
+                isStopped ||
+                pendingBackgroundEvents.length === 0 ||
+                lastEventEmitTime > bgQueueSnapshot
+              ) {
+                return;
+              }
+              const nextOrphan = pendingBackgroundEvents.shift();
+              if (nextOrphan) {
+                emitParsedEvents([nextOrphan.event], nextOrphan.channel, nextOrphan.rawText);
+              }
+            }, 400);
+            deferredEmitTimers.add(orphanTimer);
+          }
+        }
+        continue;
+      }
+
+      // 최상단(전경) 이벤트로 유입된 사건이 배경 대기열에 있었다면 중복/쿨다운 가드보다 먼저 대기열에서 제거하여 사후 중복 승격을 방지합니다.
+      for (let i = pendingBackgroundEvents.length - 1; i >= 0; i--) {
+        const queued = pendingBackgroundEvents[i];
+        const isSameOrDefaultTitle =
+          queued !== undefined &&
+          (queued.event.title === event.title ||
+            queued.event.title === '이벤트' ||
+            event.title === '이벤트');
+        if (
+          queued &&
+          (queued.event.content === event.content ||
+            (isSameOrDefaultTitle &&
+              (isFragmentOf(queued.event.content, event.content) ||
+                isFragmentOf(event.content, queued.event.content))))
+        ) {
+          pendingBackgroundEvents.splice(i, 1);
+        }
+      }
       if (event.eventType === 'legend_chronicle') {
         const legendEntry = recentLegendChronicleCache.get(event.title);
         const isForce = Boolean(event.isForceReplay);
@@ -554,10 +695,11 @@ export const startWatchingLogFile = <TSnapshot>(
       let isDuplicateFragment = false;
 
       // 1. 단어 파편(Subset) 또는 부분 문자열 검사 (기존에 더 긴 원본이 이미 활성화되어 있는 경우)
+      const hasDistinctExplicitTitle = event.title !== '이벤트' && recentTitleCache.size > 0 && Array.from(recentTitleCache.keys()).every((t) => t !== event.title && !t.includes(event.title) && !event.title.includes(t));
       for (const [cachedContent, cachedTime] of recentEventCache.entries()) {
         if (
           now - cachedTime < RECENT_FRAGMENT_TTL_MS &&
-          isFragmentOf(event.content, cachedContent)
+          (cachedContent.includes(event.content) || (!hasDistinctExplicitTitle && isFragmentOf(event.content, cachedContent)))
         ) {
           isDuplicateFragment = true;
           break;
@@ -793,7 +935,7 @@ export const startWatchingLogFile = <TSnapshot>(
             const lastEndIndex = Math.max(lastEndHash, lastEndBracket);
 
             if (parsedEvents.length === 0 || lastStopIndex > lastEndIndex) {
-              emitStopSignal(isFromErrorLog ? 'error' : 'debug');
+              emitStopSignal(isFromErrorLog ? 'error' : 'debug', liveMeta.mtimeMs);
               return;
             }
           }
@@ -979,6 +1121,7 @@ export const startWatchingLogFile = <TSnapshot>(
       deferredEmitTimers.clear();
       recentExecutionSoundCache.clear();
       pendingBuffers.clear();
+      pendingBackgroundEvents.length = 0;
       if (watcher) {
         await watcher.close();
         watcher = null;

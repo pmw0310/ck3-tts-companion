@@ -201,7 +201,7 @@
 			tooltip = "CLOSE_TOOLTIP"
 			clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_close"
 			onclick = "[RoyalCourtWindow.Close]"
-			onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+			onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 
 			using = Animation_ShowHide_Quick
 

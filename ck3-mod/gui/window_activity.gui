@@ -877,7 +877,7 @@
 			blockoverride "button_close"
 			{
 				onclick = "[ActivityWindow.Close]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 			blockoverride "button_go_to"
 			{

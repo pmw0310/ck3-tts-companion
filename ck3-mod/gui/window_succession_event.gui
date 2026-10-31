@@ -360,7 +360,7 @@ window = {
 							texture = "gfx/interface/icons/flat_icons/window_close.dds"
 							onclick = "[SuccessionEventWindow.Close]"
 							onclick = "[ClearErrorLog]"
-							onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+							onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 						}
 					}
 

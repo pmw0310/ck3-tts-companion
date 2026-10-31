@@ -115,7 +115,7 @@
 		size = { 675 530 }           ############ SIZES NEED TO MATCH
 		alpha = 0
 		
-		using = Event_Window_Debug_EventTools
+		widget = { name = "tts_on_top_tracker" size = { 0 0 } state = { name = tts_initial_check trigger_on_create = yes duration = 0.15 on_finish = "[PdxGuiWidget.TriggerAnimation( Select_CString( EventWindow.IsOnTop, 'tts_speak_fg', 'tts_queue_bg' ) )]" } state = { name = tts_speak_fg on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('sender'), Select_CString( EventWindowData.GetPortraitCharacter('sender').IsFemale, '|||GENDER:LETTER_F##CK3_TTS_END##', '|||GENDER:LETTER_M##CK3_TTS_END##' ), '##CK3_TTS_END##' ))))))]" } state = { name = tts_queue_bg on_start = "[CloseGameView(Concatenate(Select_CString( EventWindow.IsOnTop, '##CK3_TTS## ', '##CK3_TTS_BG## ' ), Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('sender'), Select_CString( EventWindowData.GetPortraitCharacter('sender').IsFemale, '|||GENDER:LETTER_F##CK3_TTS_END##', '|||GENDER:LETTER_M##CK3_TTS_END##' ), '##CK3_TTS_END##' ))))))]" } widget = { name = "tts_promotion_watcher" size = { 0 0 } visible_at_creation = no visible = "[Not(EventWindow.IsOnTop)]" state = { name = _show } state = { name = _hide duration = 0.25 on_finish = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('sender'), Select_CString( EventWindowData.GetPortraitCharacter('sender').IsFemale, '|||GENDER:LETTER_F##CK3_TTS_END##', '|||GENDER:LETTER_M##CK3_TTS_END##' ), '##CK3_TTS_END##' ))))))]" } } } 		using = Event_Window_Debug_EventTools
 		using = Event_Window_Debug_OptionTooltips
 		blockoverride "is_event_on_top" {
 			enabled = "[EventWindow.IsOnTop]"
@@ -136,7 +136,7 @@
 
 			using = Animation_FadeIn_Standard
 
-			on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetOpening, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('sender'), Select_CString( EventWindowData.GetPortraitCharacter('sender').IsFemale, '|||GENDER:LETTER_F##CK3_TTS_END##', '|||GENDER:LETTER_M##CK3_TTS_END##' ), '##CK3_TTS_END##' ))))))]"
+			on_start = "[PdxGuiWidget.AccessChild('tts_on_top_tracker').TriggerAnimation('tts_initial_check')]"
 
 			animation = {
 				size = { 675 530 }           ############ SIZES NEED TO MATCH
@@ -301,7 +301,7 @@
 							name = "tts_speak_button"
 							size = { 36 36 }
 							raw_tooltip = "TTS 서신 낭독 (단축키: F)"
-							shortcut = "army_split_half"
+							shortcut = "army_split_half" enabled = "[EventWindow.IsOnTop]"
 
 							button_icon = {
 								texture = "gfx/interface/icons/flat_icons/play_sound.dds"
@@ -508,9 +508,9 @@
 						tooltip = "EVENT_TOOLTIP_SHORTCUT"
 						tooltip_visible = "[Not( StringIsEmpty( EventOption.GetTooltip ) )]"
 
-						onclick = "[EventOption.Select]"
-						onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]"
-						onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+						onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]" onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]" onclick = "[EventOption.Select]"
+						# [CopyBuildVersionInfoToClipboard] and [ClearErrorLog] are executed before EventOption.Select above
+						# [ClearErrorLog] is executed before CloseGameView above
 						onmousehierarchyenter = "[EventOption.OnEnter]"
 						onmousehierarchyleave = "[EventOption.OnLeave]"
 						enabled = "[EventOption.IsValid]"

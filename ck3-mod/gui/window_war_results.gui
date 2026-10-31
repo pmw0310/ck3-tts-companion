@@ -525,7 +525,7 @@ window = {
 				text = "WAR_RESULTS_DISMISS"
 				onclick = "[WarResultsWindow.Dismiss]"
 				onclick = "[ClearErrorLog]"
-				onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+				onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 			}
 
 			expand = {}

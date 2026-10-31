@@ -87,9 +87,9 @@ types Events
 		enabled = "[EventOption.IsValid]"
 
 		default_clicksound = "event:/SFX/UI/Generic/sfx_ui_generic_icon_select"
-		onclick = "[EventOption.Select]"
-		onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]"
-		onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+		onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]" onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]" onclick = "[EventOption.Select]"
+		# [CopyBuildVersionInfoToClipboard] and [ClearErrorLog] are executed before EventOption.Select above
+		# [ClearErrorLog] is executed before CloseGameView above
 		clicksound = "[EventOption.GetClickSound]"
 		block "eventoption_down" {
 			down = "[And(GetVariableSystem.HasValue('event_tooltip', EventOption.GetText), PdxGuiFoldOut.IsUnfolded)]"
@@ -1935,7 +1935,7 @@ template Event_Window_Debug_OptionTooltips
 									
 									container = {
 										button = {
-											onclick = "[EventOption.Select]"
+											onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]" onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]" onclick = "[EventOption.Select]"
 											onclick = "[GetVariableSystem.Clear('event_tooltip')]"
 											clicksound = "[EventOption.GetClickSound]"
 											visible = "[GetVariableSystem.Exists('event_tooltip')]"
@@ -2416,7 +2416,7 @@ types Events {
 	}
 	
 	type button_event_shortcut = button {
-		onclick = "[EventOption.Select]"
+		onclick = "[EventWindowData.CopyStringToClipboard('##CK3_TTS_STOP##')]" onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[ClearErrorLog]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]" onclick = "[EventOption.Select]"
 		clicksound = "[EventOption.GetClickSound]"
 		onclick = "[GetVariableSystem.Clear('event_tooltip')]"
 		# shift+number

@@ -147,7 +147,7 @@
 					{
 						onclick = "[LegendChronicleWindow.Close]"
 						onclick = "[ClearErrorLog]"
-						onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+						onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 					}
 					margin_right = 18
 				}
@@ -467,7 +467,7 @@
 							onclick = "[PostCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							onclick = "[LegendChronicleWindow.Close]"
 							onclick = "[ClearErrorLog]"
-							onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
+							onclick = "[GetVariableSystem.Set('tts_clipboard', '##CK3_TTS_STOP##')]" onclick = "[CopyBuildVersionInfoToClipboard]" onclick = "[CloseGameView('##CK3_TTS_STOP##')]"
 							enabled = "[IsValidCommand( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 							tooltip = "[GetCommandDesc( GetPlayer.RemoveFromLegendLibrary( Legend.Self ) )]"
 

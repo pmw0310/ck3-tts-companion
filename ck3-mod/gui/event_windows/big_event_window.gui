@@ -35,7 +35,7 @@ types BigWindowTypes {
 				duration = 0.7
 				delay = 0.1
 
-				on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
+				on_start = "[PdxGuiWidget.AccessChild('tts_on_top_tracker').TriggerAnimation('tts_initial_check')]"
 				on_finish = "[GetVariableSystem.Clear( 'event_window_mouse_leave')]"
 
 				start_sound = {
@@ -58,7 +58,7 @@ types BigWindowTypes {
 			on_start = "[GetVariableSystem.Set( 'event_window_mouse_leave', 'true' )]"
 		}
 
-		event_window_dimmer_widget = {}
+		widget = { name = "tts_on_top_tracker" size = { 0 0 } state = { name = tts_initial_check trigger_on_create = yes duration = 0.15 on_finish = "[PdxGuiWidget.TriggerAnimation( Select_CString( EventWindow.IsOnTop, 'tts_speak_fg', 'tts_queue_bg' ) )]" } state = { name = tts_speak_fg on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]" } state = { name = tts_queue_bg on_start = "[CloseGameView(Concatenate(Select_CString( EventWindow.IsOnTop, '##CK3_TTS## ', '##CK3_TTS_BG## ' ), Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]" } widget = { name = "tts_promotion_watcher" size = { 0 0 } visible_at_creation = no visible = "[Not(EventWindow.IsOnTop)]" state = { name = _show } state = { name = _hide duration = 0.25 on_finish = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]" } } } event_window_dimmer_widget = {}
 
 		block "window_decoration" {
 			widget = {
@@ -922,7 +922,7 @@ types BigWindowTypes {
 						position = { -20 0 }
 						size = { 42 42 }
 						raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
-						shortcut = "army_split_half"
+						shortcut = "army_split_half" enabled = "[EventWindow.IsOnTop]"
 
 						button_icon = {
 							texture = "gfx/interface/icons/flat_icons/play_sound.dds"
@@ -1035,7 +1035,7 @@ types BigWindowTypes {
 				duration = 0.7
 				delay = 0.1
 
-				on_start = "[EventWindowData.CopyStringToClipboard(Concatenate('##CK3_TTS## ', Concatenate(EventWindowData.GetTitle, Concatenate('|||', Concatenate(EventWindowData.GetDescription, Select_CString( EventWindowData.HasPortraitCharacter('right_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('right_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('center_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('center_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), Select_CString( EventWindowData.HasPortraitCharacter('left_portrait'), Select_CString( EventWindowData.GetPortraitCharacter('left_portrait').IsFemale, '|||GENDER:F##CK3_TTS_END##', '|||GENDER:M##CK3_TTS_END##' ), '##CK3_TTS_END##' ) ) ))))))]"
+				on_start = "[PdxGuiWidget.AccessChild('tts_on_top_tracker').TriggerAnimation('tts_initial_check')]"
 				on_finish = "[GetVariableSystem.Clear( 'event_window_mouse_leave')]"
 
 				start_sound = {
@@ -1262,7 +1262,7 @@ types BigWindowTypes {
 					position = { -35 0 }
 					size = { 42 42 }
 					raw_tooltip = "TTS 이벤트 낭독 (단축키: F)"
-					shortcut = "army_split_half"
+					shortcut = "army_split_half" enabled = "[EventWindow.IsOnTop]"
 
 					button_icon = {
 						texture = "gfx/interface/icons/flat_icons/play_sound.dds"

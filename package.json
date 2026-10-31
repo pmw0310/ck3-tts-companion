@@ -1,7 +1,7 @@
 {
   "name": "ck3-tts-companion",
   "productName": "CK3 TTS Companion",
-  "version": "1.11.5",
+  "version": "1.11.6",
   "description": "CK3 Event Voice Reader (TTS Companion)",
   "main": "./out/main/index.js",
   "author": "BlackOlf",

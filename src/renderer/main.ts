@@ -1559,7 +1559,7 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
    };
 
    const now = Date.now();
-   lastEventDetectedTime = now;
+   // lastEventDetectedTime은 shouldPlay 통과 이후에 갱신합니다.
 
    // 이벤트 중복 및 재진입 방어 검사 (현재 재생 중 동일 이벤트, 60초 쿨다운, 닫힌 창 방어)
    const shouldPlay = shouldPlayEvent(
@@ -1583,6 +1583,7 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
       return;
    }
 
+   lastEventDetectedTime = now;
    state.currentEvent = event;
 
    // 최신 히스토리와 동일한 내용이 연달아 중복 적재되지 않도록 방어하고,
@@ -2466,13 +2467,7 @@ const initializeApp = async (): Promise<void> => {
 
    // 인게임 창 닫힘 신호 수신 시 즉시 오디오 완전 중단
    window.electronAPI.onStopSpeech(() => {
-      // 결투 등 연속 이벤트 전환 시, 새 이벤트가 들어온 직후(300ms 이내)에 뒤늦게 도착한 이전 창의 잔여 STOP 신호는 무시
-      if (Date.now() - lastEventDetectedTime < 300) {
-         console.info(
-            "ℹ️ [Audio] 새 이벤트 직후 유입된 이전 창의 잔여 STOP 신호 무시",
-         );
-         return;
-      }
+      // 인게임 창 닫힘 신호 수신 시 즉시 오디오 중단 (교차 채널 지연 경합은 logWatcher의 sourceTimestampMs 가드에서 차단됨)
       stopAudio();
    });
 

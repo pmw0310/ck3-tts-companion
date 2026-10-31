@@ -96,6 +96,7 @@ export type Ck3EventMessage = {
   readonly content: string;
   readonly rawText: string;
   readonly isForceReplay?: boolean;
+  readonly isBackgroundEvent?: boolean;
   readonly speakerGender?: SpeakerGender;
   readonly eventType?: Ck3EventType;
 };
