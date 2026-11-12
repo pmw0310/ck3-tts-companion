@@ -1,0 +1,215 @@
+﻿entity = {
+	name = "m_clothes_villains_hitler_entity"
+	pdxmesh = "m_clothes_sec_fp4_western_era3_nob_01_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/fp4_western/era3_nob_01/m_clothes_sec_fp4_western_era3_nob_01_masks.dds"
+				variation = "villains_var_hitler"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_mussolini_entity"
+	pdxmesh = "m_clothes_sec_fp4_western_era3_nob_03_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_03_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/fp4_western/era3_nob_03/m_clothes_sec_fp4_western_era3_nob_03_masks.dds"
+				variation = "villains_var_mussolini"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_stalin_entity"
+	pdxmesh = "m_clothes_sec_fp4_western_era3_nob_02_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_02_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/fp4_western/era3_nob_02/m_clothes_sec_fp4_western_era3_nob_02_masks.dds"
+				variation = "villains_var_stalin"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_trump_entity"
+	pdxmesh = "m_clothes_sec_fp4_western_era3_nob_01_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_fp4_western_era3_nob_01_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/fp4_western/era3_nob_01/m_clothes_sec_fp4_western_era3_nob_01_masks.dds"
+				variation = "villains_var_trump"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_mutaguchi_entity"
+	pdxmesh = "m_clothes_sec_tgp_japanese_nob_01_mesh"
+	meshsettings = {
+		name = "m_clothes_sec_tgp_japanese_nob_01Shape"
+		index = 0
+		texture_diffuse = "gfx/models/portraits/m_clothes/tgp_japanese/japanese_nob_01/m_clothes_sec_tgp_japanese_nob_01_diffuse.dds"
+		texture_normal = "gfx/models/portraits/m_clothes/tgp_japanese/japanese_nob_01/m_clothes_sec_tgp_japanese_nob_01_normal.dds"
+		texture_specular = "gfx/models/portraits/m_clothes/tgp_japanese/japanese_nob_01/m_clothes_sec_tgp_japanese_nob_01_properties.dds"
+		shader = "portrait_attachment_pattern"
+		shader_file = "gfx/FX/jomini/portrait.shader"
+	}
+
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_tgp_japanese_nob_01_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/tgp_japanese/japanese_nob_01/m_clothes_sec_tgp_japanese_nob_01_masks.dds"
+				variation = "villains_var_mutaguchi"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_kim_jongun_entity"
+	pdxmesh = "m_clothes_sec_tgp_chinese_nob_01_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_musc" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_infant" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_tgp_chinese_nob_01_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/tgp_chinese/nob_01/m_clothes_sec_tgp_chinese_nob_01_masks.dds"
+				variation = "villains_var_kim_jongun"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "f_clothes_villains_kim_yojong_entity"
+	pdxmesh = "f_clothes_sec_tgp_chinese_nob_02_mesh"
+	attribute = { name = "bs_body_infant_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_infant" }
+	attribute = { name = "bs_body_fat_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_musc" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_dwarf" }
+	attribute = { name = "bs_body_pregnant_1"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_pregnant" }
+	attribute = { name = "bs_body_breast_size_min"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_bust_min" }
+	attribute = { name = "bs_body_breast_size_max"		blend_shape = "f_clothes_sec_tgp_chinese_nob_02_bs_bust_max" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/f_clothes/tgp_chinese/nob_02/f_clothes_sec_tgp_chinese_nob_02_masks.dds"
+				variation = "villains_var_kim_yojong"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_pol_pot_entity"
+	pdxmesh = "male_clothing_secular_indian_nobility_01_mesh"
+	attribute = { name = "bs_body_infant_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_infant" }
+	attribute = { name = "bs_body_fat_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_muscular" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_dwarf" }
+	attribute = { name = "bs_body_seated"		blend_shape = "male_clothing_secular_indian_nobility_01_bs_seated" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/indian/nob_01/m_clothing_secular_indian_nob_01_masks.dds"
+				variation = "villains_var_pol_pot"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_idi_amin_entity"
+	pdxmesh = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_mesh"
+	attribute = { name = "bs_body_fat_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_muscular" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_dwarf" }
+	attribute = { name = "bs_body_infant_1"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_infant" }
+	attribute = { name = "bs_body_seated"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_seated" }
+	attribute = { name = "bs_cloak_offset"		blend_shape = "m_clothes_sec_fp2_iberian_muslim_war_nob_01_bs_offset" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/fp2_muslim/war_nob_01/m_clothes_sec_fp2_iberian_muslim_war_nob_01_masks.dds"
+				variation = "villains_var_idi_amin"
+			}
+		}
+	}
+}
+
+entity = {
+	name = "m_clothes_villains_rasputin_entity"
+	pdxmesh = "male_clothes_religious_catholic_devoted_02_mesh"
+	attribute = { name = "bs_body_infant_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_infant" }
+	attribute = { name = "bs_body_fat_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_fat" }
+	attribute = { name = "bs_body_gaunt_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_gaunt" }
+	attribute = { name = "bs_body_muscular_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_muscular" }
+	attribute = { name = "bs_body_old_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_old" }
+	attribute = { name = "bs_body_dwarf_1"		blend_shape = "male_clothes_religious_catholic_devoted_02_bs_dwarf" }
+
+	game_data = {
+		portrait_entity_user_data = {
+			portrait_accessory = {
+				pattern_mask = "gfx/models/portraits/m_clothes/catholic_rel/devoted_02/m_clothes_religious_catholic_devoted_02_masks.dds"
+				variation = "villains_var_rasputin"
+			}
+		}
+	}
+}

@@ -1,0 +1,1325 @@
+﻿###########################
+
+# Fascism Holy Sites (5)  #
+
+###########################
+
+
+
+roma_fascism = {
+
+	county = c_roma
+
+	barony = b_roma
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		stewardship = 1
+
+		church_holding_build_gold_cost = -0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		monthly_prestige_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+milano = {
+
+	county = c_lombardia
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		monthly_county_control_growth_factor = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		levy_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		martial = 1
+
+		heavy_infantry_damage_mult = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		heavy_infantry_damage_mult = 0.01
+
+		monthly_county_control_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+ravenna_fascism = {
+
+	county = c_ravenna
+
+	barony = b_ravenna
+
+
+
+	county_holder_character_modifier = {
+
+		diplomacy = 1
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		diplomacy = 1
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_prestige_gain_mult = 0.01
+
+		knight_effectiveness_mult = 0.01
+
+	}
+
+}
+
+
+
+napoli_fascism = {
+
+	county = c_napoli
+
+	barony = b_napoli
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		domain_tax_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		levy_size = 0.02
+
+	}
+
+}
+
+
+
+carthage_fascism = {
+
+	county = c_tunis
+
+	barony = b_tunis
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		embarkation_cost_mult = -0.25
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		tax_mult = 0.01
+
+	}
+
+}
+
+
+
+######################################
+
+# National Socialism Holy Sites (5)  #
+
+######################################
+
+
+
+munich = {
+
+	county = c_munchen
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		dread_baseline_add = 10
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		levy_size = 0.02
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		knight_effectiveness_mult = 0.1
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		knight_effectiveness_mult = 0.015
+
+		monthly_prestige_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+berlin = {
+
+	county = c_berlin
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		army_maintenance_mult = -0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		build_speed = -0.01
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		martial = 1
+
+		heavy_infantry_damage_mult = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		heavy_infantry_damage_mult = 0.01
+
+		monthly_county_control_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+nurnberg = {
+
+	county = c_nurnberg
+
+
+
+	county_holder_character_modifier = {
+
+		diplomacy = 1
+
+		same_faith_opinion = 5
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		dread_baseline_add = 10
+
+		same_faith_opinion = 5
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_piety_gain_mult = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+vienna_ns = {
+
+	county = c_vienna
+
+	barony = b_vienna
+
+
+
+	county_holder_character_modifier = {
+
+		diplomacy = 1
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+}
+
+
+
+paderborn_ns = {
+
+	county = c_paderborn
+
+	barony = b_paderborn
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		prowess = 2
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		defender_holding_advantage = 0.5
+
+		levy_size = 0.02
+
+	}
+
+}
+
+
+
+##############################
+
+# Bolshevism Holy Sites (5)  #
+
+##############################
+
+
+
+moskva = {
+
+	county = c_moskva
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		domain_tax_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		dread_baseline_add = 10
+
+		monthly_county_control_growth_factor = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_county_control_growth_factor = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+leningrad = {
+
+	county = c_vodi
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		development_growth_factor = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		build_speed = -0.01
+
+		levy_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		martial_per_piety_level = 1
+
+		levy_reinforcement_rate = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		monthly_piety_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+kiev_bolshevism = {
+
+	county = c_kiev
+
+
+
+	county_holder_character_modifier = {
+
+		knight_effectiveness_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		build_speed = -0.01
+
+		defender_holding_advantage = 0.5
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		monthly_piety_gain_mult = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		knight_effectiveness_mult = 0.015
+
+		monthly_piety_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+tsaritsyn = {
+
+	county = c_sarysyn
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		defender_advantage = 5
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		defender_holding_advantage = 0.5
+
+		levy_size = 0.02
+
+	}
+
+}
+
+
+
+trier = {
+
+	county = c_trier
+
+
+
+	parameters = {
+
+		jerusalem_conversion_bonus
+
+	}
+
+
+
+	county_holder_character_modifier = {
+
+		learning = 2
+
+		monthly_piety_gain_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+}
+
+
+
+###########################
+
+# Juche Holy Sites        #
+
+###########################
+
+
+
+pyongyang_juche = {
+
+	county = c_seogyeong
+
+	barony = b_Goryeo_Bukgye_Seogyeong
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		monthly_county_control_growth_factor = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		dread_baseline_add = 10
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_prestige_gain_mult = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+myohyang_juche = {
+
+	county = c_yeongwon
+
+	barony = b_Goryeo_Bukgye_Yeongwon
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		mountains_development_growth_factor = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		mountains_development_growth_factor = 0.01
+
+		tax_mult = 0.01
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		intrigue = 1
+
+		hostile_scheme_phase_duration_add = 5
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_piety_gain_mult = 0.01
+
+		mountains_tax_mult = 0.01
+
+	}
+
+}
+
+
+
+guwol_juche = {
+
+	county = c_hwangju
+
+	barony = b_Goryeo_Seohae_Hwangju
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		levy_size = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		garrison_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		levy_reinforcement_rate = 0.1
+
+		legitimacy_gain_mult = 0.05
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		legitimacy_gain_mult = 0.01
+
+		monthly_prestige_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+###########################
+
+# Angkar Holy Sites (5)   #
+
+###########################
+
+
+
+angkor_angkar = {
+
+	county = c_angkor
+
+	barony = b_angkor
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		monthly_county_control_growth_factor = 0.1
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		dread_baseline_add = 15
+
+		monthly_county_control_growth_factor = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_county_control_growth_factor = 0.01
+
+		levy_size = 0.01
+
+	}
+
+}
+
+
+
+koh_ker_angkar = {
+
+	county = c_koh_ker
+
+	barony = b_koh_ker
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		jungle_advantage = 5
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		levy_size = 0.02
+
+		garrison_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		intrigue = 1
+
+		jungle_attrition_mult = -0.25
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_piety_gain_mult = 0.01
+
+		levy_reinforcement_rate = 0.01
+
+	}
+
+}
+
+
+
+vyadhapura_angkar = {
+
+	county = c_vyadhapura
+
+	barony = b_vyadhapura
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		domain_tax_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		levy_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		stewardship = 1
+
+		levy_size = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		tax_mult = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+sambhupura_angkar = {
+
+	county = c_sambhupura
+
+	barony = b_sambhupura
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		levy_reinforcement_rate = 0.1
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		defender_holding_advantage = 0.5
+
+		levy_size = 0.02
+
+	}
+
+}
+
+
+
+ratanakiri_angkar = {
+
+	county = c_ratanakiri
+
+	barony = b_ratanakiri
+
+
+
+	county_holder_character_modifier = {
+
+		intrigue = 1
+
+		jungle_development_growth_factor = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		defender_holding_advantage = 0.5
+
+		county_opinion_add = 1
+
+	}
+
+}
+
+
+
+###########################
+
+# Aminism Holy Sites (5)  #
+
+###########################
+
+
+
+fazughli_amin = {
+
+	county = c_fazughli
+
+	barony = b_fazughli
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		prowess = 2
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		levy_size = 0.02
+
+		county_opinion_add = 1
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		martial = 1
+
+		dread_baseline_add = 15
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		knight_effectiveness_mult = 0.015
+
+		monthly_prestige_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+sennar_amin = {
+
+	county = c_sennar
+
+	barony = b_sennar
+
+
+
+	county_holder_character_modifier = {
+
+		stewardship = 1
+
+		domain_tax_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		tax_mult = 0.01
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		prowess = 2
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		monthly_prestige_gain_mult = 0.01
+
+		development_growth_factor = 0.01
+
+	}
+
+}
+
+
+
+alodia_amin = {
+
+	county = c_alodia
+
+	barony = b_soba
+
+
+
+	county_holder_character_modifier = {
+
+		diplomacy = 1
+
+		monthly_prestige_gain_mult = 0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		development_growth_factor = 0.01
+
+		levy_size = 0.02
+
+	}
+
+
+
+	faith_character_modifier = {
+
+		knight_effectiveness_mult = 0.1
+
+	}
+
+
+
+	faith_character_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		knight_effectiveness_mult = 0.015
+
+		monthly_piety_gain_mult = 0.01
+
+	}
+
+}
+
+
+
+tagali_amin = {
+
+	county = c_tagali
+
+	barony = b_kosti
+
+
+
+	county_holder_character_modifier = {
+
+		martial = 1
+
+		army_maintenance_mult = -0.05
+
+	}
+
+
+
+	county_modifier_scaled = {
+
+		scale = holy_site_total_artifact_rarity
+
+		levy_size = 0.02
+
+		garrison_size = 0.02
+
+	}
+
+}
+
+
+
+###########################
+# Khlystism Holy Sites    #
+###########################
+
+neva_khlyst = {
+	county = c_vodi
+	barony = b_nyen
+
+	county_holder_character_modifier = {
+		intrigue = 1
+		monthly_piety_gain_mult = 0.05
+	}
+
+	county_modifier_scaled = {
+		scale = holy_site_total_artifact_rarity
+		development_growth_factor = 0.01
+		county_opinion_add = 1
+	}
+
+	faith_character_modifier = {
+		intrigue = 1
+		learning = 1
+		seduce_scheme_phase_duration_add = -10
+	}
+
+	faith_character_modifier_scaled = {
+		scale = holy_site_total_artifact_rarity
+		monthly_piety_gain_mult = 0.015
+		owned_personal_scheme_success_chance_add = 1
+	}
+}
+
+
+
+

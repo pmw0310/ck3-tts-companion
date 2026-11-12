@@ -1,0 +1,10 @@
+﻿male_hair_kim_paegi = {
+	set_tags = "partly_shaved,kim_paegi_fade"
+	entity = { required_tags = "no_hair"			shared_pose_entity = head		 }
+	entity = { required_tags = ""					shared_pose_entity = head		entity = "male_hair_kim_paegi_entity" }
+}
+
+female_hair_kim_yojong = {
+	entity = { required_tags = "no_hair"			shared_pose_entity = head		 }
+	entity = { required_tags = ""					shared_pose_entity = head		entity = "female_hair_kim_yojong_entity" }
+}

@@ -1,0 +1,57 @@
+﻿axis_hostility_doctrine = {
+
+	doctrine_group_type = hostility_group
+
+	index = 4
+
+	divergence = 30
+
+
+
+	visible = no
+
+
+
+	special_parameters = {
+
+		hostility_levels = {
+
+			same_religion = astray
+
+			same_family = hostile
+
+			unrelated = evil
+
+		}
+
+		hostility_level_override = {
+
+			axis_hostility_doctrine = righteous
+
+		}
+
+	}
+
+}
+
+bolshevik_hostility_doctrine = {
+	doctrine_group_type = hostility_group
+	index = 5
+	divergence = 30
+
+	visible = no
+
+	special_parameters = {
+		hostility_levels = {
+			same_religion = astray
+			same_family = astray
+			unrelated = evil
+		}
+		hostility_level_override = {
+			bolshevik_hostility_doctrine = righteous
+			pagan_hostility_doctrine = astray
+			axis_hostility_doctrine = evil
+		}
+	}
+}
+

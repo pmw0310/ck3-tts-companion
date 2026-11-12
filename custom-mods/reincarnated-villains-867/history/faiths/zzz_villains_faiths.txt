@@ -1,0 +1,226 @@
+﻿national_socialism = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = national_socialism
+
+		permitted = {
+
+			tenet_warmonger
+
+			tenet_unrelenting_faith
+
+		}
+
+		known = {
+
+			tenet_legalism
+
+			tenet_sacrificial_ceremonies
+
+		}
+
+	}
+
+}
+
+
+
+bolshevism = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = bolshevism
+
+		permitted = {
+
+			tenet_sacred_shadows
+
+			tenet_pursuit_of_power
+
+		}
+
+		known = {
+
+			tenet_legalism
+
+			tenet_communal_identity
+
+		}
+
+	}
+
+}
+
+
+
+fascism = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = fascism
+
+		permitted = {
+
+			tenet_miles_christi
+
+			tenet_unrelenting_faith
+
+		}
+
+		known = {
+
+			tenet_warmonger
+
+			tenet_hedonistic
+
+		}
+
+	}
+
+}
+
+
+
+americanism = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = americanism
+
+		permitted = {
+
+			tenet_communal_identity
+
+		}
+
+		known = {
+
+			tenet_hedonistic
+
+			tenet_legalism
+
+		}
+
+	}
+
+}
+
+
+
+juche = {
+
+	812.4.15 = {
+
+		created = yes
+
+		main_rite = juche
+
+		permitted = {
+
+			tenet_extinction_of_dharma
+
+			tenet_sacred_shadows
+
+			tenet_unrelenting_faith
+
+		}
+
+		known = {
+
+			tenet_household_gods
+
+			tenet_pursuit_of_power
+
+		}
+
+	}
+
+}
+
+
+
+angkar = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = angkar
+
+		permitted = {
+
+			tenet_cranial_trophies
+
+			tenet_pursuit_of_power
+
+		}
+
+		known = {
+
+			tenet_communal_identity
+
+			tenet_unrelenting_faith
+
+		}
+
+	}
+
+}
+
+
+
+aminism = {
+
+	867.1.1 = {
+
+		created = yes
+
+		main_rite = aminism
+
+		permitted = {
+
+			tenet_cranial_trophies
+
+			tenet_pursuit_of_power
+
+		}
+
+		known = {
+
+			tenet_carnal_exaltation
+
+			tenet_communal_identity
+
+		}
+
+	}
+
+}
+
+
+
+# Khlystism starts uncreated in 867 (no created = yes) and is founded via Rasputin's decision
+khlystism = {
+	867.1.1 = {
+		main_rite = khlystism
+		permitted = {
+			tenet_hedonistic
+			tenet_communal_possessions
+		}
+		known = {
+			tenet_sacred_shadows
+			tenet_natural_primitivism
+		}
+	}
+}
+
+

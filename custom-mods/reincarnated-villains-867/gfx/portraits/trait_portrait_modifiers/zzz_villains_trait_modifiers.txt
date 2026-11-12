@@ -1,0 +1,59 @@
+﻿villains_juche_saint_halo = {
+	juche_sun_saint = {
+		trigger = {
+			OR = {
+				faith = faith:juche
+				AND = {
+					exists = dynasty
+					dynasty = dynasty:dynasty_kim_867
+					NOT = {
+						faith.religion = { is_in_family = rf_abrahamic }
+					}
+				}
+			}
+		}
+		traits = {
+			saint
+		}
+		dna_modifiers = {
+			human = {
+				accessory = {
+					mode = add
+					gene = villains_custom_halo
+					template = juche_sun_halo
+					value = 1
+				}
+			}
+		}
+	}
+}
+
+villains_non_abrahamic_saint_halo = {
+	non_abrahamic_saint = {
+		trigger = {
+			NOT = {
+				faith.religion = { is_in_family = rf_abrahamic }
+			}
+			NOT = { faith = faith:juche }
+			NOT = {
+				AND = {
+					exists = dynasty
+					dynasty = dynasty:dynasty_kim_867
+				}
+			}
+		}
+		traits = {
+			saint
+		}
+		dna_modifiers = {
+			human = {
+				accessory = {
+					mode = add
+					gene = character_halo
+					template = christianity_religion_halo
+					value = 1
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,177 @@
+﻿# Government safeguards for Reincarnated Villains starting as independent Count-tier Administrative, Meritocratic, or Soryo rulers
+
+administrative_counts_can_be_independent = {
+	OR = {
+		government_has_flag = government_is_celestial
+		government_has_flag = government_is_japan_administrative
+		government_has_flag = government_is_meritocratic
+		government_has_flag = government_is_administrative
+	}
+}
+
+japan_government_japan_kingdom_restriction_trigger = {
+	trigger_if = {
+		limit = {
+			government_is_japanese_trigger = yes
+			top_liege = { has_title = title:e_japan }
+			OR = {
+				is_independent_ruler = no
+				AND = {
+					NOT = { highest_held_title_tier = tier_kingdom }
+					has_title = title:e_japan
+				}
+			}
+		}
+		custom_tooltip = {
+			text = japan_government_japan_kingdom_restriction_tt
+			has_global_variable = tenno_restored
+		}
+	}
+}
+
+japan_government_japan_duchy_restriction_trigger = {
+	trigger_if = {
+		limit = {
+			top_liege = { has_title = title:e_japan }
+			OR = {
+				government_has_flag = government_is_japan_administrative
+				AND = { # Soryo can create duchies if they're already a duke
+					government_has_flag = government_is_japan_feudal
+					primary_title.tier = tier_county
+				}
+			}
+			NAND = {
+				is_independent_ruler = yes
+				government_has_flag = government_is_japan_feudal
+			}
+		}
+		custom_tooltip = {
+			text = japan_government_japan_duchy_restriction_tt
+			has_global_variable = tenno_restored
+		}
+	}
+}
+
+portrait_religious_christian_trigger = {
+	religion = religion:christianity_religion
+	NOT = { faith = faith:americanism }
+}
+
+portrait_religious_muslim_trigger = {
+	religion = religion:islam_religion
+	NOT = { faith = faith:aminism }
+}
+
+broadly_dharmic_faith_trigger = {
+	OR = {
+		religion = religion:buddhism_religion
+		religion = religion:hinduism_religion
+		religion = religion:jainism_religion
+		religion = religion:bon_religion
+		religion = religion:dab_qhuas_religion
+		religion = religion:aluk_religion
+		religion = religion:dayawism_religion
+		religion = religion:hantuism_religion
+		religion = religion:kaharingan_religion
+		religion = religion:satsana_phi_religion
+		religion = religion:tolotang_religion
+		religion = religion:utaki_religion
+		religion = religion:bimoism_religion
+		religion = religion:moism_religion
+		religion = religion:muism_religion
+		religion = religion:qiangic_religion
+		this = faith:angkar
+	}
+}
+
+religion_is_east_asian_trigger = {
+	OR = {
+		faith.religion = religion:buddhism_religion
+		faith.religion = religion:confucianism_religion
+		faith.religion = religion:taoism_religion
+		faith.religion = religion:shintoism_religion
+		faith.religion = religion:juche_religion
+	}
+}
+
+faith_is_in_same_rf = {
+	trigger_if = {
+		limit = { is_in_family = rf_abrahamic }
+		$FAITH$ = { is_in_family = rf_abrahamic }
+	}
+	trigger_else_if = {
+		limit = { is_in_family = rf_pagan }
+		$FAITH$ = { is_in_family = rf_pagan }
+	}
+	trigger_else_if = {
+		limit = { is_in_family = rf_eastern }
+		$FAITH$ = { is_in_family = rf_eastern }
+	}
+	trigger_else_if = {
+		limit = { is_in_family = rf_sinitic }
+		$FAITH$ = { is_in_family = rf_sinitic }
+	}
+	trigger_else_if = {
+		limit = { is_in_family = rf_totalitarian }
+		$FAITH$ = { is_in_family = rf_totalitarian }
+	}
+	trigger_else_if = {
+		limit = { is_in_family = rf_socialist }
+		$FAITH$ = { is_in_family = rf_socialist }
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+is_in_same_religious_family_trigger = {
+	OR = {
+		AND = {
+			is_in_family = rf_abrahamic
+			$FAITH$ = { is_in_family = rf_abrahamic }
+		}
+		AND = {
+			is_in_family = rf_eastern
+			$FAITH$ = { is_in_family = rf_eastern }
+		}
+		AND = {
+			is_in_family = rf_sinitic
+			$FAITH$ = { is_in_family = rf_sinitic }
+		}
+		AND = {
+			is_in_family = rf_pagan
+			$FAITH$ = { is_in_family = rf_pagan }
+		}
+		AND = {
+			is_in_family = rf_totalitarian
+			$FAITH$ = { is_in_family = rf_totalitarian }
+		}
+		AND = {
+			is_in_family = rf_socialist
+			$FAITH$ = { is_in_family = rf_socialist }
+		}
+	}
+}
+
+# Juche preserves Eternal Leaders as intact embalmed mummies; disable "Extract Relic" decision and travel relic extraction for Juche
+pam_can_extract_relic_from_saint_trigger = {
+	$EXTRACTOR$ = { NOT = { faith = faith:juche } }
+	$SAINT$ = {
+		is_alive = no
+		NOT = { faith = faith:juche }
+	}
+	pam_saint_is_buried_in_my_lands_trigger = { EXTRACTOR = $EXTRACTOR$ }
+	trigger_if = {
+		limit = { $EXTRACTOR$ = { is_ai = yes } }
+		$SAINT$ = {
+			remaining_saint_relics > 1
+		}
+	}
+	trigger_else = {
+		$SAINT$ = {
+			remaining_saint_relics > 0
+		}
+	}
+}
+
+

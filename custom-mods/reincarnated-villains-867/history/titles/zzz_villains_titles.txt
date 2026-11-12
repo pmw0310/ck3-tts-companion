@@ -1,0 +1,136 @@
+﻿d_fascism = {
+
+	867.1.1 = {
+
+		holder = reincarnated_mussolini_867
+
+		liege = k_italy
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+}
+
+
+
+d_bolshevism = {
+
+	867.1.1 = {
+
+		holder = reincarnated_stalin_867
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+}
+
+
+
+d_americanism = {
+
+	867.1.1 = {
+
+		holder = reincarnated_trump_867
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+}
+
+
+
+d_juche = {
+
+	812.4.15 = {
+
+		holder = reincarnated_kim_grandfather_867
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+	854.7.8 = {
+
+		holder = reincarnated_kim_father_867
+
+	}
+
+	866.12.17 = {
+
+		holder = reincarnated_kim_jongun_867
+
+	}
+
+}
+
+d_angkar = {
+
+	867.1.1 = {
+
+		holder = 0
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+}
+
+d_aminism = {
+
+	867.1.1 = {
+
+		holder = reincarnated_idi_amin_867
+
+		succession_laws = { temporal_head_of_faith_succession_law }
+
+	}
+
+}
+
+d_nf_trump = {
+	867.1.1 = {
+		holder = reincarnated_trump_867
+		government = administrative_government
+		succession_laws = { noble_family_succession_law }
+	}
+}
+
+c_nf_mutaguchi = {
+	867.1.1 = {
+		holder = reincarnated_mutaguchi_867
+		government = japan_feudal_government
+		succession_laws = { noble_family_succession_law }
+	}
+}
+
+d_khlystism = {
+	867.1.1 = {
+		holder = 0
+		succession_laws = { temporal_head_of_faith_succession_law }
+	}
+}
+
+d_laamp_rasputin = {
+	867.1.1 = {
+		liege = 0
+		holder = reincarnated_rasputin_867
+		government = landless_adventurer_government
+		succession_laws = { landless_adventurer_succession_law }
+		effect = {
+			create_landless_adventurer_title_history_effect = yes
+			set_variable = {
+				name = adventurer_creation_reason
+				value = flag:historical
+			}
+		}
+	}
+	916.12.30 = {
+		holder = 0
+	}
+}
+
+
+

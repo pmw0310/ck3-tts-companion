@@ -1,0 +1,22 @@
+﻿namespace = villains_relics
+
+
+
+# Seeds bespoke Holy Site Relics for Fascism and Bolshevism after historical_artifacts.0050
+
+villains_relics.0001 = {
+
+	scope = none
+
+	hidden = yes
+
+
+
+	immediate = {
+
+		villains_seed_holy_site_relics_effect = yes
+
+	}
+
+}
+

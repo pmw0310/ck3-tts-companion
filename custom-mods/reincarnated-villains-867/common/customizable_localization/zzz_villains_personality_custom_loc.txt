@@ -1,0 +1,98 @@
+﻿VillainsCharacterPersonality = {
+
+	type = character
+
+
+
+	# 김일성 (reincarnated_kim_grandfather_867): ambitious + arrogant + deceitful -> 욕심 사나운 도박사
+
+	text = {
+
+		trigger = {
+
+			is_alive = no
+
+			has_trait = ambitious
+
+			has_trait = arrogant
+
+		}
+
+		localization_key = villains_dead_personality_kim_ilsung
+
+	}
+
+
+
+	# 김정일 (reincarnated_kim_father_867): paranoid + callous + arbitrary -> 기만적인 냉혈한
+
+	text = {
+
+		trigger = {
+
+			is_alive = no
+
+			has_trait = paranoid
+
+			has_trait = callous
+
+		}
+
+		localization_key = villains_dead_personality_kim_jongil
+
+	}
+
+
+
+	# 고영희 (reincarnated_kim_mother_867): ambitious + patient -> 탐욕스러운 사상가
+
+	text = {
+
+		trigger = {
+
+			is_alive = no
+
+			has_trait = ambitious
+
+			has_trait = patient
+
+		}
+
+		localization_key = villains_dead_personality_ko_yonghui
+
+	}
+
+
+
+	# 김정남 (reincarnated_kim_jongnam_867): gluttonous + lazy -> 연민 어린 도박사
+
+	text = {
+
+		trigger = {
+
+			is_alive = no
+
+			has_trait = gluttonous
+
+			has_trait = lazy
+
+		}
+
+		localization_key = villains_dead_personality_kim_jongnam
+
+	}
+
+
+
+	# 기본값 (일반 균형 잡힘)
+
+	text = {
+
+		fallback = yes
+
+		localization_key = villains_dead_personality_neutral_fallback
+
+	}
+
+}
+

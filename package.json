@@ -18,7 +18,8 @@
     "version:minor": "node scripts/bump-version.mjs minor",
     "version:major": "node scripts/bump-version.mjs major",
     "version:auto": "node scripts/bump-version.mjs auto",
-    "sync:mod": "node scripts/sync-mod.mjs"
+    "sync:mod": "node scripts/sync-mod.mjs",
+    "sync:custom-mod": "node scripts/sync-custom-mod.mjs"
   },
   "dependencies": {
     "@breezystack/lamejs": "^1.2.7",

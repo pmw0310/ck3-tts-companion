@@ -1,0 +1,2330 @@
+﻿national_socialism = {
+
+	name = national_socialism
+
+	desc = national_socialism_desc
+
+	faith = national_socialism
+
+
+
+	color = { 0.35 0.05 0.05 }
+
+	icon = ns_iron_cross
+
+
+
+	tenets = {
+
+		tenet_communal_identity
+
+		tenet_pursuit_of_power
+
+		tenet_sacred_destruction
+
+	}
+
+
+
+	doctrines = {
+
+		axis_hostility_doctrine
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_legitimization
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_crime
+
+		doctrine_adultery_men_shunned
+
+		doctrine_adultery_women_crime
+
+		doctrine_kinslaying_close_kin_crime
+
+		doctrine_deviancy_crime
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_male_only
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_monasticism_absent
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = national_socialism_high_god_name
+
+		HighGodName2 = national_socialism_high_god_name
+
+		HighGodNamePossessive = national_socialism_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = national_socialism_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = national_socialism_high_god_name_alternate_possessive
+
+		CreatorName = national_socialism_high_god_name
+
+		CreatorNamePossessive = national_socialism_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = national_socialism_high_god_name
+
+		HealthGodNamePossessive = national_socialism_high_god_name_possessive
+
+		FertilityGodName = national_socialism_high_god_name
+
+		FertilityGodNamePossessive = national_socialism_high_god_name_possessive
+
+		WealthGodName = national_socialism_high_god_name
+
+		WealthGodNamePossessive = national_socialism_high_god_name_possessive
+
+		HouseholdGodName = national_socialism_high_god_name
+
+		HouseholdGodNamePossessive = national_socialism_high_god_name_possessive
+
+		FateGodName = national_socialism_high_god_name
+
+		FateGodNamePossessive = national_socialism_high_god_name_possessive
+
+		KnowledgeGodName = national_socialism_high_god_name
+
+		KnowledgeGodNamePossessive = national_socialism_high_god_name_possessive
+
+		WarGodName = national_socialism_war_god_name
+
+		WarGodNamePossessive = national_socialism_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = national_socialism_high_god_name
+
+		NightGodNamePossessive = national_socialism_high_god_name_possessive
+
+		WaterGodName = national_socialism_high_god_name
+
+		WaterGodNamePossessive = national_socialism_high_god_name_possessive
+
+		DevilName = national_socialism_devil_name
+
+		DevilNamePossessive = national_socialism_devil_name_possessive
+
+		DeathDeityName = national_socialism_devil_name
+
+		DeathDeityNamePossessive = national_socialism_devil_name_possessive
+
+		WitchGodName = national_socialism_devil_name
+
+		WitchGodNamePossessive = national_socialism_devil_name_possessive
+
+		GoodGodNames = { national_socialism_high_god_name national_socialism_high_god_name_alternate national_socialism_war_god_name }
+
+		EvilGodNames = { national_socialism_devil_name }
+
+		PantheonTerm = national_socialism_high_god_name
+
+		PantheonTerm2 = national_socialism_high_god_name
+
+		PantheonTerm3 = national_socialism_high_god_name
+
+		HouseOfWorship = national_socialism_house_of_worship
+
+		HouseOfWorship2 = national_socialism_house_of_worship
+
+		HouseOfWorship3 = national_socialism_house_of_worship
+
+		HouseOfWorshipPlural = national_socialism_house_of_worship_plural
+
+		ReligiousSymbol = national_socialism_religious_symbol
+
+		ReligiousSymbol2 = national_socialism_religious_symbol
+
+		ReligiousSymbol3 = national_socialism_religious_symbol
+
+		ReligiousText = national_socialism_religious_text
+
+		ReligiousText2 = national_socialism_religious_text
+
+		ReligiousText3 = national_socialism_religious_text
+
+		DevoteeMale = national_socialism_devotee
+
+		DevoteeMalePlural = national_socialism_devotee_plural
+
+		DevoteeFemale = national_socialism_devotee
+
+		DevoteeFemalePlural = national_socialism_devotee_plural
+
+		DevoteeNeuter = national_socialism_devotee
+
+		DevoteeNeuterPlural = national_socialism_devotee_plural
+
+		PriestMale = national_socialism_priest_male
+
+		PriestMalePlural = national_socialism_priest_male_plural
+
+		PriestFemale = national_socialism_priest_male
+
+		PriestFemalePlural = national_socialism_priest_male_plural
+
+		PriestNeuter = national_socialism_priest_male
+
+		PriestNeuterPlural = national_socialism_priest_male_plural
+
+		AltPriestTermPlural = national_socialism_priest_male_plural
+
+		BishopMale = national_socialism_bishop_male
+
+		BishopMalePlural = national_socialism_bishop_male_plural
+
+		BishopFemale = national_socialism_bishop_male
+
+		BishopFemalePlural = national_socialism_bishop_male_plural
+
+		BishopNeuter = national_socialism_bishop_male
+
+		BishopNeuterPlural = national_socialism_bishop_male_plural
+
+		ReligiousHeadName = national_socialism_religious_head_title
+
+		ReligiousHeadNameFemale = national_socialism_religious_head_title
+
+		ReligiousHeadTitleName = national_socialism_religious_head_title_name
+
+		DivineRealm = national_socialism_positive_afterlife
+
+		DivineRealm2 = national_socialism_positive_afterlife
+
+		DivineRealm3 = national_socialism_positive_afterlife
+
+		PositiveAfterLife = national_socialism_positive_afterlife
+
+		PositiveAfterLife2 = national_socialism_positive_afterlife
+
+		PositiveAfterLife3 = national_socialism_positive_afterlife
+
+		NegativeAfterLife = national_socialism_negative_afterlife
+
+		NegativeAfterLife2 = national_socialism_negative_afterlife
+
+		NegativeAfterLife3 = national_socialism_negative_afterlife
+
+		GHWName = national_socialism_ghw_name
+
+		GHWNamePlural = national_socialism_ghw_name_plural
+
+	}
+
+}
+
+
+
+bolshevism = {
+
+	name = bolshevism
+
+	desc = bolshevism_desc
+
+	faith = bolshevism
+
+
+
+	color = { 0.85 0.08 0.08 }
+
+	icon = bolshevik_hammer_sickle
+
+
+
+	tenets = {
+
+		tenet_communal_possessions
+
+		tenet_warmonger
+
+		tenet_unrelenting_faith
+
+	}
+
+
+
+	doctrines = {
+
+		bolshevik_hostility_doctrine
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_none
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_shunned
+
+		doctrine_adultery_men_shunned
+
+		doctrine_adultery_women_shunned
+
+		doctrine_kinslaying_close_kin_crime
+
+		doctrine_deviancy_shunned
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_either
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_funeral_mummification
+
+		doctrine_monasticism_absent
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = bolshevism_high_god_name
+
+		HighGodName2 = bolshevism_high_god_name
+
+		HighGodNamePossessive = bolshevism_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = bolshevism_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = bolshevism_high_god_name_alternate_possessive
+
+		CreatorName = bolshevism_high_god_name
+
+		CreatorNamePossessive = bolshevism_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = bolshevism_high_god_name
+
+		HealthGodNamePossessive = bolshevism_high_god_name_possessive
+
+		FertilityGodName = bolshevism_high_god_name
+
+		FertilityGodNamePossessive = bolshevism_high_god_name_possessive
+
+		WealthGodName = bolshevism_high_god_name
+
+		WealthGodNamePossessive = bolshevism_high_god_name_possessive
+
+		HouseholdGodName = bolshevism_high_god_name
+
+		HouseholdGodNamePossessive = bolshevism_high_god_name_possessive
+
+		FateGodName = bolshevism_high_god_name
+
+		FateGodNamePossessive = bolshevism_high_god_name_possessive
+
+		KnowledgeGodName = bolshevism_high_god_name
+
+		KnowledgeGodNamePossessive = bolshevism_high_god_name_possessive
+
+		WarGodName = bolshevism_war_god_name
+
+		WarGodNamePossessive = bolshevism_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = bolshevism_high_god_name
+
+		NightGodNamePossessive = bolshevism_high_god_name_possessive
+
+		WaterGodName = bolshevism_high_god_name
+
+		WaterGodNamePossessive = bolshevism_high_god_name_possessive
+
+		DevilName = bolshevism_devil_name
+
+		DevilNamePossessive = bolshevism_devil_name_possessive
+
+		DeathDeityName = bolshevism_devil_name
+
+		DeathDeityNamePossessive = bolshevism_devil_name_possessive
+
+		WitchGodName = bolshevism_devil_name
+
+		WitchGodNamePossessive = bolshevism_devil_name_possessive
+
+		GoodGodNames = { bolshevism_high_god_name bolshevism_high_god_name_alternate bolshevism_war_god_name }
+
+		EvilGodNames = { bolshevism_devil_name }
+
+		PantheonTerm = bolshevism_high_god_name
+
+		PantheonTerm2 = bolshevism_high_god_name
+
+		PantheonTerm3 = bolshevism_high_god_name
+
+		HouseOfWorship = bolshevism_house_of_worship
+
+		HouseOfWorship2 = bolshevism_house_of_worship
+
+		HouseOfWorship3 = bolshevism_house_of_worship
+
+		HouseOfWorshipPlural = bolshevism_house_of_worship_plural
+
+		ReligiousSymbol = bolshevism_religious_symbol
+
+		ReligiousSymbol2 = bolshevism_religious_symbol
+
+		ReligiousSymbol3 = bolshevism_religious_symbol
+
+		ReligiousText = bolshevism_religious_text
+
+		ReligiousText2 = bolshevism_religious_text
+
+		ReligiousText3 = bolshevism_religious_text
+
+		DevoteeMale = bolshevism_devotee
+
+		DevoteeMalePlural = bolshevism_devotee_plural
+
+		DevoteeFemale = bolshevism_devotee
+
+		DevoteeFemalePlural = bolshevism_devotee_plural
+
+		DevoteeNeuter = bolshevism_devotee
+
+		DevoteeNeuterPlural = bolshevism_devotee_plural
+
+		PriestMale = bolshevism_priest_male
+
+		PriestMalePlural = bolshevism_priest_male_plural
+
+		PriestFemale = bolshevism_priest_male
+
+		PriestFemalePlural = bolshevism_priest_male_plural
+
+		PriestNeuter = bolshevism_priest_male
+
+		PriestNeuterPlural = bolshevism_priest_male_plural
+
+		AltPriestTermPlural = bolshevism_priest_male_plural
+
+		BishopMale = bolshevism_bishop_male
+
+		BishopMalePlural = bolshevism_bishop_male_plural
+
+		BishopFemale = bolshevism_bishop_male
+
+		BishopFemalePlural = bolshevism_bishop_male_plural
+
+		BishopNeuter = bolshevism_bishop_male
+
+		BishopNeuterPlural = bolshevism_bishop_male_plural
+
+		ReligiousHeadName = bolshevism_religious_head_title
+
+		ReligiousHeadNameFemale = bolshevism_religious_head_title
+
+		ReligiousHeadTitleName = bolshevism_religious_head_title_name
+
+		DivineRealm = bolshevism_positive_afterlife
+
+		DivineRealm2 = bolshevism_positive_afterlife
+
+		DivineRealm3 = bolshevism_positive_afterlife
+
+		PositiveAfterLife = bolshevism_positive_afterlife
+
+		PositiveAfterLife2 = bolshevism_positive_afterlife
+
+		PositiveAfterLife3 = bolshevism_positive_afterlife
+
+		NegativeAfterLife = bolshevism_negative_afterlife
+
+		NegativeAfterLife2 = bolshevism_negative_afterlife
+
+		NegativeAfterLife3 = bolshevism_negative_afterlife
+
+		GHWName = bolshevism_ghw_name
+
+		GHWNamePlural = bolshevism_ghw_name_plural
+
+	}
+
+}
+
+
+
+fascism = {
+
+	name = fascism
+
+	desc = fascism_desc
+
+	faith = fascism
+
+
+
+	color = { 0.18 0.18 0.18 }
+
+	icon = fascist_aquila
+
+
+
+	tenets = {
+
+		tenet_communal_identity
+
+		tenet_legalism
+
+		tenet_pursuit_of_power
+
+	}
+
+
+
+	doctrines = {
+
+		axis_hostility_doctrine
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_righteous
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_legitimization
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_crime
+
+		doctrine_adultery_men_shunned
+
+		doctrine_adultery_women_crime
+
+		doctrine_kinslaying_close_kin_crime
+
+		doctrine_deviancy_crime
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_male_only
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_monasticism_absent
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = fascism_high_god_name
+
+		HighGodName2 = fascism_high_god_name
+
+		HighGodNamePossessive = fascism_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = fascism_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = fascism_high_god_name_alternate_possessive
+
+		CreatorName = fascism_high_god_name
+
+		CreatorNamePossessive = fascism_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = fascism_high_god_name
+
+		HealthGodNamePossessive = fascism_high_god_name_possessive
+
+		FertilityGodName = fascism_high_god_name
+
+		FertilityGodNamePossessive = fascism_high_god_name_possessive
+
+		WealthGodName = fascism_high_god_name
+
+		WealthGodNamePossessive = fascism_high_god_name_possessive
+
+		HouseholdGodName = fascism_high_god_name
+
+		HouseholdGodNamePossessive = fascism_high_god_name_possessive
+
+		FateGodName = fascism_high_god_name
+
+		FateGodNamePossessive = fascism_high_god_name_possessive
+
+		KnowledgeGodName = fascism_high_god_name
+
+		KnowledgeGodNamePossessive = fascism_high_god_name_possessive
+
+		WarGodName = fascism_war_god_name
+
+		WarGodNamePossessive = fascism_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = fascism_high_god_name
+
+		NightGodNamePossessive = fascism_high_god_name_possessive
+
+		WaterGodName = fascism_high_god_name
+
+		WaterGodNamePossessive = fascism_high_god_name_possessive
+
+		DevilName = fascism_devil_name
+
+		DevilNamePossessive = fascism_devil_name_possessive
+
+		DeathDeityName = fascism_devil_name
+
+		DeathDeityNamePossessive = fascism_devil_name_possessive
+
+		WitchGodName = fascism_devil_name
+
+		WitchGodNamePossessive = fascism_devil_name_possessive
+
+		GoodGodNames = { fascism_high_god_name fascism_high_god_name_alternate fascism_war_god_name }
+
+		EvilGodNames = { fascism_devil_name }
+
+		PantheonTerm = fascism_high_god_name
+
+		PantheonTerm2 = fascism_high_god_name
+
+		PantheonTerm3 = fascism_high_god_name
+
+		HouseOfWorship = fascism_house_of_worship
+
+		HouseOfWorship2 = fascism_house_of_worship
+
+		HouseOfWorship3 = fascism_house_of_worship
+
+		HouseOfWorshipPlural = fascism_house_of_worship_plural
+
+		ReligiousSymbol = fascism_religious_symbol
+
+		ReligiousSymbol2 = fascism_religious_symbol
+
+		ReligiousSymbol3 = fascism_religious_symbol
+
+		ReligiousText = fascism_religious_text
+
+		ReligiousText2 = fascism_religious_text
+
+		ReligiousText3 = fascism_religious_text
+
+		DevoteeMale = fascism_devotee
+
+		DevoteeMalePlural = fascism_devotee_plural
+
+		DevoteeFemale = fascism_devotee
+
+		DevoteeFemalePlural = fascism_devotee_plural
+
+		DevoteeNeuter = fascism_devotee
+
+		DevoteeNeuterPlural = fascism_devotee_plural
+
+		PriestMale = fascism_priest_male
+
+		PriestMalePlural = fascism_priest_male_plural
+
+		PriestFemale = fascism_priest_male
+
+		PriestFemalePlural = fascism_priest_male_plural
+
+		PriestNeuter = fascism_priest_male
+
+		PriestNeuterPlural = fascism_priest_male_plural
+
+		AltPriestTermPlural = fascism_priest_male_plural
+
+		BishopMale = fascism_bishop_male
+
+		BishopMalePlural = fascism_bishop_male_plural
+
+		BishopFemale = fascism_bishop_male
+
+		BishopFemalePlural = fascism_bishop_male_plural
+
+		BishopNeuter = fascism_bishop_male
+
+		BishopNeuterPlural = fascism_bishop_male_plural
+
+		ReligiousHeadName = fascism_religious_head_title
+
+		ReligiousHeadNameFemale = fascism_religious_head_title
+
+		ReligiousHeadTitleName = fascism_religious_head_title_name
+
+		DivineRealm = fascism_positive_afterlife
+
+		DivineRealm2 = fascism_positive_afterlife
+
+		DivineRealm3 = fascism_positive_afterlife
+
+		PositiveAfterLife = fascism_positive_afterlife
+
+		PositiveAfterLife2 = fascism_positive_afterlife
+
+		PositiveAfterLife3 = fascism_positive_afterlife
+
+		NegativeAfterLife = fascism_negative_afterlife
+
+		NegativeAfterLife2 = fascism_negative_afterlife
+
+		NegativeAfterLife3 = fascism_negative_afterlife
+
+		GHWName = fascism_ghw_name
+
+		GHWNamePlural = fascism_ghw_name_plural
+
+	}
+
+}
+
+
+
+state_shinto = {
+
+	name = state_shinto
+
+	desc = state_shinto_desc
+
+	faith = shinto_faith
+
+
+
+	color = { 0.74 0.00 0.18 }
+
+	icon = state_shinto_kiku
+
+
+
+	tenets = {
+
+		tenet_warmonger
+
+		tenet_ancestor_worship
+
+		tenet_sacrificial_ceremonies
+
+	}
+
+
+
+	doctrines = {
+
+		doctrine_no_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_concubines
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_none
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_accepted
+
+		doctrine_adultery_men_accepted
+
+		doctrine_adultery_women_shunned
+
+		doctrine_kinslaying_any_dynasty_member_crime
+
+		doctrine_deviancy_shunned
+
+		doctrine_witchcraft_shunned
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_either
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_monasticism_absent
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = state_shinto_high_god_name
+
+		HighGodName2 = state_shinto_high_god_name
+
+		HighGodNamePossessive = state_shinto_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_SHE
+
+		HighGodHerselfHimself = CHARACTER_HERSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HER
+
+		HighGodNameAlternate = state_shinto_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = state_shinto_high_god_name_alternate_possessive
+
+		CreatorName = state_shinto_high_god_name
+
+		CreatorNamePossessive = state_shinto_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_SHE
+
+		CreatorHerHis = CHARACTER_HERHIS_HER
+
+		CreatorHerHim = CHARACTER_HERHIM_HER
+
+		HealthGodName = state_shinto_high_god_name
+
+		HealthGodNamePossessive = state_shinto_high_god_name_possessive
+
+		FertilityGodName = state_shinto_high_god_name
+
+		FertilityGodNamePossessive = state_shinto_high_god_name_possessive
+
+		WealthGodName = state_shinto_high_god_name
+
+		WealthGodNamePossessive = state_shinto_high_god_name_possessive
+
+		HouseholdGodName = state_shinto_high_god_name
+
+		HouseholdGodNamePossessive = state_shinto_high_god_name_possessive
+
+		FateGodName = state_shinto_high_god_name
+
+		FateGodNamePossessive = state_shinto_high_god_name_possessive
+
+		KnowledgeGodName = state_shinto_high_god_name
+
+		KnowledgeGodNamePossessive = state_shinto_high_god_name_possessive
+
+		WarGodName = state_shinto_war_god_name
+
+		WarGodNamePossessive = state_shinto_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = state_shinto_high_god_name
+
+		NightGodNamePossessive = state_shinto_high_god_name_possessive
+
+		WaterGodName = state_shinto_high_god_name
+
+		WaterGodNamePossessive = state_shinto_high_god_name_possessive
+
+		DevilName = state_shinto_devil_name
+
+		DevilNamePossessive = state_shinto_devil_name_possessive
+
+		DeathDeityName = state_shinto_devil_name
+
+		DeathDeityNamePossessive = state_shinto_devil_name_possessive
+
+		WitchGodName = state_shinto_devil_name
+
+		WitchGodNamePossessive = state_shinto_devil_name_possessive
+
+		GoodGodNames = { state_shinto_high_god_name state_shinto_high_god_name_alternate state_shinto_war_god_name }
+
+		EvilGodNames = { state_shinto_devil_name }
+
+		PantheonTerm = state_shinto_high_god_name
+
+		PantheonTerm2 = state_shinto_high_god_name
+
+		PantheonTerm3 = state_shinto_high_god_name
+
+		HouseOfWorship = state_shinto_house_of_worship
+
+		HouseOfWorship2 = state_shinto_house_of_worship
+
+		HouseOfWorship3 = state_shinto_house_of_worship
+
+		HouseOfWorshipPlural = state_shinto_house_of_worship_plural
+
+		ReligiousSymbol = state_shinto_religious_symbol
+
+		ReligiousSymbol2 = state_shinto_religious_symbol
+
+		ReligiousSymbol3 = state_shinto_religious_symbol
+
+		ReligiousText = state_shinto_religious_text
+
+		ReligiousText2 = state_shinto_religious_text
+
+		ReligiousText3 = state_shinto_religious_text
+
+		DevoteeMale = state_shinto_devotee
+
+		DevoteeMalePlural = state_shinto_devotee_plural
+
+		DevoteeFemale = state_shinto_devotee
+
+		DevoteeFemalePlural = state_shinto_devotee_plural
+
+		DevoteeNeuter = state_shinto_devotee
+
+		DevoteeNeuterPlural = state_shinto_devotee_plural
+
+		PriestMale = state_shinto_priest_male
+
+		PriestMalePlural = state_shinto_priest_male_plural
+
+		PriestFemale = state_shinto_priest_male
+
+		PriestFemalePlural = state_shinto_priest_male_plural
+
+		PriestNeuter = state_shinto_priest_male
+
+		PriestNeuterPlural = state_shinto_priest_male_plural
+
+		AltPriestTermPlural = state_shinto_priest_male_plural
+
+		BishopMale = state_shinto_bishop_male
+
+		BishopMalePlural = state_shinto_bishop_male_plural
+
+		BishopFemale = state_shinto_bishop_male
+
+		BishopFemalePlural = state_shinto_bishop_male_plural
+
+		BishopNeuter = state_shinto_bishop_male
+
+		BishopNeuterPlural = state_shinto_bishop_male_plural
+
+		ReligiousHeadName = state_shinto_religious_head_title
+
+		ReligiousHeadNameFemale = state_shinto_religious_head_title
+
+		ReligiousHeadTitleName = state_shinto_religious_head_title_name
+
+		DivineRealm = state_shinto_positive_afterlife
+
+		DivineRealm2 = state_shinto_positive_afterlife
+
+		DivineRealm3 = state_shinto_positive_afterlife
+
+		PositiveAfterLife = state_shinto_positive_afterlife
+
+		PositiveAfterLife2 = state_shinto_positive_afterlife
+
+		PositiveAfterLife3 = state_shinto_positive_afterlife
+
+		NegativeAfterLife = state_shinto_negative_afterlife
+
+		NegativeAfterLife2 = state_shinto_negative_afterlife
+
+		NegativeAfterLife3 = state_shinto_negative_afterlife
+
+		GHWName = state_shinto_ghw_name
+
+		GHWNamePlural = state_shinto_ghw_name_plural
+
+	}
+
+}
+
+
+
+americanism = {
+
+	name = americanism
+
+	desc = americanism_desc
+
+	faith = americanism
+
+
+
+	color = { 0.15 0.32 0.72 }
+
+	icon = american_eagle_shield
+
+
+
+	tenets = {
+
+		tenet_tax_nonbelievers
+
+		tenet_simony
+
+		tenet_pursuit_of_power
+
+	}
+
+
+
+	doctrines = {
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		divine_destiny_doctrine
+
+		doctrine_gender_equal
+
+		doctrine_pluralism_righteous
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_legitimization
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_shunned
+
+		doctrine_adultery_men_accepted
+
+		doctrine_adultery_women_shunned
+
+		doctrine_kinslaying_close_kin_crime
+
+		doctrine_deviancy_shunned
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_taxation
+
+		doctrine_clerical_gender_either
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_monasticism_absent
+
+		abrahamic_hostility_doctrine
+
+		special_doctrine_is_christian_faith
+
+		special_doctrine_ecumenical_christian
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = americanism_high_god_name
+
+		HighGodName2 = americanism_high_god_name
+
+		HighGodNamePossessive = americanism_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = americanism_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = americanism_high_god_name_alternate_possessive
+
+		CreatorName = americanism_high_god_name
+
+		CreatorNamePossessive = americanism_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = americanism_high_god_name
+
+		HealthGodNamePossessive = americanism_high_god_name_possessive
+
+		FertilityGodName = americanism_high_god_name
+
+		FertilityGodNamePossessive = americanism_high_god_name_possessive
+
+		WealthGodName = americanism_high_god_name
+
+		WealthGodNamePossessive = americanism_high_god_name_possessive
+
+		HouseholdGodName = americanism_high_god_name
+
+		HouseholdGodNamePossessive = americanism_high_god_name_possessive
+
+		FateGodName = americanism_high_god_name_alternate
+
+		FateGodNamePossessive = americanism_high_god_name_alternate_possessive
+
+		KnowledgeGodName = americanism_high_god_name
+
+		KnowledgeGodNamePossessive = americanism_high_god_name_possessive
+
+		WarGodName = americanism_war_god_name
+
+		WarGodNamePossessive = americanism_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = americanism_high_god_name
+
+		NightGodNamePossessive = americanism_high_god_name_possessive
+
+		WaterGodName = americanism_high_god_name
+
+		WaterGodNamePossessive = americanism_high_god_name_possessive
+
+		DevilName = americanism_devil_name
+
+		DevilNamePossessive = americanism_devil_name_possessive
+
+		DeathDeityName = americanism_devil_name
+
+		DeathDeityNamePossessive = americanism_devil_name_possessive
+
+		WitchGodName = americanism_devil_name
+
+		WitchGodNamePossessive = americanism_devil_name_possessive
+
+		GoodGodNames = { americanism_high_god_name americanism_high_god_name_alternate americanism_war_god_name }
+
+		EvilGodNames = { americanism_devil_name }
+
+		PantheonTerm = americanism_high_god_name
+
+		PantheonTerm2 = americanism_high_god_name
+
+		PantheonTerm3 = americanism_high_god_name
+
+		HouseOfWorship = americanism_house_of_worship
+
+		HouseOfWorship2 = americanism_house_of_worship
+
+		HouseOfWorship3 = americanism_house_of_worship
+
+		HouseOfWorshipPlural = americanism_house_of_worship_plural
+
+		ReligiousSymbol = americanism_religious_symbol
+
+		ReligiousSymbol2 = americanism_religious_symbol
+
+		ReligiousSymbol3 = americanism_religious_symbol
+
+		ReligiousText = americanism_religious_text
+
+		ReligiousText2 = americanism_religious_text
+
+		ReligiousText3 = americanism_religious_text
+
+		DevoteeMale = americanism_devotee
+
+		DevoteeMalePlural = americanism_devotee_plural
+
+		DevoteeFemale = americanism_devotee
+
+		DevoteeFemalePlural = americanism_devotee_plural
+
+		DevoteeNeuter = americanism_devotee
+
+		DevoteeNeuterPlural = americanism_devotee_plural
+
+		PriestMale = americanism_priest_male
+
+		PriestMalePlural = americanism_priest_male_plural
+
+		PriestFemale = americanism_priest_male
+
+		PriestFemalePlural = americanism_priest_male_plural
+
+		PriestNeuter = americanism_priest_male
+
+		PriestNeuterPlural = americanism_priest_male_plural
+
+		AltPriestTermPlural = americanism_priest_male_plural
+
+		BishopMale = americanism_bishop_male
+
+		BishopMalePlural = americanism_bishop_male_plural
+
+		BishopFemale = americanism_bishop_male
+
+		BishopFemalePlural = americanism_bishop_male_plural
+
+		BishopNeuter = americanism_bishop_male
+
+		BishopNeuterPlural = americanism_bishop_male_plural
+
+		ReligiousHeadName = americanism_religious_head_title
+
+		ReligiousHeadNameFemale = americanism_religious_head_title
+
+		ReligiousHeadTitleName = americanism_religious_head_title_name
+
+		DivineRealm = americanism_positive_afterlife
+
+		DivineRealm2 = americanism_positive_afterlife
+
+		DivineRealm3 = americanism_positive_afterlife
+
+		PositiveAfterLife = americanism_positive_afterlife
+
+		PositiveAfterLife2 = americanism_positive_afterlife
+
+		PositiveAfterLife3 = americanism_positive_afterlife
+
+		NegativeAfterLife = americanism_negative_afterlife
+
+		NegativeAfterLife2 = americanism_negative_afterlife
+
+		NegativeAfterLife3 = americanism_negative_afterlife
+
+		GHWName = americanism_ghw_name
+
+		GHWNamePlural = americanism_ghw_name_plural
+
+	}
+
+}
+
+
+
+juche = {
+
+	name = juche
+
+	desc = juche_desc
+
+	faith = juche
+
+
+
+	color = { 0.85 0.10 0.15 }
+
+	icon = juche_wpk
+
+
+
+	tenets = {
+
+		tenet_mountain_worship
+
+		tenet_communal_identity
+
+		tenet_ancestor_worship
+
+	}
+
+
+
+	doctrines = {
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_legitimization
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_crime
+
+		doctrine_adultery_men_shunned
+
+		doctrine_adultery_women_crime
+
+		doctrine_kinslaying_close_kin_crime
+
+		doctrine_deviancy_crime
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_either
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_funeral_mummification
+
+		doctrine_monasticism_absent
+
+		abrahamic_hostility_doctrine
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = juche_high_god_name
+
+		HighGodName2 = juche_high_god_name
+
+		HighGodNamePossessive = juche_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = juche_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = juche_high_god_name_alternate_possessive
+
+		CreatorName = juche_high_god_name
+
+		CreatorNamePossessive = juche_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = juche_health_god_name
+
+		HealthGodNamePossessive = juche_health_god_name_possessive
+
+		HealthGodSheHe = CHARACTER_SHEHE_HE
+
+		HealthGodHerHis = CHARACTER_HERHIS_HIS
+
+		HealthGodHerHim = CHARACTER_HERHIM_HIM
+
+		FertilityGodName = juche_health_god_name
+
+		FertilityGodNamePossessive = juche_health_god_name_possessive
+
+		FertilityGodSheHe = CHARACTER_SHEHE_HE
+
+		FertilityGodHerHis = CHARACTER_HERHIS_HIS
+
+		FertilityGodHerHim = CHARACTER_HERHIM_HIM
+
+		WealthGodName = juche_wealth_god_name
+
+		WealthGodNamePossessive = juche_wealth_god_name_possessive
+
+		WealthGodSheHe = CHARACTER_SHEHE_HE
+
+		WealthGodHerHis = CHARACTER_HERHIS_HIS
+
+		WealthGodHerHim = CHARACTER_HERHIM_HIM
+
+		HouseholdGodName = juche_health_god_name
+
+		HouseholdGodNamePossessive = juche_health_god_name_possessive
+
+		HouseholdGodSheHe = CHARACTER_SHEHE_HE
+
+		HouseholdGodHerHis = CHARACTER_HERHIS_HIS
+
+		HouseholdGodHerHim = CHARACTER_HERHIM_HIM
+
+		FateGodName = juche_wealth_god_name
+
+		FateGodNamePossessive = juche_wealth_god_name_possessive
+
+		FateGodSheHe = CHARACTER_SHEHE_HE
+
+		FateGodHerHis = CHARACTER_HERHIS_HIS
+
+		FateGodHerHim = CHARACTER_HERHIM_HIM
+
+		KnowledgeGodName = juche_wealth_god_name
+
+		KnowledgeGodNamePossessive = juche_wealth_god_name_possessive
+
+		KnowledgeGodSheHe = CHARACTER_SHEHE_HE
+
+		KnowledgeGodHerHis = CHARACTER_HERHIS_HIS
+
+		KnowledgeGodHerHim = CHARACTER_HERHIM_HIM
+
+		WarGodName = juche_war_god_name
+
+		WarGodNamePossessive = juche_war_god_name_possessive
+
+		WarGodSheHe = CHARACTER_SHEHE_HE
+
+		WarGodHerHis = CHARACTER_HERHIS_HIS
+
+		WarGodHerHim = CHARACTER_HERHIM_HIM
+
+		TricksterGodName = juche_trickster_god_name
+
+		TricksterGodNamePossessive = juche_trickster_god_name_possessive
+
+		TricksterGodSheHe = CHARACTER_SHEHE_IT
+
+		TricksterGodHerHis = CHARACTER_HERHIS_ITS
+
+		TricksterGodHerHim = CHARACTER_HERHIM_IT
+
+		NightGodName = juche_wealth_god_name
+
+		NightGodNamePossessive = juche_wealth_god_name_possessive
+
+		NightGodSheHe = CHARACTER_SHEHE_HE
+
+		NightGodHerHis = CHARACTER_HERHIS_HIS
+
+		NightGodHerHim = CHARACTER_HERHIM_HIM
+
+		WaterGodName = juche_health_god_name
+
+		WaterGodNamePossessive = juche_health_god_name_possessive
+
+		WaterGodSheHe = CHARACTER_SHEHE_HE
+
+		WaterGodHerHis = CHARACTER_HERHIS_HIS
+
+		WaterGodHerHim = CHARACTER_HERHIM_HIM
+
+		DevilName = juche_devil_name
+
+		DevilNamePossessive = juche_devil_name_possessive
+
+		DevilSheHe = CHARACTER_SHEHE_HE
+
+		DevilHerHis = CHARACTER_HERHIS_HIS
+
+		DevilHerselfHimself = CHARACTER_HIMSELF
+
+		DeathDeityName = juche_devil_name
+
+		DeathDeityNamePossessive = juche_devil_name_possessive
+
+		DeathDeitySheHe = CHARACTER_SHEHE_HE
+
+		DeathDeityHerHis = CHARACTER_HERHIS_HIS
+
+		DeathDeityHerHim = CHARACTER_HERHIM_HIM
+
+		WitchGodName = juche_devil_name
+
+		WitchGodNamePossessive = juche_devil_name_possessive
+
+		WitchGodSheHe = CHARACTER_SHEHE_HE
+
+		WitchGodHerHim = CHARACTER_HERHIM_HIM
+
+		WitchGodMistressMaster = master
+
+		WitchGodMotherFather = father
+
+		WitchGodHerHis = CHARACTER_HERHIS_HIS
+
+		GoodGodNames = { juche_high_god_name juche_high_god_name_alternate juche_health_god_name juche_wealth_god_name juche_war_god_name }
+
+		EvilGodNames = { juche_devil_name }
+
+		PantheonTerm = juche_high_god_name
+
+		PantheonTerm2 = juche_high_god_name
+
+		PantheonTerm3 = juche_high_god_name
+
+		PantheonTermHasHave = pantheon_term_has
+
+		HouseOfWorship = juche_house_of_worship
+
+		HouseOfWorship2 = juche_house_of_worship
+
+		HouseOfWorship3 = juche_house_of_worship
+
+		HouseOfWorshipPlural = juche_house_of_worship_plural
+
+		ReligiousSymbol = juche_religious_symbol
+
+		ReligiousSymbol2 = juche_religious_symbol
+
+		ReligiousSymbol3 = juche_religious_symbol
+
+		ReligiousText = juche_religious_text
+
+		ReligiousText2 = juche_religious_text
+
+		ReligiousText3 = juche_religious_text
+
+		DevoteeMale = juche_devotee
+
+		DevoteeMalePlural = juche_devotee_plural
+
+		DevoteeFemale = juche_devotee
+
+		DevoteeFemalePlural = juche_devotee_plural
+
+		DevoteeNeuter = juche_devotee
+
+		DevoteeNeuterPlural = juche_devotee_plural
+
+		PriestMale = juche_priest_male
+
+		PriestMalePlural = juche_priest_male_plural
+
+		PriestFemale = juche_priest_male
+
+		PriestFemalePlural = juche_priest_male_plural
+
+		PriestNeuter = juche_priest_male
+
+		PriestNeuterPlural = juche_priest_male_plural
+
+		AltPriestTermPlural = juche_priest_male_plural
+
+		BishopMale = juche_bishop_male
+
+		BishopMalePlural = juche_bishop_male_plural
+
+		BishopFemale = juche_bishop_male
+
+		BishopFemalePlural = juche_bishop_male_plural
+
+		BishopNeuter = juche_bishop_male
+
+		BishopNeuterPlural = juche_bishop_male_plural
+
+		ReligiousHeadName = juche_religious_head_title
+
+		ReligiousHeadNameFemale = juche_religious_head_title
+
+		ReligiousHeadTitleName = juche_religious_head_title_name
+
+		DivineRealm = juche_positive_afterlife
+
+		DivineRealm2 = juche_positive_afterlife
+
+		DivineRealm3 = juche_positive_afterlife
+
+		PositiveAfterLife = juche_positive_afterlife
+
+		PositiveAfterLife2 = juche_positive_afterlife
+
+		PositiveAfterLife3 = juche_positive_afterlife
+
+		NegativeAfterLife = juche_negative_afterlife
+
+		NegativeAfterLife2 = juche_negative_afterlife
+
+		NegativeAfterLife3 = juche_negative_afterlife
+
+		GHWName = juche_ghw_name
+
+		GHWNamePlural = juche_ghw_name_plural
+
+	}
+
+}
+
+
+
+angkar = {
+
+	name = angkar
+
+	desc = angkar_desc
+
+	faith = angkar
+
+
+
+	color = { 0.78 0.06 0.10 }
+
+	icon = angkar_wat
+
+
+
+	tenets = {
+
+		tenet_communal_possessions
+
+		tenet_gruesome_festivals
+
+		tenet_sacred_destruction
+
+	}
+
+
+
+	doctrines = {
+
+		bolshevik_hostility_doctrine
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_monogamy
+
+		doctrine_divorce_disallowed
+
+		doctrine_bastardry_none
+
+		doctrine_consanguinity_unrestricted
+
+		doctrine_homosexuality_crime
+
+		doctrine_adultery_men_crime
+
+		doctrine_adultery_women_crime
+
+		doctrine_kinslaying_accepted
+
+		doctrine_deviancy_crime
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_alms_and_pacification
+
+		doctrine_clerical_gender_either
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_funeral_cremation
+
+		doctrine_monasticism_absent
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = angkar_high_god_name
+
+		HighGodName2 = angkar_high_god_name
+
+		HighGodNamePossessive = angkar_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_IT
+
+		HighGodHerselfHimself = CHARACTER_ITSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_ITS
+
+		HighGodNameAlternate = angkar_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = angkar_high_god_name_alternate_possessive
+
+		CreatorName = angkar_high_god_name
+
+		CreatorNamePossessive = angkar_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_IT
+
+		CreatorHerHis = CHARACTER_HERHIS_ITS
+
+		CreatorHerHim = CHARACTER_HERHIM_IT
+
+		HealthGodName = angkar_high_god_name
+
+		HealthGodNamePossessive = angkar_high_god_name_possessive
+
+		FertilityGodName = angkar_high_god_name
+
+		FertilityGodNamePossessive = angkar_high_god_name_possessive
+
+		WealthGodName = angkar_high_god_name
+
+		WealthGodNamePossessive = angkar_high_god_name_possessive
+
+		HouseholdGodName = angkar_high_god_name
+
+		HouseholdGodNamePossessive = angkar_high_god_name_possessive
+
+		FateGodName = angkar_high_god_name
+
+		FateGodNamePossessive = angkar_high_god_name_possessive
+
+		KnowledgeGodName = angkar_high_god_name
+
+		KnowledgeGodNamePossessive = angkar_high_god_name_possessive
+
+		WarGodName = angkar_war_god_name
+
+		WarGodNamePossessive = angkar_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = angkar_high_god_name
+
+		NightGodNamePossessive = angkar_high_god_name_possessive
+
+		WaterGodName = angkar_high_god_name
+
+		WaterGodNamePossessive = angkar_high_god_name_possessive
+
+		DevilName = angkar_devil_name
+
+		DevilNamePossessive = angkar_devil_name_possessive
+
+		DeathDeityName = angkar_devil_name
+
+		DeathDeityNamePossessive = angkar_devil_name_possessive
+
+		WitchGodName = angkar_devil_name
+
+		WitchGodNamePossessive = angkar_devil_name_possessive
+
+		GoodGodNames = { angkar_high_god_name angkar_high_god_name_alternate angkar_war_god_name }
+
+		EvilGodNames = { angkar_devil_name }
+
+		PantheonTerm = angkar_high_god_name
+
+		PantheonTerm2 = angkar_high_god_name
+
+		PantheonTerm3 = angkar_high_god_name
+
+		HouseOfWorship = angkar_house_of_worship
+
+		HouseOfWorship2 = angkar_house_of_worship
+
+		HouseOfWorship3 = angkar_house_of_worship
+
+		HouseOfWorshipPlural = angkar_house_of_worship_plural
+
+		ReligiousSymbol = angkar_religious_symbol
+
+		ReligiousSymbol2 = angkar_religious_symbol
+
+		ReligiousSymbol3 = angkar_religious_symbol
+
+		ReligiousText = angkar_religious_text
+
+		ReligiousText2 = angkar_religious_text
+
+		ReligiousText3 = angkar_religious_text
+
+		DevoteeMale = angkar_devotee
+
+		DevoteeMalePlural = angkar_devotee_plural
+
+		DevoteeFemale = angkar_devotee
+
+		DevoteeFemalePlural = angkar_devotee_plural
+
+		DevoteeNeuter = angkar_devotee
+
+		DevoteeNeuterPlural = angkar_devotee_plural
+
+		PriestMale = angkar_priest_male
+
+		PriestMalePlural = angkar_priest_male_plural
+
+		PriestFemale = angkar_priest_male
+
+		PriestFemalePlural = angkar_priest_male_plural
+
+		PriestNeuter = angkar_priest_male
+
+		PriestNeuterPlural = angkar_priest_male_plural
+
+		AltPriestTermPlural = angkar_priest_male_plural
+
+		BishopMale = angkar_bishop_male
+
+		BishopMalePlural = angkar_bishop_male_plural
+
+		BishopFemale = angkar_bishop_male
+
+		BishopFemalePlural = angkar_bishop_male_plural
+
+		BishopNeuter = angkar_bishop_male
+
+		BishopNeuterPlural = angkar_bishop_male_plural
+
+		ReligiousHeadName = angkar_religious_head_title
+
+		ReligiousHeadNameFemale = angkar_religious_head_title
+
+		ReligiousHeadTitleName = angkar_religious_head_title_name
+
+		DivineRealm = angkar_positive_afterlife
+
+		DivineRealm2 = angkar_positive_afterlife
+
+		DivineRealm3 = angkar_positive_afterlife
+
+		PositiveAfterLife = angkar_positive_afterlife
+
+		PositiveAfterLife2 = angkar_positive_afterlife
+
+		PositiveAfterLife3 = angkar_positive_afterlife
+
+		NegativeAfterLife = angkar_negative_afterlife
+
+		NegativeAfterLife2 = angkar_negative_afterlife
+
+		NegativeAfterLife3 = angkar_negative_afterlife
+
+		GHWName = angkar_ghw_name
+
+		GHWNamePlural = angkar_ghw_name_plural
+
+	}
+
+}
+
+
+
+aminism = {
+
+	name = aminism
+
+	desc = aminism_desc
+
+	faith = aminism
+
+
+
+	color = { 0.85 0.68 0.05 }
+
+	icon = amin_marshal_star
+
+
+
+	tenets = {
+
+		tenet_warmonger
+
+		tenet_ritual_cannibalism
+
+		tenet_gruesome_festivals
+
+	}
+
+
+
+	doctrines = {
+
+		abrahamic_hostility_doctrine
+
+		doctrine_monotheist
+
+		doctrine_temporal_head
+
+		doctrine_gender_male_dominated
+
+		doctrine_pluralism_fundamentalist
+
+		doctrine_theocracy_lay_clergy
+
+		doctrine_polygamy
+
+		doctrine_divorce_allowed
+
+		doctrine_bastardry_legitimization
+
+		doctrine_consanguinity_cousins
+
+		doctrine_homosexuality_crime
+
+		doctrine_adultery_men_accepted
+
+		doctrine_adultery_women_crime
+
+		doctrine_kinslaying_shunned
+
+		doctrine_deviancy_shunned
+
+		doctrine_witchcraft_crime
+
+		doctrine_clerical_function_recruitment
+
+		doctrine_clerical_gender_male_only
+
+		doctrine_clerical_marriage_allowed
+
+		doctrine_clerical_succession_temporal_fixed_appointment
+
+		doctrine_no_anointment
+
+		doctrine_monasticism_absent
+
+		doctrine_pilgrimage_encouraged
+
+		muhammad_succession_zandaqa_doctrine
+
+		special_doctrine_is_islamic_faith
+
+		divine_destiny_doctrine
+
+	}
+
+
+
+	localization = {
+
+		HighGodName = aminism_high_god_name
+
+		HighGodName2 = aminism_high_god_name
+
+		HighGodNamePossessive = aminism_high_god_name_possessive
+
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+
+		HighGodNameAlternate = aminism_high_god_name_alternate
+
+		HighGodNameAlternatePossessive = aminism_high_god_name_alternate_possessive
+
+		CreatorName = aminism_high_god_name
+
+		CreatorNamePossessive = aminism_high_god_name_possessive
+
+		CreatorSheHe = CHARACTER_SHEHE_HE
+
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+
+		HealthGodName = aminism_high_god_name
+
+		HealthGodNamePossessive = aminism_high_god_name_possessive
+
+		FertilityGodName = aminism_high_god_name
+
+		FertilityGodNamePossessive = aminism_high_god_name_possessive
+
+		WealthGodName = aminism_high_god_name
+
+		WealthGodNamePossessive = aminism_high_god_name_possessive
+
+		HouseholdGodName = aminism_high_god_name
+
+		HouseholdGodNamePossessive = aminism_high_god_name_possessive
+
+		FateGodName = aminism_high_god_name
+
+		FateGodNamePossessive = aminism_high_god_name_possessive
+
+		KnowledgeGodName = aminism_high_god_name
+
+		KnowledgeGodNamePossessive = aminism_high_god_name_possessive
+
+		WarGodName = aminism_war_god_name
+
+		WarGodNamePossessive = aminism_war_god_name_possessive
+
+		TricksterGodName = villains_trickster_fate_name
+
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+
+		NightGodName = aminism_high_god_name
+
+		NightGodNamePossessive = aminism_high_god_name_possessive
+
+		WaterGodName = aminism_high_god_name
+
+		WaterGodNamePossessive = aminism_high_god_name_possessive
+
+		DevilName = aminism_devil_name
+
+		DevilNamePossessive = aminism_devil_name_possessive
+
+		DeathDeityName = aminism_devil_name
+
+		DeathDeityNamePossessive = aminism_devil_name_possessive
+
+		WitchGodName = aminism_devil_name
+
+		WitchGodNamePossessive = aminism_devil_name_possessive
+
+		GoodGodNames = { aminism_high_god_name aminism_high_god_name_alternate aminism_war_god_name }
+
+		EvilGodNames = { aminism_devil_name }
+
+		PantheonTerm = aminism_high_god_name
+
+		PantheonTerm2 = aminism_high_god_name
+
+		PantheonTerm3 = aminism_high_god_name
+
+		HouseOfWorship = aminism_house_of_worship
+
+		HouseOfWorship2 = aminism_house_of_worship
+
+		HouseOfWorship3 = aminism_house_of_worship
+
+		HouseOfWorshipPlural = aminism_house_of_worship_plural
+
+		ReligiousSymbol = aminism_religious_symbol
+
+		ReligiousSymbol2 = aminism_religious_symbol
+
+		ReligiousSymbol3 = aminism_religious_symbol
+
+		ReligiousText = aminism_religious_text
+
+		ReligiousText2 = aminism_religious_text
+
+		ReligiousText3 = aminism_religious_text
+
+		DevoteeMale = aminism_devotee
+
+		DevoteeMalePlural = aminism_devotee_plural
+
+		DevoteeFemale = aminism_devotee
+
+		DevoteeFemalePlural = aminism_devotee_plural
+
+		DevoteeNeuter = aminism_devotee
+
+		DevoteeNeuterPlural = aminism_devotee_plural
+
+		PriestMale = aminism_priest_male
+
+		PriestMalePlural = aminism_priest_male_plural
+
+		PriestFemale = aminism_priest_male
+
+		PriestFemalePlural = aminism_priest_male_plural
+
+		PriestNeuter = aminism_priest_male
+
+		PriestNeuterPlural = aminism_priest_male_plural
+
+		AltPriestTermPlural = aminism_priest_male_plural
+
+		BishopMale = aminism_bishop_male
+
+		BishopMalePlural = aminism_bishop_male_plural
+
+		BishopFemale = aminism_bishop_male
+
+		BishopFemalePlural = aminism_bishop_male_plural
+
+		BishopNeuter = aminism_bishop_male
+
+		BishopNeuterPlural = aminism_bishop_male_plural
+
+		ReligiousHeadName = aminism_religious_head_title
+
+		ReligiousHeadNameFemale = aminism_religious_head_title
+
+		ReligiousHeadTitleName = aminism_religious_head_title_name
+
+		DivineRealm = aminism_positive_afterlife
+
+		DivineRealm2 = aminism_positive_afterlife
+
+		DivineRealm3 = aminism_positive_afterlife
+
+		PositiveAfterLife = aminism_positive_afterlife
+
+		PositiveAfterLife2 = aminism_positive_afterlife
+
+		PositiveAfterLife3 = aminism_positive_afterlife
+
+		NegativeAfterLife = aminism_negative_afterlife
+
+		NegativeAfterLife2 = aminism_negative_afterlife
+
+		NegativeAfterLife3 = aminism_negative_afterlife
+
+		GHWName = aminism_ghw_name
+
+		GHWNamePlural = aminism_ghw_name_plural
+
+	}
+
+}
+
+
+
+khlystism = {
+	name = khlystism
+	desc = khlystism_desc
+	faith = khlystism
+
+	color = { 0.54 0.22 0.70 }
+	icon = khlyst_mystic_cross
+
+	tenets = {
+		tenet_carnal_exaltation
+		tenet_esotericism
+		tenet_ritual_celebrations
+	}
+
+	doctrines = {
+		doctrine_monotheist
+		doctrine_temporal_head
+		divine_destiny_doctrine
+		doctrine_gender_equal
+		doctrine_pluralism_pluralistic
+		doctrine_theocracy_lay_clergy
+		doctrine_monogamy
+		doctrine_divorce_allowed
+		doctrine_bastardry_legitimization
+		doctrine_consanguinity_cousins
+		doctrine_homosexuality_accepted
+		doctrine_adultery_men_accepted
+		doctrine_adultery_women_accepted
+		doctrine_kinslaying_close_kin_crime
+		doctrine_deviancy_accepted
+		doctrine_witchcraft_accepted
+		doctrine_clerical_function_recruitment
+		doctrine_clerical_gender_either
+		doctrine_clerical_marriage_allowed
+		doctrine_clerical_succession_temporal_fixed_appointment
+		doctrine_no_anointment
+		doctrine_monasticism_shunned
+		doctrine_pilgrimage_encouraged
+		abrahamic_hostility_doctrine
+		special_doctrine_is_christian_faith
+	}
+
+	localization = {
+		HighGodName = khlystism_high_god_name
+		HighGodName2 = khlystism_high_god_name
+		HighGodNamePossessive = khlystism_high_god_name_possessive
+		HighGodNameSheHe = CHARACTER_SHEHE_HE
+		HighGodHerselfHimself = CHARACTER_HIMSELF
+		HighGodHerHis = CHARACTER_HERHIS_HIS
+		HighGodNameAlternate = khlystism_high_god_name_alternate
+		HighGodNameAlternatePossessive = khlystism_high_god_name_alternate_possessive
+		CreatorName = khlystism_high_god_name
+		CreatorNamePossessive = khlystism_high_god_name_possessive
+		CreatorSheHe = CHARACTER_SHEHE_HE
+		CreatorHerHis = CHARACTER_HERHIS_HIS
+		CreatorHerHim = CHARACTER_HERHIM_HIM
+		HealthGodName = khlystism_high_god_name_alternate
+		HealthGodNamePossessive = khlystism_high_god_name_alternate_possessive
+		FertilityGodName = khlystism_fertility_god_name
+		FertilityGodNamePossessive = khlystism_fertility_god_name_possessive
+		WealthGodName = khlystism_high_god_name
+		WealthGodNamePossessive = khlystism_high_god_name_possessive
+		HouseholdGodName = khlystism_fertility_god_name
+		HouseholdGodNamePossessive = khlystism_fertility_god_name_possessive
+		FateGodName = khlystism_high_god_name
+		FateGodNamePossessive = khlystism_high_god_name_possessive
+		KnowledgeGodName = khlystism_high_god_name_alternate
+		KnowledgeGodNamePossessive = khlystism_high_god_name_alternate_possessive
+		WarGodName = khlystism_high_god_name
+		WarGodNamePossessive = khlystism_high_god_name_possessive
+		TricksterGodName = villains_trickster_fate_name
+		TricksterGodNamePossessive = villains_trickster_fate_name_possessive
+		NightGodName = khlystism_high_god_name_alternate
+		NightGodNamePossessive = khlystism_high_god_name_alternate_possessive
+		WaterGodName = khlystism_high_god_name
+		WaterGodNamePossessive = khlystism_high_god_name_possessive
+		DevilName = khlystism_devil_name
+		DevilNamePossessive = khlystism_devil_name_possessive
+		DeathDeityName = khlystism_devil_name
+		DeathDeityNamePossessive = khlystism_devil_name_possessive
+		WitchGodName = khlystism_high_god_name_alternate
+		WitchGodNamePossessive = khlystism_high_god_name_alternate_possessive
+		GoodGodNames = { khlystism_high_god_name khlystism_high_god_name_alternate khlystism_fertility_god_name }
+		EvilGodNames = { khlystism_devil_name }
+		PantheonTerm = khlystism_high_god_name
+		PantheonTerm2 = khlystism_high_god_name
+		PantheonTerm3 = khlystism_high_god_name
+		HouseOfWorship = khlystism_house_of_worship
+		HouseOfWorship2 = khlystism_house_of_worship
+		HouseOfWorship3 = khlystism_house_of_worship
+		HouseOfWorshipPlural = khlystism_house_of_worship_plural
+		ReligiousSymbol = khlystism_religious_symbol
+		ReligiousSymbol2 = khlystism_religious_symbol
+		ReligiousSymbol3 = khlystism_religious_symbol
+		ReligiousText = khlystism_religious_text
+		ReligiousText2 = khlystism_religious_text
+		ReligiousText3 = khlystism_religious_text
+		DevoteeMale = khlystism_devotee
+		DevoteeMalePlural = khlystism_devotee_plural
+		DevoteeFemale = khlystism_devotee_female
+		DevoteeFemalePlural = khlystism_devotee_female_plural
+		DevoteeNeuter = khlystism_devotee
+		DevoteeNeuterPlural = khlystism_devotee_plural
+		PriestMale = khlystism_priest_male
+		PriestMalePlural = khlystism_priest_male_plural
+		PriestFemale = khlystism_priest_female
+		PriestFemalePlural = khlystism_priest_female_plural
+		PriestNeuter = khlystism_priest_male
+		PriestNeuterPlural = khlystism_priest_male_plural
+		AltPriestTermPlural = khlystism_priest_male_plural
+		BishopMale = khlystism_bishop_male
+		BishopMalePlural = khlystism_bishop_male_plural
+		BishopFemale = khlystism_bishop_female
+		BishopFemalePlural = khlystism_bishop_female_plural
+		BishopNeuter = khlystism_bishop_male
+		BishopNeuterPlural = khlystism_bishop_male_plural
+		ReligiousHeadName = khlystism_religious_head_title
+		ReligiousHeadNameFemale = khlystism_religious_head_title_female
+		ReligiousHeadTitleName = khlystism_religious_head_title_name
+		DivineRealm = khlystism_positive_afterlife
+		DivineRealm2 = khlystism_positive_afterlife
+		DivineRealm3 = khlystism_positive_afterlife
+		PositiveAfterLife = khlystism_positive_afterlife
+		PositiveAfterLife2 = khlystism_positive_afterlife
+		PositiveAfterLife3 = khlystism_positive_afterlife
+		NegativeAfterLife = khlystism_negative_afterlife
+		NegativeAfterLife2 = khlystism_negative_afterlife
+		NegativeAfterLife3 = khlystism_negative_afterlife
+		GHWName = khlystism_ghw_name
+		GHWNamePlural = khlystism_ghw_name_plural
+	}
+}
+
+
+
+
+
+

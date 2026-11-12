@@ -1,0 +1,2562 @@
+﻿reincarnated_hitler_867 = {
+
+	name = "Adolf"
+
+	dynasty = dynasty_hitler_867
+
+	dna = hitler_867_dna
+
+	rite = national_socialism
+
+	culture = bavarian
+
+	diplomacy = 14
+
+	martial = 5
+
+	stewardship = 8
+
+	intrigue = 11
+
+	learning = 6
+
+	prowess = 8
+
+	trait = education_diplomacy_4
+
+	trait = ambitious
+
+	trait = wrathful
+
+	trait = arrogant
+
+	trait = chaste
+
+	trait = lifestyle_poet
+
+	848.4.20 = {
+
+		birth = "848.4.20"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_innsbruck
+
+		set_primary_title_to = title:c_innsbruck
+
+		effect = {
+
+			set_primary_title_to = title:c_innsbruck
+
+			give_nickname = nick_the_fuhrer
+
+			add_known_tenet = tenet_sacred_destruction
+
+			force_set_personal_tenet = tenet_sacred_destruction
+
+			refund_all_perks = yes
+
+			add_diplomacy_lifestyle_perk_points = -5
+
+			add_perk = faithful_perk
+
+			add_perk = zealous_proselytizer_perk
+
+			add_perk = dreadful_perk
+
+			add_perk = cutting_corners_perk
+
+			add_perk = professional_workforce_perk
+
+			add_perk = bellum_justum_perk
+
+			add_gold = 300
+
+			add_prestige = 450
+
+			add_character_modifier = {
+
+				modifier = dog_story_modifier
+
+			}
+
+			add_character_flag = had_dog_story
+
+			set_variable = {
+
+				name = story_cycle_dog_name
+
+				value = flag:dog_name_blondi
+
+			}
+
+			set_variable = {
+
+				name = dog_gender
+
+				value = flag:female
+
+			}
+
+			set_variable = {
+
+				name = dog_fur_color
+
+				value = flag:brown
+
+			}
+
+			set_variable = {
+
+				name = dog_eye_color
+
+				value = flag:brown
+
+			}
+
+			create_story = story_cycle_pet_dog
+
+			every_owned_story = {
+
+				type = story_cycle_pet_dog
+
+				set_variable = {
+
+					name = story_cycle_dog_name
+
+					value = flag:dog_name_blondi
+
+				}
+
+				set_variable = {
+
+					name = dog_gender
+
+					value = flag:female
+
+				}
+
+				set_variable = {
+
+					name = dog_fur_color
+
+					value = flag:brown
+
+				}
+
+				set_variable = {
+
+					name = dog_eye_color
+
+					value = flag:brown
+
+				}
+
+			}
+
+			title:b_innsbruck.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			title:b_brixen.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			change_government = feudal_government
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_innsbruck
+
+			title:c_innsbruck = {
+
+				set_county_rite = rite:national_socialism
+
+				set_county_culture = culture:bavarian
+
+				change_development_level = 6
+
+			}
+
+			title:c_brixen = {
+
+				set_county_rite = rite:national_socialism
+
+				set_county_culture = culture:bavarian
+
+				change_development_level = 5
+
+			}
+
+			spawn_army = {
+
+				name = hitler_sa_stormtroopers_name
+
+				men_at_arms = {
+
+					type = sa_stormtroopers
+
+					stacks = 8
+
+				}
+
+				location = province:2950
+
+				origin = province:2950
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	906.4.30 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_stalin_867 = {
+
+	name = "Iosif"
+
+	dynasty = dynasty_stalin_867
+
+	dna = stalin_867_dna
+
+	rite = bolshevism
+
+	culture = russian
+
+	diplomacy = 10
+
+	martial = 11
+
+	stewardship = 12
+
+	intrigue = 7
+
+	learning = 8
+
+	prowess = 8
+
+	trait = education_intrigue_4
+
+	trait = ambitious
+
+	trait = paranoid
+
+	trait = callous
+
+	trait = vengeful
+
+	848.12.18 = {
+
+		birth = "848.12.18"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_moskva
+		effect = {
+			give_nickname = nick_the_general_secretary
+
+			add_known_tenet = tenet_pursuit_of_power
+
+			force_set_personal_tenet = tenet_pursuit_of_power
+
+			refund_all_perks = yes
+
+			add_intrigue_lifestyle_perk_points = -5
+
+			add_perk = truth_is_relative_perk
+
+			add_perk = dreadful_perk
+
+			add_perk = faithful_perk
+
+			add_perk = zealous_proselytizer_perk
+
+			add_perk = serve_the_crown_perk
+
+			add_gold = 250
+
+			add_prestige = 750
+
+			title:b_moskva.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = tribal_holding } }
+
+					set_holding_type = tribal_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = palisades_01 } }
+
+					add_building = palisades_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = war_camps_01 } }
+
+					add_building = war_camps_01
+
+				}
+
+			}
+
+			title:b_vladimir.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = tribal_holding } }
+
+					set_holding_type = tribal_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = palisades_01 } }
+
+					add_building = palisades_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = war_camps_01 } }
+
+					add_building = war_camps_01
+
+				}
+
+			}
+
+			change_government = tribal_government
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_moskva
+
+			title:c_moskva = {
+
+				set_county_rite = rite:bolshevism
+
+				set_county_culture = culture:russian
+
+				change_development_level = 6
+
+			}
+
+			title:c_vladimir = {
+
+				set_county_rite = rite:bolshevism
+
+				set_county_culture = culture:russian
+
+				change_development_level = 5
+
+			}
+
+			spawn_army = {
+
+				name = stalin_red_guards_name
+
+				men_at_arms = {
+
+					type = red_guards
+
+					stacks = 8
+
+				}
+
+				location = province:575
+
+				origin = province:575
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	922.3.5 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_mussolini_867 = {
+
+	name = "Benito"
+
+	dynasty = dynasty_mussolini_867
+
+	dna = mussolini_867_dna
+
+	rite = fascism
+
+	culture = italian
+
+	diplomacy = 8
+
+	martial = 5
+
+	stewardship = 8
+
+	intrigue = 9
+
+	learning = 9
+
+	prowess = 7
+
+	trait = education_diplomacy_3
+
+	trait = ambitious
+
+	trait = arrogant
+
+	trait = gregarious
+
+	trait = impatient
+
+	848.7.29 = {
+
+		birth = "848.7.29"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_lombardia
+		effect = {
+			give_nickname = nick_the_duce
+
+			add_known_tenet = tenet_miles_christi
+
+			force_set_personal_tenet = tenet_miles_christi
+
+			refund_all_perks = yes
+
+			add_diplomacy_lifestyle_perk_points = -5
+
+			add_perk = befriend_perk
+
+			add_perk = confidants_perk
+
+			add_perk = like_weed_in_a_garden_perk
+
+			add_perk = faithful_perk
+
+			add_perk = zealous_proselytizer_perk
+
+			add_gold = 150
+
+			add_prestige = 350
+
+			add_character_modifier = {
+
+				modifier = cat_story_modifier
+
+			}
+
+			add_character_flag = had_cat_story
+
+			set_variable = {
+
+				name = story_cycle_cat_name
+
+				value = flag:cat_name_italia
+
+			}
+
+			set_variable = {
+
+				name = cat_gender
+
+				value = flag:female
+
+			}
+
+			set_variable = {
+
+				name = cat_fur_color
+
+				value = flag:orange
+
+			}
+
+			set_variable = {
+
+				name = cat_eye_color
+
+				value = flag:amber
+
+			}
+
+			create_story = story_cycle_pet_cat
+
+			every_owned_story = {
+
+				type = story_cycle_pet_cat
+
+				set_variable = {
+
+					name = story_cycle_cat_name
+
+					value = flag:cat_name_italia
+
+				}
+
+				set_variable = {
+
+					name = cat_gender
+
+					value = flag:female
+
+				}
+
+				set_variable = {
+
+					name = cat_fur_color
+
+					value = flag:orange
+
+				}
+
+				set_variable = {
+
+					name = cat_eye_color
+
+					value = flag:amber
+
+				}
+
+			}
+
+			if = {
+
+				limit = { exists = title:d_et_milano.holder }
+
+				destroy_title = title:d_et_milano
+
+			}
+
+			title:b_milano.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+			}
+
+			title:b_brescia.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+			}
+
+			change_government = feudal_government
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_lombardia
+
+			title:c_lombardia = {
+
+				set_county_rite = rite:fascism
+
+				set_county_culture = culture:italian
+
+			}
+
+			title:c_brescia = {
+
+				set_county_rite = rite:fascism
+
+				set_county_culture = culture:italian
+
+			}
+
+			spawn_army = {
+
+				name = mussolini_blackshirts_name
+
+				men_at_arms = {
+
+					type = blackshirts_militia
+
+					stacks = 5
+
+				}
+
+				location = province:2482
+
+				origin = province:2482
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { exists = character:reincarnated_hitler_867 }
+
+				create_alliance = {
+
+					target = character:reincarnated_hitler_867
+
+					allied_through_owner = this
+
+					allied_through_target = character:reincarnated_hitler_867
+
+				}
+
+				add_opinion = {
+
+					modifier = event_negotiated_alliance_opinion
+
+					target = character:reincarnated_hitler_867
+
+				}
+
+				character:reincarnated_hitler_867 = {
+
+					add_opinion = {
+
+						modifier = event_negotiated_alliance_opinion
+
+						target = prev
+
+					}
+
+				}
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	910.4.28 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_mutaguchi_concubine_867 = {
+
+	name = "Haruko"
+
+	female = yes
+
+	rite = state_shinto
+
+	culture = japanese
+
+	diplomacy = 10
+
+	martial = 3
+
+	stewardship = 7
+
+	intrigue = 8
+
+	learning = 6
+
+	prowess = 3
+
+	trait = education_diplomacy_3
+
+	trait = beauty_good_2
+
+	trait = gregarious
+
+	trait = lustful
+
+	trait = temperate
+
+	849.4.15 = {
+
+		birth = "849.4.15"
+
+	}
+
+	867.1.1 = {
+
+		employer = reincarnated_mutaguchi_867
+
+	}
+
+	920.1.1 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_mutaguchi_867 = {
+
+	name = "Renya"
+
+	dynasty = dynasty_mutaguchi_867
+
+	dna = mutaguchi_867_dna
+
+	rite = state_shinto
+
+	culture = japanese
+
+	diplomacy = 4
+
+	martial = 2
+
+	stewardship = 2
+
+	intrigue = 4
+
+	learning = 3
+
+	prowess = 6
+
+	trait = education_martial_1
+
+	trait = stubborn
+
+	trait = arrogant
+
+	trait = wrathful
+
+	trait = arbitrary
+
+	trait = reckless
+
+	trait = improvident
+
+	848.10.7 = {
+
+		birth = "848.10.7"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_manipur
+
+		set_primary_title_to = title:c_manipur
+
+		add_concubine = reincarnated_mutaguchi_concubine_867
+
+		effect = {
+
+			if = {
+
+				limit = {
+
+					exists = character:reincarnated_mutaguchi_concubine_867
+
+					NOT = { any_concubine = { this = character:reincarnated_mutaguchi_concubine_867 } }
+
+				}
+
+				make_concubine = character:reincarnated_mutaguchi_concubine_867
+
+			}
+
+			give_nickname = nick_the_imphal_commander
+
+			add_known_tenet = tenet_warmonger
+
+			force_set_personal_tenet = tenet_warmonger
+
+			refund_all_perks = yes
+
+			add_martial_lifestyle_perk_points = -5
+
+			add_perk = like_weed_in_a_garden_perk
+
+			add_perk = unshackled_lust_perk
+
+			add_perk = subtle_desire_perk
+
+			add_perk = enticing_opportunity_perk
+
+			add_perk = home_advantage_perk
+
+			add_perk = graceful_recovery_perk
+
+			add_perk = smooth_operator_perk
+
+			add_gold = 250
+
+			add_prestige = 400
+
+			title:b_manipur.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			title:b_dimapur.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			add_character_flag = can_become_japanese_feudal
+
+			change_government = japan_feudal_government
+
+			if = {
+				limit = {
+					has_tgp_dlc_trigger = yes
+					government_is_japanese_trigger = yes
+				}
+				house ?= {
+					set_house_aspiration = {
+						type = strength
+						level = 1
+					}
+				}
+			}
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_manipur
+
+			set_primary_title_to = title:c_manipur
+
+			title:c_nf_mutaguchi = {
+				set_coa = holder.house
+				set_color_from_title = title:c_manipur
+			}
+
+			domicile ?= {
+				set_up_domicile_estate_effect = yes
+				move_domicile = owner.capital_province
+			}
+
+			title:c_manipur = {
+
+				set_county_rite = rite:state_shinto
+
+				set_county_culture = culture:japanese
+
+				change_development_level = 6
+
+			}
+
+			title:c_dimapur = {
+
+				set_county_rite = rite:state_shinto
+
+				set_county_culture = culture:japanese
+
+				change_development_level = 5
+
+			}
+
+			spawn_army = {
+
+				name = mutaguchi_15th_army_name
+
+				men_at_arms = {
+
+					type = mutaguchi_banzai_samurai
+
+					stacks = 8
+
+				}
+
+				location = province:826
+
+				origin = province:826
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	926.8.2 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_trump_867 = {
+
+	name = "Donald"
+
+	dynasty = dynasty_trump_867
+
+	dna = trump_867_dna
+
+	rite = americanism
+
+	culture = american
+
+	diplomacy = 14
+
+	martial = 6
+
+	stewardship = 10
+
+	intrigue = 9
+
+	learning = 6
+
+	prowess = 8
+
+	trait = education_stewardship_4
+
+	trait = ambitious
+
+	trait = greedy
+
+	trait = arrogant
+
+	trait = gregarious
+
+	trait = architect
+
+	848.6.14 = {
+
+		birth = "848.6.14"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_northumberland
+		effect = {
+			give_nickname = nick_the_president
+
+			add_known_tenet = tenet_simony
+
+			force_set_personal_tenet = tenet_simony
+
+			refund_all_perks = yes
+
+			add_stewardship_lifestyle_perk_points = -5
+
+			add_perk = thoughtful_perk
+
+			add_perk = ducal_conquest_perk
+
+			add_perk = bellum_justum_perk
+
+			add_perk = golden_obligations_perk
+
+			add_perk = it_is_my_domain_perk
+
+			add_gold = 350
+
+			add_treasury = 350
+
+			add_prestige = 400
+
+			change_influence = 400
+
+			title:b_bamburgh.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			title:b_carlisle.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			change_government = administrative_government
+
+			add_realm_law_skip_effects = acclamation_succession_law
+
+			add_realm_law_skip_effects = equal_law
+
+			set_realm_capital = title:c_northumberland
+
+			tgp_treasury_setup_effect = yes
+
+			title:d_nf_trump = {
+				set_coa = holder.house
+				set_color_from_title = title:c_northumberland
+			}
+
+			house ?= {
+				set_house_aspiration = {
+					type = lofty_architects
+					level = 1
+				}
+			}
+
+			domicile ?= {
+				set_up_domicile_estate_effect = yes
+				move_domicile = owner.capital_province
+			}
+
+			title:c_northumberland = {
+
+				set_county_rite = rite:americanism
+
+				set_county_culture = culture:american
+
+				change_development_level = 6
+
+			}
+
+			title:c_cumberland = {
+
+				set_county_rite = rite:americanism
+
+				set_county_culture = culture:american
+
+				change_development_level = 5
+
+			}
+
+			add_pressed_claim = title:d_northumberland
+
+			add_pressed_claim = title:c_durham
+
+			if = {
+
+				limit = { exists = character:163102 }
+
+				create_alliance = {
+
+					target = character:163102
+
+					allied_through_owner = this
+
+					allied_through_target = character:163102
+
+				}
+
+				add_opinion = {
+
+					modifier = event_negotiated_alliance_opinion
+
+					target = character:163102
+
+				}
+
+				character:163102 = {
+
+					add_opinion = {
+
+						modifier = event_negotiated_alliance_opinion
+
+						target = prev
+
+					}
+
+				}
+
+			}
+
+			if = {
+
+				limit = { exists = character:163112 }
+
+				add_truce_both_ways = {
+
+					character = character:163112
+
+					years = 10
+
+					name = TRUCE_TRUMP_VIKING_DEAL
+
+				}
+
+			}
+
+			if = {
+
+				limit = { exists = character:163108 }
+
+				add_truce_both_ways = {
+
+					character = character:163108
+
+					years = 10
+
+					name = TRUCE_TRUMP_VIKING_DEAL
+
+				}
+
+			}
+
+			if = {
+
+				limit = { exists = character:163111 }
+
+				add_truce_both_ways = {
+
+					character = character:163111
+
+					years = 10
+
+					name = TRUCE_TRUMP_VIKING_DEAL
+
+				}
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	930.6.14 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_kim_grandfather_867 = {
+
+	name = "Il_sung"
+
+	dynasty = dynasty_kim_867
+
+	dna = kim_jongun_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	trait = education_martial_1
+
+	trait = saint
+
+	trait = ambitious
+
+	trait = gregarious
+
+	trait = arrogant
+
+	792.4.15 = {
+
+		birth = "792.4.15"
+
+	}
+
+	854.7.8 = {
+
+		death = {
+
+			death_reason = death_heart_attack
+
+		}
+
+	}
+
+}
+
+
+
+reincarnated_kim_father_867 = {
+
+	name = "Jeong_il"
+
+	dynasty = dynasty_kim_867
+
+	dna = kim_jongun_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	father = reincarnated_kim_grandfather_867
+
+	trait = education_intrigue_3
+
+	trait = saint
+
+	trait = kinslayer_3
+
+	trait = paranoid
+
+	trait = callous
+
+	trait = arbitrary
+
+	820.2.16 = {
+
+		birth = "820.2.16"
+
+	}
+
+	845.1.1 = {
+
+		add_spouse = reincarnated_kim_mother_867
+
+	}
+
+	866.12.17 = {
+
+		death = {
+
+			death_reason = death_heart_attack
+
+		}
+
+	}
+
+}
+
+
+
+reincarnated_kim_mother_867 = {
+
+	name = "Yong_hui"
+
+	female = yes
+
+	dna = kim_yojong_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	trait = education_diplomacy_2
+
+	trait = ambitious
+
+	trait = gregarious
+
+	trait = patient
+
+	825.6.26 = {
+
+		birth = "825.6.26"
+
+	}
+
+	864.5.24 = {
+
+		death = {
+
+			death_reason = death_cancer
+
+		}
+
+	}
+
+}
+
+
+
+reincarnated_kim_jongnam_867 = {
+
+	name = "Jong_nam"
+
+	dynasty_house = house_paektu_867
+
+	dna = kim_jongun_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	father = reincarnated_kim_father_867
+
+	trait = education_diplomacy_2
+
+	trait = gluttonous
+
+	trait = gregarious
+
+	trait = lazy
+
+	846.5.10 = {
+
+		birth = "846.5.10"
+
+	}
+
+	866.2.13 = {
+
+		death = {
+
+			death_reason = death_poison
+
+			killer = reincarnated_kim_jongun_867
+
+		}
+
+	}
+
+}
+
+
+
+reincarnated_kim_jongun_867 = {
+
+	name = "Jong_un"
+
+	dynasty_house = house_paektu_867
+
+	dna = kim_jongun_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	father = reincarnated_kim_father_867
+
+	mother = reincarnated_kim_mother_867
+
+	diplomacy = 7
+
+	martial = 6
+
+	stewardship = 9
+
+	intrigue = 13
+
+	learning = 7
+
+	prowess = 5
+
+	trait = education_intrigue_3
+
+	trait = saint
+
+	trait = kinslayer_3
+
+	trait = ambitious
+
+	trait = gluttonous
+
+	trait = wrathful
+
+	trait = sadistic
+
+	849.1.1 = {
+
+		birth = "849.1.1"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = has_scripted_weight
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_seogyeong
+		effect = {
+			give_nickname = nick_the_supreme_leader
+
+			add_known_tenet = tenet_extinction_of_dharma
+
+			force_set_personal_tenet = tenet_extinction_of_dharma
+
+			pam_canonize_saint_effect = {
+
+				CANONIZER = character:reincarnated_kim_jongun_867
+
+				CANDIDATE = character:reincarnated_kim_grandfather_867
+
+				CONSECRATION_PROVINCE = province:9899
+
+				PRESET = yes
+
+			}
+
+			pam_canonize_saint_effect = {
+
+				CANONIZER = character:reincarnated_kim_jongun_867
+
+				CANDIDATE = character:reincarnated_kim_father_867
+
+				CONSECRATION_PROVINCE = province:9902
+
+				PRESET = yes
+
+			}
+
+			pam_canonize_saint_effect = {
+
+				CANONIZER = character:reincarnated_kim_jongun_867
+
+				CANDIDATE = character:reincarnated_kim_jongun_867
+
+				CONSECRATION_PROVINCE = province:9898
+
+				PRESET = yes
+
+			}
+
+			refund_all_perks = yes
+
+			add_intrigue_lifestyle_perk_points = -5
+
+			add_perk = firm_hand_perk
+
+			add_perk = serve_the_crown_perk
+
+			add_perk = dreadful_perk
+
+			add_perk = dark_insights_perk
+
+			add_perk = divine_retribution_perk
+
+			add_gold = 250
+
+			add_prestige = 400
+
+			add_character_modifier = {
+
+				modifier = horse_story_modifier
+
+			}
+
+			add_character_flag = had_warhorse_story
+
+			add_character_flag = is_in_naming_event
+
+			set_variable = {
+
+				name = warhorse_modifier_level
+
+				value = 0
+
+			}
+
+			create_story = story_cycle_martial_lifestyle_warhorse
+
+			every_owned_story = {
+
+				type = story_cycle_martial_lifestyle_warhorse
+
+				set_variable = {
+
+					name = story_cycle_horse_name
+
+					value = flag:paektu_steed
+
+				}
+
+				set_variable = {
+
+					name = horse_gender
+
+					value = flag:male
+
+				}
+
+			}
+
+			remove_character_flag = is_in_naming_event
+
+			if = {
+
+				limit = { exists = title:c_nf_korean_hwangbo.holder }
+
+				destroy_title = title:c_nf_korean_hwangbo
+
+			}
+
+			add_treasury = 250
+
+			change_influence = 350
+
+			change_merit = 500
+
+			add_character_flag = passed_provincial_exam
+
+			add_character_modifier = {
+
+				modifier = tgp_passed_provincial_exam_modifier
+
+			}
+
+			title:b_Goryeo_Bukgye_Seogyeong.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			title:b_Goryeo_Bukgye_Seongju.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+			}
+
+			change_government = meritocratic_government
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_seogyeong
+
+			tgp_treasury_setup_effect = yes
+
+			title:c_nf_geom_nakrang = {
+				set_coa = holder.house
+				set_color_from_title = title:c_seogyeong
+			}
+
+			domicile ?= {
+				set_up_domicile_estate_effect = yes
+				move_domicile = owner.capital_province
+			}
+
+			title:c_seogyeong = {
+
+				set_county_rite = rite:juche
+
+				set_county_culture = culture:goguryeo
+
+			}
+
+			title:c_seongju = {
+
+				set_county_rite = rite:juche
+
+				set_county_culture = culture:goguryeo
+
+				change_development_level = 5
+
+			}
+
+			spawn_army = {
+
+				name = kim_storm_corps_name
+
+				men_at_arms = {
+
+					type = kpa_storm_corps
+
+					stacks = 8
+
+				}
+
+				location = province:9899
+
+				origin = province:9899
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = {
+
+					exists = character:reincarnated_kim_yojong_867
+
+				}
+
+				set_relation_friend = {
+
+					reason = friend_generic_history
+
+					target = character:reincarnated_kim_yojong_867
+
+				}
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	930.1.8 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_kim_yojong_867 = {
+
+	name = "Yo_jong"
+
+	female = yes
+
+	dynasty_house = house_paektu_867
+
+	dna = kim_yojong_867_dna
+
+	rite = juche
+
+	culture = goguryeo
+
+	father = reincarnated_kim_father_867
+
+	mother = reincarnated_kim_mother_867
+
+	diplomacy = 10
+
+	martial = 6
+
+	stewardship = 9
+
+	intrigue = 6
+
+	learning = 9
+
+	prowess = 6
+
+	trait = education_intrigue_3
+
+	trait = callous
+
+	trait = ambitious
+
+	trait = deceitful
+
+	849.1.2 = {
+
+		birth = "849.1.2"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		employer = reincarnated_kim_jongun_867
+
+		effect = {
+
+			give_nickname = nick_the_first_vice_director
+			add_perk = faithful_perk
+
+			add_perk = zealous_proselytizer_perk
+
+			add_prestige = 250
+
+		}
+
+	}
+
+	932.9.26 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_pol_pot_867 = {
+
+	name = "Saloth"
+
+	dynasty = dynasty_pol_pot_867
+
+	dna = pol_pot_867_dna
+
+	rite = angkar
+
+	culture = khmer
+
+	diplomacy = 8
+
+	martial = 6
+
+	stewardship = 3
+
+	intrigue = 15
+
+	learning = 9
+
+	prowess = 4
+
+	trait = education_intrigue_4
+
+	trait = paranoid
+
+	trait = callous
+
+	trait = zealous
+
+	trait = deceitful
+
+	trait = lifestyle_scholar
+
+	848.5.19 = {
+
+		birth = "848.5.19"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_koh_ker
+
+		set_primary_title_to = title:c_koh_ker
+
+		effect = {
+
+			set_primary_title_to = title:c_koh_ker
+
+			give_nickname = nick_brother_number_one
+
+			add_known_tenet = tenet_cranial_trophies
+
+			force_set_personal_tenet = tenet_cranial_trophies
+
+			refund_all_perks = yes
+
+			add_intrigue_lifestyle_perk_points = -5
+
+			add_perk = truth_is_relative_perk
+
+			add_perk = dreadful_perk
+
+			add_perk = dark_insights_perk
+
+			add_perk = divine_retribution_perk
+
+			add_perk = serve_the_crown_perk
+
+			add_gold = 200
+
+			add_prestige = 750
+
+			add_piety = 500
+
+			title:b_koh_ker.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = temple_citadel_holding } }
+
+					set_holding_type = temple_citadel_holding
+
+				}
+
+			}
+
+			title:b_sambhupura.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = temple_citadel_holding } }
+
+					set_holding_type = temple_citadel_holding
+
+				}
+
+			}
+
+			change_government = mandala_government
+
+			house ?= {
+
+				set_house_aspiration = {
+
+					type = aspect_of_destruction
+
+					level = 1
+
+				}
+
+			}
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_koh_ker
+
+			title:c_koh_ker = {
+
+				set_county_rite = rite:angkar
+
+				set_county_culture = culture:khmer
+
+			}
+
+			title:c_sambhupura = {
+
+				set_county_rite = rite:angkar
+
+				set_county_culture = culture:khmer
+
+			}
+
+			spawn_army = {
+
+				name = pol_pot_khmer_rouge_name
+
+				men_at_arms = {
+
+					type = khmer_rouge_guerrillas
+
+					stacks = 8
+
+				}
+
+				location = province:10908
+
+				origin = province:10908
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	921.4.15 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_idi_amin_867 = {
+
+	name = "Idi"
+
+	dynasty = dynasty_amin_867
+
+	dna = idi_amin_867_dna
+
+	rite = aminism
+
+	culture = daju
+
+	diplomacy = 7
+
+	martial = 12
+
+	stewardship = 3
+
+	intrigue = 10
+
+	learning = 3
+
+	prowess = 20
+
+	trait = education_martial_3
+
+	trait = physique_good_3
+
+	trait = strong
+
+	trait = wrathful
+
+	trait = sadistic
+
+	trait = arbitrary
+
+	trait = arrogant
+
+	trait = cannibal
+
+	848.5.17 = {
+
+		birth = "848.5.17"
+
+		effect = {
+
+			add_character_flag = has_scripted_appearance
+
+			add_character_flag = do_not_generate_starting_family
+
+		}
+
+	}
+
+	867.1.1 = {
+
+		capital = c_fazughli
+		effect = {
+			give_nickname = nick_conqueror_of_british_empire
+
+			add_pressed_claim = title:k_scotland
+
+			add_known_tenet = tenet_cranial_trophies
+
+			force_set_personal_tenet = tenet_cranial_trophies
+
+			refund_all_perks = yes
+
+			add_martial_lifestyle_perk_points = -5
+
+			add_perk = bellum_justum_perk
+
+			add_perk = stalwart_leader_perk
+
+			add_perk = kingsguard_perk
+
+			add_perk = dreadful_perk
+
+			add_perk = serve_the_crown_perk
+
+			add_gold = 250
+
+			add_prestige = 600
+
+			add_piety = 400
+
+			title:b_fazughli.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = military_camps_01 } }
+
+					add_building = military_camps_01
+
+				}
+
+			}
+
+			title:b_sennar.title_province = {
+
+				if = {
+
+					limit = { NOT = { has_holding_type = castle_holding } }
+
+					set_holding_type = castle_holding
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = curtain_walls_01 } }
+
+					add_building = curtain_walls_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = barracks_01 } }
+
+					add_building = barracks_01
+
+				}
+
+				if = {
+
+					limit = { NOT = { has_building_or_higher = military_camps_01 } }
+
+					add_building = military_camps_01
+
+				}
+
+			}
+
+			change_government = clan_government
+
+			add_realm_law_skip_effects = male_preference_law
+
+			set_realm_capital = title:c_fazughli
+
+			title:c_fazughli = {
+
+				set_county_rite = rite:aminism
+
+				set_county_culture = culture:daju
+
+			}
+
+			title:c_sennar = {
+
+				set_county_rite = rite:aminism
+
+				set_county_culture = culture:daju
+
+			}
+
+			spawn_army = {
+
+				name = idi_amin_simba_army_name
+
+				men_at_arms = {
+
+					type = uganda_simba_battalion
+
+					stacks = 8
+
+				}
+
+				location = province:6433
+
+				origin = province:6433
+
+				inheritable = no
+
+			}
+
+			if = {
+
+				limit = { is_independent_ruler = no }
+
+				vassal_contract_set_obligation_level = {
+
+					type = religious_rights
+
+					level = 1
+
+				}
+
+				vassal_contract_set_obligation_level = {
+
+					type = title_revocation_rights
+
+					level = 1
+
+				}
+
+			}
+
+		}
+
+	}
+
+	923.8.16 = {
+
+		death = yes
+
+	}
+
+}
+
+
+
+reincarnated_rasputin_867 = {
+	name = "Grigori"
+	dynasty = dynasty_rasputin_867
+	dna = rasputin_867_dna
+	rite = byzantine_rite
+	culture = russian
+	diplomacy = 10
+	martial = 4
+	stewardship = 3
+	intrigue = 14
+	learning = 13
+	prowess = 12
+	trait = education_intrigue_4
+	trait = lustful
+	trait = deceitful
+	trait = eccentric
+	trait = physique_good_2
+	trait = seducer
+	trait = lifestyle_mystic
+	trait = lifestyle_herbalist
+	trait = witch
+	trait = drunkard
+
+	848.1.21 = {
+		birth = "848.1.21"
+		effect = {
+			add_character_flag = has_scripted_appearance
+			add_character_flag = do_not_generate_starting_family
+		}
+	}
+
+	867.1.1 = {
+		effect = {
+			give_nickname = nick_the_mad_monk
+			force_set_personal_tenet = tenet_polyamory
+			add_character_modifier = rasputin_herbal_contraception_modifier
+			add_character_flag = reduced_ailment_chance
+			add_realm_law_skip_effects = camp_purpose_scholars
+			set_focus = intrigue_temptation_focus
+			refund_all_perks = yes
+			add_intrigue_lifestyle_perk_points = -5
+			add_perk = like_weed_in_a_garden_perk
+			add_perk = unshackled_lust_perk
+			add_perk = subtle_desire_perk
+			add_perk = mortal_adoration_perk
+			add_perk = enticing_opportunity_perk
+			add_perk = home_advantage_perk
+			add_perk = graceful_recovery_perk
+			add_perk = smooth_operator_perk
+			add_perk = seducer_perk
+			add_gold = 150
+			add_piety = 350
+			add_prestige = 250
+		}
+	}
+
+	916.12.30 = {
+		death = yes
+	}
+}
+
+
+

@@ -1,0 +1,3881 @@
+﻿namespace = villains_religious_decision
+
+# ==============================================================================
+# Shared Helper Scripted Effects for Religious Decision Events
+# ==============================================================================
+
+scripted_effect villains_kim_apply_canonization_core_effect = {
+	if = {
+		limit = {
+			exists = scope:idolized_target
+			exists = scope:paektu_consecration_province
+			scope:idolized_target = {
+				NOT = { has_trait = saint }
+			}
+		}
+		custom_tooltip = kim_paektu_idolization_decision_effect_tt
+		pam_canonize_saint_effect = {
+			CANONIZER = root
+			CANDIDATE = scope:idolized_target
+			CONSECRATION_PROVINCE = scope:paektu_consecration_province
+			PRESET = no
+		}
+	}
+}
+
+scripted_effect villains_amin_feudalize_tribal_counties_effect = {
+	every_held_title = {
+		limit = {
+			tier = tier_county
+			title_province = { has_holding_type = tribal_holding }
+		}
+		title_province = {
+			set_holding_type = castle_holding
+		}
+	}
+}
+
+scripted_effect villains_rasputin_found_khlystism_core_effect = {
+	faith:khlystism.main_rite = {
+		set_can_convert_to_rite = yes
+	}
+	set_character_faith = faith:khlystism
+	force_set_personal_tenet = tenet_polyamory
+	create_title_and_vassal_change = {
+		type = created
+		save_scope_as = title_change
+		add_claim_on_loss = no
+	}
+	if = {
+		limit = { NOT = { exists = title:d_khlystism.holder } }
+		title:d_khlystism = {
+			change_title_holder = {
+				holder = root
+				change = scope:title_change
+			}
+		}
+	}
+	resolve_title_and_vassal_change = scope:title_change
+	custom_tooltip = rasputin_found_khlystism_convert_followers_tt
+	hidden_effect = {
+		every_courtier_or_guest = {
+			limit = { NOT = { faith = faith:khlystism } }
+			set_character_faith = faith:khlystism
+		}
+		every_relation = {
+			type = lover
+			limit = {
+				is_ruler = no
+				NOT = { faith = faith:khlystism }
+			}
+			set_character_faith = faith:khlystism
+		}
+		if = {
+			limit = { is_landed = yes }
+			capital_county ?= {
+				set_county_rite = rite:khlystism
+			}
+		}
+	}
+	add_character_modifier = rasputin_living_vessel_modifier
+	dynasty ?= {
+		add_dynasty_prestige = 500
+	}
+}
+
+# ==============================================================================
+# 0010 - Adolf Hitler: Torchlight Mass Rally & Stormtrooper Parade
+# ==============================================================================
+villains_religious_decision.0010 = {
+	type = character_event
+	title = villains_religious_decision.0010.t
+	desc = villains_religious_decision.0010.desc
+	theme = faith
+	override_background = { reference = courtyard }
+
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	right_portrait = {
+		trigger = { exists = scope:rally_lieutenant }
+		character = scope:rally_lieutenant
+		animation = marshal
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = cp:councillor_marshal
+				cp:councillor_marshal != root
+			}
+			cp:councillor_marshal = { save_scope_as = rally_lieutenant }
+		}
+		else_if = {
+			limit = {
+				any_knight = { this != root }
+			}
+			random_knight = {
+				limit = { this != root }
+				save_scope_as = rally_lieutenant
+			}
+		}
+	}
+
+	# Option A: Diplomacy check (Difficulty 12) - Frenzy Oratory
+	option = {
+		name = villains_religious_decision.0010.a
+		duel = {
+			skill = diplomacy
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0010.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0010.a.success
+					left_icon = root
+					add_piety = 250
+					add_prestige = 300
+					add_legitimacy_effect = { LEGITIMACY = 75 }
+					add_dread = 25
+					add_stress = -30
+					add_character_modifier = {
+						modifier = axis_mass_agitation_triumph_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_county }
+						capital_county = {
+							change_county_control = 25
+							if = {
+								limit = { NOT = { faith = root.faith } }
+								set_county_rite = root.rite
+							}
+						}
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = hitler_sa_stormtroopers_name
+							men_at_arms = {
+								type = sa_stormtroopers
+								stacks = 5
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0010.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0010.a.failure
+					left_icon = root
+					add_prestige = -120
+					add_stress = 25
+					add_character_modifier = {
+						modifier = axis_mass_agitation_fiasco_modifier
+						years = 3
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = hitler_sa_stormtroopers_name
+							men_at_arms = {
+								type = sa_stormtroopers
+								stacks = 1
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				diplomacy >= 12
+				add = 100
+			}
+			modifier = {
+				diplomacy < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Intrigue check (Difficulty 12) - Torchlight Street Intimidation
+	option = {
+		name = villains_religious_decision.0010.b
+		duel = {
+			skill = intrigue
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0010.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0010.b.success
+					left_icon = root
+					add_dread = 35
+					add_piety = 175
+					add_stress = -20
+					add_character_modifier = {
+						modifier = axis_mass_agitation_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_county }
+						capital_county = {
+							change_county_control = 20
+							if = {
+								limit = { NOT = { faith = root.faith } }
+								set_county_rite = root.rite
+							}
+						}
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = hitler_sa_stormtroopers_name
+							men_at_arms = {
+								type = sa_stormtroopers
+								stacks = 4
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0010.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0010.b.failure
+					left_icon = root
+					add_prestige = -75
+					add_stress = 20
+					if = {
+						limit = { exists = capital_county }
+						capital_county = {
+							change_county_control = -15
+							add_county_modifier = {
+								modifier = axis_street_riot_county_modifier
+								years = 3
+							}
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				intrigue >= 12
+				add = 80
+			}
+			modifier = {
+				intrigue < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Podium Review
+	option = {
+		name = villains_religious_decision.0010.c
+		add_piety = 100
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = axis_mass_agitation_modifier
+			years = 3
+		}
+		if = {
+			limit = { exists = capital_county }
+			capital_county = {
+				change_county_control = 10
+				if = {
+					limit = { NOT = { faith = root.faith } }
+					set_county_rite = root.rite
+				}
+			}
+		}
+		if = {
+			limit = { exists = capital_province }
+			spawn_army = {
+				name = hitler_sa_stormtroopers_name
+				men_at_arms = {
+					type = sa_stormtroopers
+					stacks = 2
+				}
+				location = root.capital_province
+				origin = root.capital_province
+				inheritable = no
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0020 - Benito Mussolini: Piazza Balcony Oratory & Blackshirt March
+# ==============================================================================
+villains_religious_decision.0020 = {
+	type = character_event
+	title = villains_religious_decision.0020.t
+	desc = villains_religious_decision.0020.desc
+	theme = diplomacy_majesty_focus
+	override_background = { reference = courtyard }
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		trigger = { exists = scope:rally_lieutenant }
+		character = scope:rally_lieutenant
+		animation = chancellor
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = cp:councillor_chancellor
+				cp:councillor_chancellor != root
+			}
+			cp:councillor_chancellor = { save_scope_as = rally_lieutenant }
+		}
+		else_if = {
+			limit = {
+				any_knight = { this != root }
+			}
+			random_knight = {
+				limit = { this != root }
+				save_scope_as = rally_lieutenant
+			}
+		}
+	}
+
+	# Option A: Diplomacy check (Difficulty 11) - New Caesar Balcony Speech
+	option = {
+		name = villains_religious_decision.0020.a
+		duel = {
+			skill = diplomacy
+			value = 11
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0020.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0020.a.success
+					left_icon = root
+					add_prestige = 350
+					add_piety = 200
+					add_legitimacy_effect = { LEGITIMACY = 75 }
+					add_stress = -25
+					add_character_modifier = {
+						modifier = axis_mass_agitation_triumph_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_county }
+						capital_county = {
+							change_county_control = 25
+							if = {
+								limit = { NOT = { faith = root.faith } }
+								set_county_rite = root.rite
+							}
+						}
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = mussolini_blackshirts_name
+							men_at_arms = {
+								type = blackshirts_militia
+								stacks = 5
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0020.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0020.a.failure
+					left_icon = root
+					add_prestige = -120
+					add_stress = 25
+					add_character_modifier = {
+						modifier = axis_mass_agitation_fiasco_modifier
+						years = 3
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = mussolini_blackshirts_name
+							men_at_arms = {
+								type = blackshirts_militia
+								stacks = 1
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				diplomacy >= 11
+				add = 90
+			}
+			modifier = {
+				diplomacy < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Learning + Intrigue check (Average Difficulty 9) - Roman Triumph Spectacle
+	option = {
+		name = villains_religious_decision.0020.b
+		duel = {
+			skills = { learning intrigue }
+			value = 9
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0020.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0020.b.success
+					left_icon = root
+					add_piety = 250
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = axis_mass_agitation_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_county }
+						capital_county = {
+							change_development_progress_with_overflow = 50
+							if = {
+								limit = { NOT = { faith = root.faith } }
+								set_county_rite = root.rite
+							}
+						}
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = mussolini_blackshirts_name
+							men_at_arms = {
+								type = blackshirts_militia
+								stacks = 4
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0020.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0020.b.failure
+					left_icon = root
+					remove_short_term_gold = 30
+					add_piety = -75
+					add_stress = 15
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				learning >= 9
+				intrigue >= 9
+				add = 80
+			}
+		}
+	}
+
+	# Option C: Safe Blackshirt Parade
+	option = {
+		name = villains_religious_decision.0020.c
+		add_prestige = 100
+		add_piety = 75
+		add_character_modifier = {
+			modifier = axis_mass_agitation_modifier
+			years = 3
+		}
+		if = {
+			limit = { exists = capital_county }
+			capital_county = {
+				change_county_control = 10
+				if = {
+					limit = { NOT = { faith = root.faith } }
+					set_county_rite = root.rite
+				}
+			}
+		}
+		if = {
+			limit = { exists = capital_province }
+			spawn_army = {
+				name = mussolini_blackshirts_name
+				men_at_arms = {
+					type = blackshirts_militia
+					stacks = 2
+				}
+				location = root.capital_province
+				origin = root.capital_province
+				inheritable = no
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0030 - Joseph Stalin: Midnight Purge List & Show Trial
+# ==============================================================================
+villains_religious_decision.0030 = {
+	type = character_event
+	title = villains_religious_decision.0030.t
+	desc = villains_religious_decision.0030.desc
+	theme = dread
+	override_background = { reference = council_chamber }
+
+	left_portrait = {
+		character = root
+		animation = paranoia
+	}
+	right_portrait = {
+		trigger = { exists = scope:purge_suspect }
+		character = scope:purge_suspect
+		animation = fear
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_courtier_or_guest = {
+					is_adult = yes
+					is_imprisoned = no
+					this != root
+					opinion = {
+						target = root
+						value < 0
+					}
+				}
+			}
+			random_courtier_or_guest = {
+				limit = {
+					is_adult = yes
+					is_imprisoned = no
+					this != root
+					opinion = {
+						target = root
+						value < 0
+					}
+				}
+				save_scope_as = purge_suspect
+			}
+		}
+		else_if = {
+			limit = {
+				any_courtier_or_guest = {
+					is_adult = yes
+					is_imprisoned = no
+					this != root
+				}
+			}
+			random_courtier_or_guest = {
+				limit = {
+					is_adult = yes
+					is_imprisoned = no
+					this != root
+				}
+				save_scope_as = purge_suspect
+			}
+		}
+	}
+
+	# Option A: Intrigue check (Difficulty 11) - Root Out All Conspirators
+	option = {
+		name = villains_religious_decision.0030.a
+		duel = {
+			skill = intrigue
+			value = 11
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0030.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0030.a.success
+					left_icon = root
+					add_dread = 50
+					add_stress = -45
+					add_character_modifier = {
+						modifier = stalin_great_purge_triumph_modifier
+						years = 5
+					}
+					every_held_title = {
+						limit = { tier = tier_county }
+						change_county_control = 35
+					}
+					if = {
+						limit = {
+							exists = scope:purge_suspect
+							scope:purge_suspect = {
+								is_imprisoned = no
+								is_courtier_of = root
+							}
+						}
+						imprison = {
+							target = scope:purge_suspect
+							type = dungeon
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0030.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0030.a.failure
+					left_icon = root
+					add_prestige = -100
+					add_stress = 30
+					add_character_modifier = {
+						modifier = stalin_purge_paranoia_backlash_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				intrigue >= 11
+				add = 90
+			}
+			modifier = {
+				intrigue < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Stewardship check (Difficulty 12) - Total Kulak & Noble Expropriation
+	option = {
+		name = villains_religious_decision.0030.b
+		duel = {
+			skill = stewardship
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0030.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0030.b.success
+					left_icon = root
+					add_gold = 200
+					add_dread = 30
+					add_stress = -25
+					add_character_modifier = {
+						modifier = stalin_great_purge_modifier
+						years = 5
+					}
+					every_held_title = {
+						limit = { tier = tier_county }
+						change_county_control = 25
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0030.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0030.b.failure
+					left_icon = root
+					add_gold = 25
+					add_stress = 20
+					capital_county ?= {
+						change_county_control = -20
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				stewardship >= 12
+				add = 90
+			}
+			modifier = {
+				stewardship < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Exemplary Punishment
+	option = {
+		name = villains_religious_decision.0030.c
+		add_gold = 60
+		add_dread = 20
+		add_stress = -15
+		add_character_modifier = {
+			modifier = stalin_great_purge_modifier
+			years = 3
+		}
+		every_held_title = {
+			limit = { tier = tier_county }
+			change_county_control = 15
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0040 - Donald Trump: Golden Temple Fundraising Gala & Limited Relic Auction
+# ==============================================================================
+villains_religious_decision.0040 = {
+	type = character_event
+	title = villains_religious_decision.0040.t
+	desc = villains_religious_decision.0040.desc
+	theme = stewardship_wealth_focus
+	override_background = { reference = feast }
+
+	left_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+	right_portrait = {
+		trigger = { exists = scope:wealthy_donor }
+		character = scope:wealthy_donor
+		animation = admiration
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = cp:councillor_steward
+				cp:councillor_steward != root
+			}
+			cp:councillor_steward = { save_scope_as = wealthy_donor }
+		}
+		else_if = {
+			limit = {
+				any_vassal = { is_adult = yes }
+			}
+			random_vassal = {
+				limit = { is_adult = yes }
+				save_scope_as = wealthy_donor
+			}
+		}
+	}
+
+	# Option A: Stewardship check (Difficulty 12) - Exclusive Golden Relic Deal
+	option = {
+		name = villains_religious_decision.0040.a
+		duel = {
+			skill = stewardship
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0040.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0040.a.success
+					left_icon = root
+					add_gold = 380
+					add_prestige = 150
+					add_character_modifier = {
+						modifier = trump_art_of_the_deal_boom_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0040.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0040.a.failure
+					left_icon = root
+					add_gold = 50
+					add_prestige = -150
+					add_character_modifier = {
+						modifier = trump_fraud_scandal_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				stewardship >= 12
+				add = 90
+			}
+			modifier = {
+				stewardship < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Diplomacy check (Difficulty 13) - Massive Patriotic Rally Donations
+	option = {
+		name = villains_religious_decision.0040.b
+		duel = {
+			skill = diplomacy
+			value = 13
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0040.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0040.b.success
+					left_icon = root
+					add_gold = 260
+					add_prestige = 250
+					add_character_modifier = {
+						modifier = trump_super_pac_fundraising_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0040.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0040.b.failure
+					left_icon = root
+					add_gold = 70
+					add_prestige = -100
+					add_stress = 25
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				diplomacy >= 13
+				add = 100
+			}
+			modifier = {
+				diplomacy < 10
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Fixed-Price Merch Sale
+	option = {
+		name = villains_religious_decision.0040.c
+		add_gold = 140
+		add_prestige = 50
+		add_character_modifier = {
+			modifier = trump_super_pac_fundraising_modifier
+			years = 3
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0050 - Renya Mutaguchi: Headquarters Geisha Banquet & Reckless Strategy Lecture
+# ==============================================================================
+villains_religious_decision.0050 = {
+	type = character_event
+	title = villains_religious_decision.0050.t
+	desc = villains_religious_decision.0050.desc
+	theme = feast_activity
+	override_background = { reference = relaxing_room }
+
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	right_portrait = {
+		trigger = { exists = scope:banquet_companion }
+		character = scope:banquet_companion
+		animation = flirtation
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = character:reincarnated_mutaguchi_concubine_867
+				character:reincarnated_mutaguchi_concubine_867 = { is_alive = yes }
+			}
+			character:reincarnated_mutaguchi_concubine_867 = {
+				save_scope_as = banquet_companion
+			}
+		}
+		else_if = {
+			limit = {
+				any_consort = { is_alive = yes }
+			}
+			random_consort = {
+				limit = { is_alive = yes }
+				save_scope_as = banquet_companion
+			}
+		}
+	}
+
+	# Option A: Martial check (Difficulty 10 - High-Risk Delusional Strategy Lecture!)
+	option = {
+		name = villains_religious_decision.0050.a
+		duel = {
+			skill = martial
+			value = 10
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0050.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0050.a.success
+					left_icon = root
+					add_prestige = 400
+					add_stress = -80
+					add_character_modifier = {
+						modifier = mutaguchi_geisha_banquet_modifier
+						years = 5
+					}
+					add_character_modifier = {
+						modifier = mutaguchi_banzai_delusion_inspired_modifier
+						years = 3
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0050.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0050.a.failure
+					left_icon = root
+					add_prestige = -150
+					add_stress = 20
+					add_character_modifier = {
+						modifier = mutaguchi_drunken_blunder_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				martial >= 10
+				add = 100
+			}
+			modifier = {
+				martial < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Diplomacy + Prowess check (Average Difficulty 8) - Sake & Geisha Hospitality
+	option = {
+		name = villains_religious_decision.0050.b
+		duel = {
+			skills = { diplomacy prowess }
+			value = 8
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0050.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0050.b.success
+					left_icon = root
+					add_stress = -75
+					add_prestige = 250
+					add_character_modifier = {
+						modifier = mutaguchi_geisha_banquet_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0050.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0050.b.failure
+					left_icon = root
+					add_prestige = -75
+					add_stress = -20
+					add_character_modifier = {
+						modifier = mutaguchi_hangover_disgrace_modifier
+						years = 1
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				prowess >= 8
+				add = 40
+			}
+		}
+	}
+
+	# Option C: Safe Quiet Drinking
+	option = {
+		name = villains_religious_decision.0050.c
+		add_stress = -45
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = mutaguchi_geisha_banquet_modifier
+			years = 3
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+}
+
+# ==============================================================================
+# 0060 - Kim Jong-un & Kim Yo-jong: Mount Paektu Idolization & Sun Shrine Rite
+# ==============================================================================
+villains_religious_decision.0060 = {
+	type = character_event
+	title = villains_religious_decision.0060.t
+	desc = villains_religious_decision.0060.desc
+	theme = merit
+	override_background = { reference = temple }
+
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+	right_portrait = {
+		trigger = {
+			exists = scope:idolized_target
+			scope:idolized_target != root
+			scope:idolized_target = { is_alive = yes }
+		}
+		character = scope:idolized_target
+		animation = admiration
+	}
+	lower_right_portrait = {
+		trigger = {
+			exists = scope:idolized_target
+			scope:idolized_target = { is_alive = no }
+		}
+		character = scope:idolized_target
+		animation = dead
+	}
+
+	# Option A: Intrigue check (Difficulty 12 - Kim Jong-un State Security Total Control)
+	option = {
+		name = villains_religious_decision.0060.a
+		duel = {
+			skill = intrigue
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0060.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0060.a.success
+					left_icon = root
+					villains_kim_apply_canonization_core_effect = yes
+					if = {
+						limit = {
+							exists = scope:idolized_target
+							scope:idolized_target = { is_alive = yes }
+						}
+						scope:idolized_target = {
+							add_prestige = 500
+							add_piety = 300
+							add_dread = 30
+						}
+					}
+					add_dread = 40
+					add_legitimacy_effect = { LEGITIMACY = 100 }
+					dynasty ?= {
+						add_dynasty_prestige = 350
+					}
+					add_character_modifier = {
+						modifier = kim_paektu_idolization_supreme_modifier
+						years = 10
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0060.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0060.a.failure
+					left_icon = root
+					villains_kim_apply_canonization_core_effect = yes
+					dynasty ?= {
+						add_dynasty_prestige = 50
+					}
+					add_prestige = -150
+					add_stress = 35
+					add_character_modifier = {
+						modifier = kim_idolization_backlash_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				intrigue >= 12
+				add = 100
+			}
+			modifier = {
+				intrigue < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Diplomacy + Learning check (Average Difficulty 9 - Kim Yo-jong Grand Propaganda Epic)
+	option = {
+		name = villains_religious_decision.0060.b
+		duel = {
+			skills = { diplomacy learning }
+			value = 9
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0060.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0060.b.success
+					left_icon = root
+					villains_kim_apply_canonization_core_effect = yes
+					if = {
+						limit = {
+							exists = scope:idolized_target
+							scope:idolized_target = { is_alive = yes }
+						}
+						scope:idolized_target = {
+							add_prestige = 500
+							add_piety = 300
+						}
+					}
+					add_prestige = 350
+					add_legitimacy_effect = { LEGITIMACY = 100 }
+					dynasty ?= {
+						add_dynasty_prestige = 400
+					}
+					add_character_modifier = {
+						modifier = kim_paektu_idolization_supreme_modifier
+						years = 10
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0060.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0060.b.failure
+					left_icon = root
+					villains_kim_apply_canonization_core_effect = yes
+					dynasty ?= {
+						add_dynasty_prestige = 50
+					}
+					add_prestige = -150
+					add_piety = -100
+					add_character_modifier = {
+						modifier = kim_idolization_backlash_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				diplomacy >= 9
+				learning >= 9
+				add = 100
+			}
+			modifier = {
+				diplomacy < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Inner-Circle Enshrinement Ceremony
+	option = {
+		name = villains_religious_decision.0060.c
+		villains_kim_apply_canonization_core_effect = yes
+		if = {
+			limit = {
+				exists = scope:idolized_target
+				scope:idolized_target = { is_alive = yes }
+			}
+			scope:idolized_target = {
+				add_prestige = 250
+				add_piety = 150
+			}
+		}
+		add_prestige = 150
+		dynasty ?= {
+			add_dynasty_prestige = 150
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0070 - Pol Pot (Decision 1): Year Zero City Evacuation & Commune March
+# ==============================================================================
+villains_religious_decision.0070 = {
+	type = character_event
+	title = villains_religious_decision.0070.t
+	desc = villains_religious_decision.0070.desc
+	theme = mandala
+	override_background = { reference = wilderness_jungle }
+
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	# Option A: Intrigue check (Difficulty 13) - Angkar Secret Surveillance Forced March
+	option = {
+		name = villains_religious_decision.0070.a
+		duel = {
+			skill = intrigue
+			value = 13
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0070.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0070.a.success
+					left_icon = root
+					add_gold = 200
+					add_dread = 45
+					add_stress = -30
+					add_character_modifier = {
+						modifier = pol_pot_year_zero_commune_labor_modifier
+						years = 5
+					}
+					every_held_title = {
+						limit = { tier = tier_county }
+						change_county_control = 35
+					}
+					capital_county ?= {
+						if = {
+							limit = { NOT = { faith = root.faith } }
+							set_county_rite = root.rite
+						}
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = pol_pot_peasant_purification_squad_name
+							men_at_arms = {
+								type = khmer_rouge_guerrillas
+								stacks = 3
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0070.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0070.a.failure
+					left_icon = root
+					add_stress = 30
+					capital_county ?= {
+						change_county_control = -30
+					}
+					add_character_modifier = {
+						modifier = pol_pot_commune_famine_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				intrigue >= 13
+				add = 100
+			}
+			modifier = {
+				intrigue < 10
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Stewardship check (Difficulty 10 - High-Risk Fourfold Rice Yield Gamble!)
+	option = {
+		name = villains_religious_decision.0070.b
+		duel = {
+			skill = stewardship
+			value = 10
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0070.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0070.b.success
+					left_icon = root
+					add_gold = 350
+					capital_county ?= {
+						change_development_level = 2
+						if = {
+							limit = { NOT = { faith = root.faith } }
+							set_county_rite = root.rite
+						}
+					}
+					add_character_modifier = {
+						modifier = pol_pot_year_zero_miracle_harvest_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = pol_pot_peasant_purification_squad_name
+							men_at_arms = {
+								type = khmer_rouge_guerrillas
+								stacks = 2
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0070.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0070.b.failure
+					left_icon = root
+					remove_short_term_gold = 50
+					capital_county ?= {
+						change_development_level = -1
+						change_county_control = -20
+					}
+					add_character_modifier = {
+						modifier = pol_pot_commune_famine_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				stewardship >= 10
+				add = 100
+			}
+			modifier = {
+				stewardship < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Gradual Labor Mobilization
+	option = {
+		name = villains_religious_decision.0070.c
+		add_gold = 100
+		add_dread = 20
+		add_character_modifier = {
+			modifier = pol_pot_year_zero_commune_labor_modifier
+			years = 3
+		}
+		every_held_title = {
+			limit = { tier = tier_county }
+			change_county_control = 15
+		}
+		capital_county ?= {
+			if = {
+				limit = { NOT = { faith = root.faith } }
+				set_county_rite = root.rite
+			}
+		}
+		if = {
+			limit = { exists = capital_province }
+			spawn_army = {
+				name = pol_pot_peasant_purification_squad_name
+				men_at_arms = {
+					type = khmer_rouge_guerrillas
+					stacks = 1
+				}
+				location = root.capital_province
+				origin = root.capital_province
+				inheritable = no
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0080 - Pol Pot (Decision 2): Interrogation of Reactionary Intellectuals
+# ==============================================================================
+villains_religious_decision.0080 = {
+	type = character_event
+	title = villains_religious_decision.0080.t
+	desc = villains_religious_decision.0080.desc
+	theme = dungeon
+	override_background = { reference = dungeon }
+
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	right_portrait = {
+		trigger = { exists = scope:arrested_intellectual }
+		character = scope:arrested_intellectual
+		animation = fear
+	}
+
+	# Option A: Opposed Intrigue check vs Target - Extract Spy Confession & Hidden Wealth
+	option = {
+		name = villains_religious_decision.0080.a
+		trigger = { exists = scope:arrested_intellectual }
+		duel = {
+			skill = intrigue
+			target = scope:arrested_intellectual
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0080.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0080.a.success
+					left_icon = scope:arrested_intellectual
+					if = {
+						limit = {
+							scope:arrested_intellectual = { gold >= 75 }
+						}
+						scope:arrested_intellectual = {
+							pay_short_term_gold = {
+								target = root
+								gold = scope:arrested_intellectual.gold
+							}
+						}
+					}
+					else = {
+						add_gold = 75
+					}
+					imprison = {
+						target = scope:arrested_intellectual
+						type = dungeon
+					}
+					add_piety = 200
+					add_dread = 30
+					add_stress = -25
+					add_character_modifier = {
+						modifier = pol_pot_tuol_sleng_purge_modifier
+						years = 4
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0080.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0080.a.failure
+					left_icon = scope:arrested_intellectual
+					add_prestige = -100
+					add_stress = 25
+					scope:arrested_intellectual = {
+						add_opinion = {
+							target = root
+							modifier = insulted_opinion
+							opinion = -50
+						}
+						if = {
+							limit = { is_ruler = no }
+							banish = yes
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				intrigue >= 13
+				add = 90
+			}
+		}
+	}
+
+	# Option B: Opposed Learning check vs Target - Public Ideological Struggle Session
+	option = {
+		name = villains_religious_decision.0080.b
+		trigger = { exists = scope:arrested_intellectual }
+		duel = {
+			skill = learning
+			target = scope:arrested_intellectual
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0080.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0080.b.success
+					left_icon = scope:arrested_intellectual
+					imprison = {
+						target = scope:arrested_intellectual
+						type = dungeon
+					}
+					scope:arrested_intellectual = {
+						if = {
+							limit = { is_ruler = no }
+							set_character_faith = faith:angkar
+						}
+					}
+					add_piety = 300
+					add_legitimacy_effect = { LEGITIMACY = 50 }
+					add_character_modifier = {
+						modifier = pol_pot_tuol_sleng_purge_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0080.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0080.b.failure
+					left_icon = scope:arrested_intellectual
+					add_prestige = -150
+					add_piety = -100
+					add_stress = 20
+					imprison = {
+						target = scope:arrested_intellectual
+						type = house_arrest
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				learning < 12
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Immediate Dungeon Chaining
+	option = {
+		name = villains_religious_decision.0080.c
+		if = {
+			limit = { exists = scope:arrested_intellectual }
+			imprison = {
+				target = scope:arrested_intellectual
+				type = dungeon
+			}
+		}
+		add_gold = 40
+		add_dread = 15
+		add_tyranny = 10
+		add_character_modifier = {
+			modifier = pol_pot_tuol_sleng_purge_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0090 - Idi Amin (Decision 1): Economic War & Merchant Property Confiscation
+# ==============================================================================
+villains_religious_decision.0090 = {
+	type = character_event
+	title = villains_religious_decision.0090.t
+	desc = villains_religious_decision.0090.desc
+	theme = martial_authority_focus
+	override_background = { reference = market }
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		trigger = { exists = scope:simba_officer }
+		character = scope:simba_officer
+		animation = marshal
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_knight = { this != root }
+			}
+			random_knight = {
+				limit = { this != root }
+				save_scope_as = simba_officer
+			}
+		}
+	}
+
+	# Option A: Martial check (Difficulty 12) - Simba Battalion Seizure & Officer Spoils
+	option = {
+		name = villains_religious_decision.0090.a
+		duel = {
+			skill = martial
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0090.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0090.a.success
+					left_icon = root
+					add_gold = 300
+					add_piety = 150
+					add_dread = 30
+					villains_amin_feudalize_tribal_counties_effect = yes
+					add_character_modifier = {
+						modifier = idi_amin_economic_war_spoils_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0090.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0090.a.failure
+					left_icon = root
+					add_gold = 70
+					capital_county ?= {
+						change_county_control = -25
+					}
+					add_character_modifier = {
+						modifier = idi_amin_economic_collapse_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				martial >= 12
+				add = 100
+			}
+			modifier = {
+				martial < 9
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Stewardship check (Difficulty 10 - High-Risk State Trade Guild Gamble!)
+	option = {
+		name = villains_religious_decision.0090.b
+		duel = {
+			skill = stewardship
+			value = 10
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0090.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0090.b.success
+					left_icon = root
+					add_gold = 450
+					capital_county ?= {
+						change_development_level = 1
+					}
+					villains_amin_feudalize_tribal_counties_effect = yes
+					add_character_modifier = {
+						modifier = idi_amin_economic_boom_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0090.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0090.b.failure
+					left_icon = root
+					add_gold = 25
+					add_stress = 25
+					add_character_modifier = {
+						modifier = idi_amin_economic_collapse_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				stewardship >= 10
+				add = 100
+			}
+			modifier = {
+				stewardship < 8
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Protection Tribute Levy
+	option = {
+		name = villains_religious_decision.0090.c
+		add_gold = 150
+		add_dread = 15
+		villains_amin_feudalize_tribal_counties_effect = yes
+		add_character_modifier = {
+			modifier = idi_amin_economic_war_spoils_modifier
+			years = 3
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0100 - Idi Amin (Decision 2): Nile Crocodile Pool Feast & Execution
+# ==============================================================================
+villains_religious_decision.0100 = {
+	type = character_event
+	title = villains_religious_decision.0100.t
+	desc = villains_religious_decision.0100.desc
+	theme = dread
+	override_background = { reference = wilderness_wetlands }
+
+	left_portrait = {
+		character = root
+		animation = schadenfreude
+	}
+	right_portrait = {
+		trigger = { exists = scope:crocodile_victim }
+		character = scope:crocodile_victim
+		animation = beg
+	}
+
+	# Option A: Opposed Prowess check vs Victim - Bare-Handed Knockout into Crocodile Jaws!
+	option = {
+		name = villains_religious_decision.0100.a
+		trigger = {
+			exists = scope:crocodile_victim
+			scope:crocodile_victim = { is_alive = yes }
+		}
+		duel = {
+			skill = prowess
+			target = scope:crocodile_victim
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0100.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0100.a.success
+					left_icon = scope:crocodile_victim
+					if = {
+						limit = {
+							scope:crocodile_victim = { gold >= 75 }
+						}
+						scope:crocodile_victim = {
+							pay_short_term_gold = {
+								target = root
+								gold = scope:crocodile_victim.gold
+							}
+						}
+					}
+					else = {
+						add_gold = 75
+					}
+					if = {
+						limit = { NOT = { has_trait = cannibal } }
+						add_trait = cannibal
+					}
+					scope:crocodile_victim = {
+						death = {
+							death_reason = death_crocodile
+							killer = root
+						}
+					}
+					add_prestige = 400
+					add_piety = 250
+					add_dread = 45
+					add_stress = -50
+					add_character_modifier = {
+						modifier = idi_amin_crocodile_execution_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0100.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0100.a.failure
+					left_icon = scope:crocodile_victim
+					increase_wounds_no_death_effect = { REASON = fight }
+					add_prestige = -150
+					add_stress = 20
+					add_dread = 15
+					scope:crocodile_victim = {
+						death = {
+							death_reason = death_crocodile
+							killer = root
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				prowess >= 15
+				add = 100
+			}
+			modifier = {
+				prowess < 10
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Intrigue check (Difficulty 11) - Secret Police Public Spectacle
+	option = {
+		name = villains_religious_decision.0100.b
+		trigger = {
+			exists = scope:crocodile_victim
+			scope:crocodile_victim = { is_alive = yes }
+		}
+		duel = {
+			skill = intrigue
+			value = 11
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0100.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0100.b.success
+					left_icon = scope:crocodile_victim
+					if = {
+						limit = {
+							scope:crocodile_victim = { gold >= 60 }
+						}
+						scope:crocodile_victim = {
+							pay_short_term_gold = {
+								target = root
+								gold = scope:crocodile_victim.gold
+							}
+						}
+					}
+					else = {
+						add_gold = 60
+					}
+					if = {
+						limit = { NOT = { has_trait = cannibal } }
+						add_trait = cannibal
+					}
+					scope:crocodile_victim = {
+						death = {
+							death_reason = death_crocodile
+							killer = root
+						}
+					}
+					add_dread = 40
+					add_piety = 200
+					add_stress = -35
+					add_character_modifier = {
+						modifier = idi_amin_crocodile_execution_modifier
+						years = 4
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0100.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0100.b.failure
+					left_icon = scope:crocodile_victim
+					scope:crocodile_victim = {
+						death = {
+							death_reason = death_crocodile
+							killer = root
+						}
+					}
+					add_prestige = -100
+					add_tyranny = 15
+					add_stress = 15
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				intrigue >= 11
+				add = 60
+			}
+		}
+	}
+
+	# Option C: Safe Caged Push into the Pool
+	option = {
+		name = villains_religious_decision.0100.c
+		if = {
+			limit = {
+				exists = scope:crocodile_victim
+				scope:crocodile_victim = { is_alive = yes }
+			}
+			scope:crocodile_victim = {
+				death = {
+					death_reason = death_crocodile
+					killer = root
+				}
+			}
+		}
+		add_gold = 50
+		add_dread = 20
+		add_stress = -20
+		add_character_modifier = {
+			modifier = idi_amin_crocodile_execution_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0110 - Grigori Rasputin (Decision 1): Midnight Miracle Healing & Hypnotic Vigil
+# ==============================================================================
+villains_religious_decision.0110 = {
+	type = character_event
+	title = villains_religious_decision.0110.t
+	desc = villains_religious_decision.0110.desc
+	theme = witchcraft
+	override_background = { reference = bedchamber }
+
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	right_portrait = {
+		trigger = {
+			exists = scope:target_patron_ruler
+			scope:target_patron_ruler != root
+		}
+		character = scope:target_patron_ruler
+		animation = worry
+	}
+
+	# Option A: Opposed Intrigue check vs Patron Ruler (fallback Difficulty 12) - Hypnotic Gaze & Strong Hook
+	option = {
+		name = villains_religious_decision.0110.a
+		if = {
+			limit = {
+				exists = scope:target_patron_ruler
+				scope:target_patron_ruler != root
+			}
+			duel = {
+				skill = intrigue
+				target = scope:target_patron_ruler
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					min = 5
+					desc = villains_religious_decision.0110.a.success
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = villains_religious_decision.0110.a.success
+						left_icon = scope:target_patron_ruler
+						add_gold = 200
+						add_piety = 200
+						if = {
+							limit = { is_landless_adventurer = yes }
+							domicile ?= { change_provisions = 200 }
+						}
+						if = {
+							limit = {
+								can_add_hook = {
+									target = scope:target_patron_ruler
+									type = strong_favor_hook
+								}
+							}
+							add_hook = {
+								target = scope:target_patron_ruler
+								type = strong_favor_hook
+							}
+						}
+						else_if = {
+							limit = {
+								can_add_hook = {
+									target = scope:target_patron_ruler
+									type = favor_hook
+								}
+							}
+							add_hook = {
+								target = scope:target_patron_ruler
+								type = favor_hook
+							}
+						}
+						add_character_modifier = {
+							modifier = rasputin_imperial_healer_modifier
+							years = 5
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					min = 5
+					desc = villains_religious_decision.0110.a.failure
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = villains_religious_decision.0110.a.failure
+						left_icon = scope:target_patron_ruler
+						add_prestige = -100
+						add_stress = 20
+						scope:target_patron_ruler = {
+							add_opinion = {
+								target = root
+								modifier = insulted_opinion
+								opinion = -40
+							}
+						}
+						add_character_modifier = {
+							modifier = rasputin_charlatan_exposed_modifier
+							years = 3
+						}
+					}
+				}
+			}
+		}
+		else = {
+			duel = {
+				skill = intrigue
+				value = 12
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					min = 5
+					desc = villains_religious_decision.0110.a.success
+					send_interface_toast = {
+						type = event_toast_effect_good
+						title = villains_religious_decision.0110.a.success
+						left_icon = root
+						add_gold = 200
+						add_piety = 200
+						add_character_modifier = {
+							modifier = rasputin_imperial_healer_modifier
+							years = 5
+						}
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					min = 5
+					desc = villains_religious_decision.0110.a.failure
+					send_interface_toast = {
+						type = event_toast_effect_bad
+						title = villains_religious_decision.0110.a.failure
+						left_icon = root
+						add_prestige = -100
+						add_stress = 20
+						add_character_modifier = {
+							modifier = rasputin_charlatan_exposed_modifier
+							years = 3
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				intrigue >= 13
+				add = 100
+			}
+			modifier = {
+				intrigue < 10
+				factor = 0
+			}
+		}
+	}
+
+	# Option B: Learning check (Difficulty 13) - Siberian Herbal Remedy & Saintly Reverence
+	option = {
+		name = villains_religious_decision.0110.b
+		duel = {
+			skill = learning
+			value = 13
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0110.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0110.b.success
+					left_icon = root
+					add_piety = 350
+					add_gold = 150
+					if = {
+						limit = { is_landless_adventurer = yes }
+						domicile ?= { change_provisions = 150 }
+					}
+					if = {
+						limit = {
+							exists = scope:target_patron_ruler
+							scope:target_patron_ruler != root
+						}
+						scope:target_patron_ruler = {
+							add_opinion = {
+								target = root
+								modifier = grateful_opinion
+								opinion = 35
+							}
+						}
+						if = {
+							limit = {
+								can_add_hook = {
+									target = scope:target_patron_ruler
+									type = favor_hook
+								}
+							}
+							add_hook = {
+								target = scope:target_patron_ruler
+								type = favor_hook
+							}
+						}
+					}
+					add_character_modifier = {
+						modifier = rasputin_imperial_healer_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0110.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0110.b.failure
+					left_icon = root
+					add_piety = -100
+					add_gold = 40
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				learning >= 13
+				add = 90
+			}
+			modifier = {
+				learning < 10
+				factor = 0
+			}
+		}
+	}
+
+	# Option C: Safe Blessing & Alms
+	option = {
+		name = villains_religious_decision.0110.c
+		add_gold = 100
+		add_piety = 120
+		if = {
+			limit = { is_landless_adventurer = yes }
+			domicile ?= { change_provisions = 100 }
+		}
+		add_character_modifier = {
+			modifier = rasputin_imperial_healer_modifier
+			years = 3
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0120 - Grigori Rasputin (Decision 2): Founding the Khlystism Secret Sect
+# ==============================================================================
+villains_religious_decision.0120 = {
+	type = character_event
+	title = villains_religious_decision.0120.t
+	desc = villains_religious_decision.0120.desc
+	theme = seduction
+	override_background = { reference = temple }
+
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	right_portrait = {
+		trigger = { exists = scope:khlyst_lover }
+		character = scope:khlyst_lover
+		animation = love
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_relation = {
+					type = lover
+					is_lowborn = no
+				}
+			}
+			random_relation = {
+				type = lover
+				limit = { is_lowborn = no }
+				save_scope_as = khlyst_lover
+			}
+		}
+	}
+
+	# Option A: Learning check (Difficulty 13) - Whirling Flagellation & Mystic Revelation
+	option = {
+		name = villains_religious_decision.0120.a
+		duel = {
+			skill = learning
+			value = 13
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0120.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0120.a.success
+					left_icon = root
+					villains_rasputin_found_khlystism_core_effect = yes
+					add_piety = 400
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = rasputin_khlyst_ecstasy_fervor_modifier
+						years = 10
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0120.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0120.a.failure
+					left_icon = root
+					villains_rasputin_found_khlystism_core_effect = yes
+					add_prestige = 200
+					add_stress = 30
+					add_character_modifier = {
+						modifier = rasputin_khlyst_scandal_rumors_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				learning >= 13
+				add = 90
+			}
+		}
+	}
+
+	# Option B: Diplomacy check (Difficulty 12) - Sacred Communion of Noble Devotees
+	option = {
+		name = villains_religious_decision.0120.b
+		duel = {
+			skill = diplomacy
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0120.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0120.b.success
+					left_icon = root
+					villains_rasputin_found_khlystism_core_effect = yes
+					add_prestige = 600
+					add_gold = 200
+					add_character_modifier = {
+						modifier = rasputin_khlyst_ecstasy_fervor_modifier
+						years = 10
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0120.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0120.b.failure
+					left_icon = root
+					villains_rasputin_found_khlystism_core_effect = yes
+					add_prestige = 150
+					add_stress = 25
+					add_character_modifier = {
+						modifier = rasputin_khlyst_scandal_rumors_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				diplomacy >= 12
+				add = 90
+			}
+		}
+	}
+
+	# Option C: Safe Secret Cellar Covenant
+	option = {
+		name = villains_religious_decision.0120.c
+		villains_rasputin_found_khlystism_core_effect = yes
+		add_prestige = 350
+		add_piety = 150
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0130 - Donald Trump: Public Performance Tribunal & "You're Fired!" Tariff Shakeup
+# ==============================================================================
+villains_religious_decision.0130 = {
+	type = character_event
+	title = villains_religious_decision.0130.t
+	desc = villains_religious_decision.0130.desc
+	theme = crown
+	override_background = { reference = throne_room }
+
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+	right_portrait = {
+		trigger = { exists = scope:fired_target }
+		character = scope:fired_target
+		animation = fear
+	}
+
+	# Option A: Stewardship check (Difficulty 11) - Punitive Tariff & Tribute Renegotiation
+	option = {
+		name = villains_religious_decision.0130.a
+		trigger = { exists = scope:fired_target }
+		duel = {
+			skill = stewardship
+			value = 11
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0130.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0130.a.success
+					left_icon = scope:fired_target
+					if = {
+						limit = {
+							scope:fired_target = { gold >= 100 }
+						}
+						scope:fired_target = {
+							pay_short_term_gold = {
+								target = root
+								gold = 100
+							}
+						}
+					}
+					else = {
+						add_gold = 100
+					}
+					if = {
+						limit = {
+							can_add_hook = {
+								target = scope:fired_target
+								type = favor_hook
+							}
+						}
+						add_hook = {
+							type = favor_hook
+							target = scope:fired_target
+						}
+					}
+					add_piety = 175
+					add_character_modifier = {
+						modifier = trump_tariff_deal_master_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0130.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0130.a.failure
+					left_icon = scope:fired_target
+					add_prestige = -120
+					scope:fired_target = {
+						add_opinion = {
+							target = root
+							modifier = insulted_opinion
+							opinion = -35
+						}
+					}
+					add_character_modifier = {
+						modifier = trump_bad_deal_humiliation_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				stewardship >= 11
+				add = 90
+			}
+		}
+	}
+
+	# Option B: Opposed Diplomacy check vs Target - Public "You're Fired!" Dismissal
+	option = {
+		name = villains_religious_decision.0130.b
+		trigger = { exists = scope:fired_target }
+		duel = {
+			skill = diplomacy
+			target = scope:fired_target
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0130.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0130.b.success
+					left_icon = scope:fired_target
+					if = {
+						limit = {
+							scope:fired_target = {
+								is_councillor_of = root
+								NOT = { has_council_position = councillor_spouse }
+								can_be_fired_from_council_trigger = { COURT_OWNER = root }
+							}
+						}
+						fire_councillor = scope:fired_target
+					}
+					scope:fired_target = {
+						add_prestige = -200
+					}
+					add_prestige = 300
+					add_piety = 200
+					add_dread = 25
+					add_stress = -35
+					add_character_modifier = {
+						modifier = trump_youre_fired_authority_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0130.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0130.b.failure
+					left_icon = scope:fired_target
+					add_prestige = -100
+					add_stress = 25
+					scope:fired_target = {
+						add_opinion = {
+							target = root
+							modifier = insulted_opinion
+							opinion = -40
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				diplomacy >= 13
+				add = 100
+			}
+		}
+	}
+
+	# Option C: Safe Golden Wax-Sealed Loyalty Pledge
+	option = {
+		name = villains_religious_decision.0130.c
+		add_piety = 120
+		add_prestige = 75
+		if = {
+			limit = { exists = scope:fired_target }
+			scope:fired_target = {
+				add_opinion = {
+					target = root
+					modifier = grateful_opinion
+					opinion = 15
+				}
+			}
+		}
+		add_character_modifier = {
+			modifier = trump_tariff_deal_master_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0140 - Adolf Hitler: Degenerate Art Confiscation & Grand Architectural Model Unveiling
+# ==============================================================================
+villains_religious_decision.0140 = {
+	type = character_event
+	title = villains_religious_decision.0140.t
+	desc = villains_religious_decision.0140.desc
+	theme = learning
+	override_background = { reference = study }
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		trigger = { exists = scope:court_architect_witness }
+		character = scope:court_architect_witness
+		animation = admiration
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_vassal_or_below = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_vassal_or_below = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = court_architect_witness
+			}
+		}
+		else_if = {
+			limit = {
+				any_courtier = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_courtier = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = court_architect_witness
+			}
+		}
+	}
+
+	# Option A: Diplomacy check (Difficulty 13) - Unveil Thousand-Year White Limestone Cathedral Model
+	option = {
+		name = villains_religious_decision.0140.a
+		duel = {
+			skill = diplomacy
+			value = 13
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0140.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0140.a.success
+					left_icon = root
+					add_piety = 300
+					add_legitimacy_effect = { LEGITIMACY = 75 }
+					add_stress = -40
+					capital_county ?= {
+						change_development_level = 2
+					}
+					add_character_modifier = {
+						modifier = hitler_germania_grand_model_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0140.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0140.a.failure
+					left_icon = root
+					add_prestige = -150
+					add_stress = 35
+					add_character_modifier = {
+						modifier = hitler_rejected_artist_rage_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				diplomacy >= 13
+				add = 100
+			}
+		}
+	}
+
+	# Option B: Intrigue check (Difficulty 12) - Secretly Auction Confiscated Artworks Abroad
+	option = {
+		name = villains_religious_decision.0140.b
+		duel = {
+			skill = intrigue
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0140.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0140.b.success
+					left_icon = root
+					add_gold = 250
+					add_piety = 175
+					add_dread = 25
+					add_character_modifier = {
+						modifier = hitler_cultural_purification_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0140.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0140.b.failure
+					left_icon = root
+					add_piety = -100
+					add_stress = 20
+					add_character_modifier = {
+						modifier = hitler_rejected_artist_rage_modifier
+						years = 2
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				intrigue >= 11
+				add = 80
+			}
+		}
+	}
+
+	# Option C: Safe Public Scroll Bonfire & Heroic Fresco Commission
+	option = {
+		name = villains_religious_decision.0140.c
+		add_piety = 150
+		add_prestige = 100
+		capital_county ?= {
+			change_county_control = 15
+		}
+		add_character_modifier = {
+			modifier = hitler_cultural_purification_modifier
+			years = 3
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# ==============================================================================
+# 0150 - Benito Mussolini: Battle for Grain Shirtless Harvest & On-Time Courier Roads
+# ==============================================================================
+villains_religious_decision.0150 = {
+	type = character_event
+	title = villains_religious_decision.0150.t
+	desc = villains_religious_decision.0150.desc
+	theme = stewardship
+	override_background = { reference = farmland }
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	# Option A: Prowess + Diplomacy check (Average Difficulty 8) - Bare-Chested Sickle Harvest Spectacle
+	option = {
+		name = villains_religious_decision.0150.a
+		duel = {
+			skills = { prowess diplomacy }
+			value = 8
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0150.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0150.a.success
+					left_icon = root
+					add_prestige = 300
+					add_piety = 200
+					add_stress = -30
+					add_character_modifier = {
+						modifier = mussolini_shirtless_harvester_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0150.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0150.a.failure
+					left_icon = root
+					add_prestige = -120
+					add_stress = 25
+					add_character_modifier = {
+						modifier = mussolini_sunstroke_fiasco_modifier
+						years = 2
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				prowess >= 8
+				add = 75
+			}
+		}
+	}
+
+	# Option B: Stewardship + Learning check (Average Difficulty 9) - Drain Marshes & Enforce Punctual Couriers
+	option = {
+		name = villains_religious_decision.0150.b
+		duel = {
+			skills = { stewardship learning }
+			value = 9
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0150.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0150.b.success
+					left_icon = root
+					add_gold = 180
+					capital_county ?= {
+						change_development_level = 2
+					}
+					add_character_modifier = {
+						modifier = mussolini_carriages_on_time_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0150.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0150.b.failure
+					left_icon = root
+					remove_short_term_gold = 40
+					capital_county ?= {
+						change_county_control = -20
+					}
+					add_character_modifier = {
+						modifier = mussolini_bogged_down_public_works_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				stewardship >= 9
+				learning >= 9
+				add = 85
+			}
+		}
+	}
+
+	# Option C: Safe Wheat-Wreath Parade & Chronicler Panegyric
+	option = {
+		name = villains_religious_decision.0150.c
+		add_piety = 150
+		add_prestige = 100
+		every_held_title = {
+			limit = { tier = tier_county }
+			change_county_control = 10
+		}
+		add_character_modifier = {
+			modifier = mussolini_carriages_on_time_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 45
+		}
+	}
+}
+
+# ==============================================================================
+# 0160 - Renya Mutaguchi: Jingisukan Ox-Buffalo Convoy & Herbivore March Inspection
+# ==============================================================================
+villains_religious_decision.0160 = {
+	type = character_event
+	title = villains_religious_decision.0160.t
+	desc = villains_religious_decision.0160.desc
+	theme = war
+	override_background = { reference = wilderness_jungle }
+
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		trigger = { exists = scope:scapegoat_officer }
+		character = scope:scapegoat_officer
+		animation = stress
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_knight = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_knight = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = scapegoat_officer
+			}
+		}
+		else_if = {
+			limit = {
+				any_courtier = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_courtier = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = scapegoat_officer
+			}
+		}
+	}
+
+	# Option A: Stewardship + Martial Extreme Gamble (Average Difficulty 8 vs Mutaguchi Base 2!) - Water Buffalo Convoy
+	option = {
+		name = villains_religious_decision.0160.a
+		duel = {
+			skills = { stewardship martial }
+			value = 8
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0160.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0160.a.success
+					left_icon = root
+					add_gold = 150
+					add_prestige = 400
+					add_stress = -50
+					add_character_modifier = {
+						modifier = mutaguchi_miracle_ox_convoy_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0160.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0160.a.failure
+					left_icon = root
+					remove_short_term_gold = 35
+					add_prestige = -100
+					add_character_modifier = {
+						modifier = mutaguchi_drowned_buffalo_disaster_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				martial >= 8
+				stewardship >= 8
+				add = 100
+			}
+		}
+	}
+
+	# Option B: Prowess + Diplomacy check (Average Difficulty 6) - Eat Jungle Weeds & Blame Subordinate Officer
+	option = {
+		name = villains_religious_decision.0160.b
+		duel = {
+			skills = { prowess diplomacy }
+			value = 6
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0160.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0160.b.success
+					left_icon = root
+					add_stress = -60
+					add_dread = 30
+					add_piety = 200
+					if = {
+						limit = { exists = scope:scapegoat_officer }
+						scope:scapegoat_officer = {
+							add_prestige = -150
+							add_opinion = {
+								target = root
+								modifier = insulted_opinion
+								opinion = -35
+							}
+						}
+					}
+					add_character_modifier = {
+						modifier = mutaguchi_herbivore_march_spirit_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0160.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0160.b.failure
+					left_icon = root
+					add_prestige = -80
+					add_character_modifier = {
+						modifier = mutaguchi_toxic_weed_stomachache_modifier
+						years = 2
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				prowess >= 6
+				add = 60
+			}
+		}
+	}
+
+	# Option C: Safe Headquarters Shrine Prayer & Wooden-Tablet Dispatch
+	option = {
+		name = villains_religious_decision.0160.c
+		add_piety = 120
+		add_stress = -35
+		add_character_modifier = {
+			modifier = mutaguchi_herbivore_march_spirit_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# ==============================================================================
+# 0170 - Joseph Stalin: Five-Year Heavy Forge Plan & Stakhanovite Shock-Worker Competition
+# ==============================================================================
+villains_religious_decision.0170 = {
+	type = character_event
+	title = villains_religious_decision.0170.t
+	desc = villains_religious_decision.0170.desc
+	theme = stewardship
+	override_background = { reference = armory }
+
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	right_portrait = {
+		trigger = { exists = scope:shock_worker_witness }
+		character = scope:shock_worker_witness
+		animation = marshal
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_courtier = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_courtier = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = shock_worker_witness
+			}
+		}
+	}
+
+	# Option A: Stewardship check (Difficulty 12) - Enforce Five-Year Heavy Blast-Furnace Quotas
+	option = {
+		name = villains_religious_decision.0170.a
+		duel = {
+			skill = stewardship
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0170.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0170.a.success
+					left_icon = root
+					add_gold = 240
+					add_piety = 175
+					capital_county ?= {
+						change_development_level = 2
+					}
+					add_character_modifier = {
+						modifier = stalin_five_year_plan_shock_work_modifier
+						years = 5
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0170.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0170.a.failure
+					left_icon = root
+					remove_short_term_gold = 40
+					add_stress = 30
+					add_character_modifier = {
+						modifier = stalin_falsified_quota_collapse_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				stewardship >= 12
+				add = 100
+			}
+		}
+	}
+
+	# Option B: Diplomacy + Martial check (Average Difficulty 11) - Stakhanovite Fourteen-Cart Hero & Red Guard Mobilization
+	option = {
+		name = villains_religious_decision.0170.b
+		duel = {
+			skills = { diplomacy martial }
+			value = 11
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0170.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0170.b.success
+					left_icon = root
+					add_prestige = 300
+					add_piety = 250
+					add_legitimacy_effect = { LEGITIMACY = 60 }
+					add_character_modifier = {
+						modifier = stalin_stakhanovite_fervor_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = stalin_shock_worker_brigade_name
+							men_at_arms = {
+								type = red_guards
+								stacks = 3
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = no
+						}
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0170.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0170.b.failure
+					left_icon = root
+					capital_county ?= {
+						change_county_control = -20
+					}
+					add_prestige = -100
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				martial >= 11
+				diplomacy >= 10
+				add = 85
+			}
+		}
+	}
+
+	# Option C: Safe Dungeon Prisoner Quarry & Timber Quota Mobilization
+	option = {
+		name = villains_religious_decision.0170.c
+		add_gold = 120
+		add_dread = 15
+		capital_county ?= {
+			change_development_progress_with_overflow = 40
+		}
+		add_character_modifier = {
+			modifier = stalin_five_year_plan_shock_work_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 45
+		}
+	}
+}
+
+# ==============================================================================
+# 0180 - Kim Jong-un & Kim Yo-jong: Asymmetric Strategic Force (Bombard) Test-Firing
+# ==============================================================================
+villains_religious_decision.0180 = {
+	type = character_event
+	title = villains_religious_decision.0180.t
+	desc = villains_religious_decision.0180.desc
+	theme = martial
+	override_background = { reference = armory }
+
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	right_portrait = {
+		trigger = { exists = scope:foundry_witness }
+		character = scope:foundry_witness
+		animation = worry
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = character:reincarnated_kim_yojong_867
+				character:reincarnated_kim_yojong_867 = {
+					is_alive = yes
+					this != root
+					OR = {
+						liege ?= root
+						host ?= root
+					}
+				}
+			}
+			character:reincarnated_kim_yojong_867 = {
+				save_scope_as = foundry_witness
+			}
+		}
+		else_if = {
+			limit = {
+				any_courtier = {
+					is_adult = yes
+					this != root
+				}
+			}
+			random_courtier = {
+				limit = {
+					is_adult = yes
+					this != root
+				}
+				save_scope_as = foundry_witness
+			}
+		}
+	}
+
+	# Option A: Standard Underground Bronze Bombard Casting & Live Test-Firing (Base 5% chance)
+	option = {
+		name = villains_religious_decision.0180.a
+		random_list = {
+			5 = {
+				modifier = {
+					add = 2
+					learning >= 16
+				}
+				modifier = {
+					add = 3
+					stewardship >= 16
+				}
+				desc = villains_religious_decision.0180.a.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0180.a.success
+					left_icon = root
+					add_prestige = 350
+					add_dread = 30
+					add_legitimacy_effect = { LEGITIMACY = 75 }
+					add_character_modifier = {
+						modifier = kim_asymmetric_deterrence_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = kim_juche_bombard_regiment_name
+							men_at_arms = {
+								type = bombard
+								stacks = 1
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = yes
+						}
+					}
+				}
+			}
+			95 = {
+				modifier = {
+					add = -2
+					learning >= 16
+				}
+				modifier = {
+					add = -3
+					stewardship >= 16
+				}
+				desc = villains_religious_decision.0180.a.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0180.a.failure
+					left_icon = root
+					add_prestige = -100
+					add_stress = 35
+					capital_county ?= {
+						change_county_control = -15
+					}
+					add_character_modifier = {
+						modifier = kim_failed_foundry_explosion_modifier
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Option B: Threaten Artisans with Purge & Double the Black-Powder Charge! (Base 15% chance, severe explosion risk)
+	option = {
+		name = villains_religious_decision.0180.b
+		add_dread = 15
+		random_list = {
+			15 = {
+				modifier = {
+					add = 2
+					learning >= 16
+				}
+				modifier = {
+					add = 3
+					stewardship >= 16
+				}
+				desc = villains_religious_decision.0180.b.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0180.b.success
+					left_icon = root
+					add_prestige = 400
+					add_dread = 40
+					add_legitimacy_effect = { LEGITIMACY = 75 }
+					add_character_modifier = {
+						modifier = kim_asymmetric_deterrence_modifier
+						years = 5
+					}
+					if = {
+						limit = { exists = capital_province }
+						spawn_army = {
+							name = kim_juche_bombard_regiment_name
+							men_at_arms = {
+								type = bombard
+								stacks = 1
+							}
+							location = root.capital_province
+							origin = root.capital_province
+							inheritable = yes
+						}
+					}
+				}
+			}
+			55 = {
+				modifier = {
+					add = -2
+					learning >= 16
+				}
+				modifier = {
+					add = -3
+					stewardship >= 16
+				}
+				desc = villains_religious_decision.0180.b.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0180.b.failure
+					left_icon = root
+					remove_short_term_gold = 75
+					add_prestige = -150
+					add_stress = 45
+					capital_county ?= {
+						change_county_control = -20
+					}
+					if = {
+						limit = {
+							NOT = {
+								has_trait_rank = {
+									trait = wounded
+									rank >= 2
+								}
+							}
+						}
+						change_trait_rank = {
+							trait = wounded
+							rank = 1
+							max = 2
+						}
+					}
+					add_character_modifier = {
+						modifier = kim_failed_foundry_explosion_modifier
+						years = 4
+					}
+				}
+			}
+			30 = {
+				desc = villains_religious_decision.0180.b.critical_failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0180.b.critical_failure
+					left_icon = root
+					remove_short_term_gold = 100
+					add_prestige = -200
+					add_stress = 60
+					capital_county ?= {
+						change_county_control = -30
+					}
+					if = {
+						limit = {
+							NOT = {
+								has_trait_rank = {
+									trait = wounded
+									rank >= 2
+								}
+							}
+						}
+						change_trait_rank = {
+							trait = wounded
+							rank = 2
+							max = 2
+						}
+					}
+					add_character_modifier = {
+						modifier = kim_failed_foundry_explosion_modifier
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				OR = {
+					has_trait = wrathful
+					has_trait = sadistic
+					has_trait = ambitious
+				}
+				add = 40
+			}
+		}
+	}
+
+	# Option C: Lacquered Pine-Log Dummy Cannon Torchlight Parade Bluff (Intrigue Difficulty 12)
+	option = {
+		name = villains_religious_decision.0180.c
+		duel = {
+			skill = intrigue
+			value = 12
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0180.c.success
+				send_interface_toast = {
+					type = event_toast_effect_good
+					title = villains_religious_decision.0180.c.success
+					left_icon = root
+					add_prestige = 200
+					add_dread = 25
+					add_character_modifier = {
+						modifier = kim_wooden_cannon_bluff_modifier
+						years = 4
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				min = 5
+				desc = villains_religious_decision.0180.c.failure
+				send_interface_toast = {
+					type = event_toast_effect_bad
+					title = villains_religious_decision.0180.c.failure
+					left_icon = root
+					add_prestige = -120
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				intrigue >= 12
+				add = 60
+			}
+		}
+	}
+}

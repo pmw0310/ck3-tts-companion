@@ -1,0 +1,999 @@
+﻿# Dynasty-specific modifiers unlocked by each reincarnated villain's major decision
+
+
+
+hitler_thousand_year_reich_dynasty_modifier = {
+
+	icon = martial_positive
+
+	martial = 2
+
+	diplomacy = 2
+
+	dread_baseline_add = 20
+
+	knight_effectiveness_mult = 0.25
+
+	army_damage_mult = 0.10
+
+	monthly_prestige_gain_mult = 0.15
+
+}
+
+
+
+stalin_iron_curtain_dynasty_modifier = {
+
+	icon = intrigue_positive
+
+	intrigue = 2
+
+	stewardship = 2
+
+	dread_baseline_add = 25
+
+	enemy_hostile_scheme_success_chance_max_add = -25
+
+	vassal_tax_contribution_mult = 0.10
+
+	vassal_levy_contribution_mult = 0.15
+
+}
+
+
+
+mussolini_new_roman_order_dynasty_modifier = {
+
+	icon = prestige_positive
+
+	diplomacy = 2
+
+	martial = 2
+
+	monthly_prestige_gain_mult = 0.20
+
+	army_toughness_mult = 0.10
+
+	same_faith_opinion = 10
+
+	legitimacy_gain_mult = 0.15
+
+}
+
+
+
+mutaguchi_herbivore_logistics_dynasty_modifier = {
+
+	icon = martial_positive
+
+	martial = 2
+
+	prowess = 4
+
+	supply_duration = 1.0
+
+	army_maintenance_mult = -0.20
+
+	movement_speed = 0.15
+
+	advantage = 5
+
+}
+
+
+
+trump_golden_empire_dynasty_modifier = {
+
+	icon = economy_positive
+
+	stewardship = 3
+
+	diplomacy = 2
+
+	domain_tax_mult = 0.20
+
+	build_gold_cost = -0.15
+
+	holding_build_gold_cost = -0.15
+
+	build_speed = -0.20
+
+	holding_build_speed = -0.20
+
+}
+
+
+
+trump_golden_tower_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.25
+
+	development_growth_factor = 0.30
+
+	fort_level = 3
+
+	hostile_raid_time = 0.50
+
+}
+
+
+
+kim_paektu_monolithic_system_dynasty_modifier = {
+
+	icon = legitimacy_positive
+
+	intrigue = 2
+
+	martial = 2
+
+	dread_baseline_add = 25
+
+	same_faith_opinion = 15
+
+	legitimacy_gain_mult = 0.20
+
+	domain_limit = 1
+
+}
+
+
+
+# Empire-tier Dynasty & Capital Modifiers unlocked by Tier 2 Empire Founding Major Decisions
+
+
+
+hitler_greater_german_reich_dynasty_modifier = {
+
+	icon = martial_positive
+
+	martial = 3
+
+	diplomacy = 3
+
+	dread_baseline_add = 30
+
+	knight_effectiveness_mult = 0.50
+
+	army_damage_mult = 0.15
+
+	monthly_prestige_gain_mult = 0.25
+
+}
+
+
+
+hitler_germania_world_capital_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	levy_size = 0.30
+
+	development_growth_factor = 0.35
+
+	fort_level = 3
+
+}
+
+
+
+stalin_ussr_superpower_dynasty_modifier = {
+
+	icon = intrigue_positive
+
+	intrigue = 3
+
+	stewardship = 3
+
+	dread_baseline_add = 35
+
+	enemy_hostile_scheme_success_chance_max_add = -35
+
+	vassal_tax_contribution_mult = 0.20
+
+	vassal_levy_contribution_mult = 0.25
+
+}
+
+
+
+stalin_socialist_metropolis_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	build_speed = -0.25
+
+	holding_build_speed = -0.25
+
+	development_growth_factor = 0.35
+
+}
+
+
+
+mussolini_mare_nostrum_empire_dynasty_modifier = {
+
+	icon = prestige_positive
+
+	diplomacy = 3
+
+	martial = 3
+
+	monthly_prestige_gain_mult = 0.30
+
+	army_toughness_mult = 0.15
+
+	army_damage_mult = 0.15
+
+	legitimacy_gain_mult = 0.30
+
+}
+
+
+
+mussolini_eternal_imperial_rome_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	development_growth_factor = 0.35
+
+	monthly_county_control_growth_add = 0.5
+
+}
+
+
+
+mutaguchi_greater_east_asia_dynasty_modifier = {
+
+	icon = martial_positive
+
+	martial = 3
+
+	prowess = 6
+
+	supply_duration = 1.5
+
+	army_maintenance_mult = -0.25
+
+	movement_speed = 0.25
+
+	advantage = 10
+
+}
+
+
+
+trump_pax_americana_empire_dynasty_modifier = {
+
+	icon = economy_positive
+
+	stewardship = 4
+
+	diplomacy = 3
+
+	domain_limit = 2
+
+	domain_tax_mult = 0.30
+
+	build_gold_cost = -0.25
+
+	holding_build_gold_cost = -0.25
+
+	mercenary_hire_cost_mult = -0.30
+
+}
+
+
+
+trump_wall_street_capital_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.50
+
+	development_growth_factor = 0.40
+
+	fort_level = 4
+
+}
+
+
+
+kim_juche_superpower_empire_dynasty_modifier = {
+
+	icon = legitimacy_positive
+
+	intrigue = 3
+
+	martial = 3
+
+	domain_limit = 2
+
+	dread_baseline_add = 35
+
+	same_faith_opinion = 25
+
+	legitimacy_gain_mult = 0.35
+
+}
+
+
+
+kim_revolutionary_pyongyang_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	development_growth_factor = 0.35
+
+	fort_level = 4
+
+	hostile_raid_time = 0.50
+
+}
+
+
+
+# Equippable Personal & Dynasty Heirloom Artifact Modifiers
+
+mutaguchi_imphal_gunto_modifier = {
+	domain_limit = 4
+	prowess_no_portrait = 3
+	supply_duration = 1.0
+	army_maintenance_mult = -0.15
+	movement_speed = 0.15
+}
+
+mutaguchi_rising_sun_cordon_modifier = {
+	martial = 1
+	supply_duration = 0.15
+	monthly_prestige = 0.2
+}
+
+trump_art_of_the_deal_regalia_modifier = {
+	stewardship = 1
+	domain_tax_mult = 0.05
+	monthly_prestige = 0.2
+}
+
+kim_paektu_marshal_star_modifier = {
+	intrigue = 1
+	dread_baseline_add = 5
+	dread_decay_mult = -0.10
+}
+
+hitler_iron_cross_badge_modifier = {
+	diplomacy = 1
+	same_faith_opinion = 5
+	monthly_prestige_gain_mult = 0.05
+}
+
+stalin_steel_pipe_modifier = {
+	intrigue = 1
+	enemy_hostile_scheme_success_chance_max_add = -5
+	stress_gain_mult = -0.05
+}
+
+mussolini_blackshirt_baton_modifier = {
+	martial = 1
+	knight_effectiveness_mult = 0.05
+	monthly_prestige = 0.2
+}
+
+pol_pot_red_krama_notebook_modifier = {
+	intrigue = 1
+	same_faith_opinion = 5
+	tyranny_gain_mult = -0.05
+}
+
+idi_amin_victoria_cross_modifier = {
+	prowess_no_portrait = 2
+	dread_baseline_add = 5
+	monthly_prestige = 0.2
+}
+
+rasputin_hypnotic_cross_modifier = {
+	intrigue = 2
+	learning = 1
+	seduce_scheme_phase_duration_add = -20
+	owned_personal_scheme_success_chance_add = 35
+	owned_personal_scheme_success_chance_growth_add = 5
+	owned_personal_scheme_success_chance_max_add = 25
+	enemy_hostile_scheme_success_chance_max_add = -15
+	health = 0.25
+	attraction_opinion = 25
+}
+
+
+
+# Repeatable Dynasty Special Decision Modifiers
+
+
+
+axis_mass_agitation_modifier = {
+
+	icon = prestige_positive
+
+	levy_size = 0.20
+
+	levy_reinforcement_rate = 0.30
+
+	same_faith_opinion = 15
+
+	vassal_levy_contribution_mult = 0.15
+
+}
+
+
+
+stalin_great_purge_modifier = {
+
+	icon = dread_positive
+
+	dread_decay_mult = -1.0
+
+	vassal_tax_contribution_mult = 0.15
+
+	enemy_hostile_scheme_success_chance_max_add = -25
+
+	tyranny_gain_mult = -0.25
+
+}
+
+
+
+trump_super_pac_fundraising_modifier = {
+
+	icon = economy_positive
+
+	domain_tax_mult = 0.10
+
+	vassal_tax_contribution_mult = 0.10
+
+	mercenary_hire_cost_mult = -0.15
+
+}
+
+
+
+mutaguchi_geisha_banquet_modifier = {
+
+	icon = social_positive
+
+	seduce_scheme_phase_duration_add = -10
+
+	owned_personal_scheme_success_chance_max_add = 20
+
+	vassal_opinion = 15
+
+	courtier_and_guest_opinion = 15
+
+	fertility = 0.15
+
+	stress_gain_mult = -0.20
+
+}
+
+
+
+pol_pot_year_zero_utopia_dynasty_modifier = {
+
+	icon = intrigue_positive
+
+	intrigue = 2
+
+	martial = 2
+
+	dread_baseline_add = 25
+
+	enemy_hostile_scheme_success_chance_max_add = -20
+
+	vassal_levy_contribution_mult = 0.20
+
+	raid_speed = 0.25
+
+}
+
+
+
+pol_pot_red_khmers_supreme_dynasty_modifier = {
+
+	icon = legitimacy_positive
+
+	intrigue = 3
+
+	martial = 3
+
+	domain_limit = 2
+
+	dread_baseline_add = 35
+
+	same_faith_opinion = 25
+
+	legitimacy_gain_mult = 0.35
+
+}
+
+
+
+pol_pot_year_zero_commune_capital_county_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	levy_size = 0.35
+
+	fort_level = 4
+
+	hostile_raid_time = 0.50
+
+}
+
+
+
+pol_pot_year_zero_commune_labor_modifier = {
+
+	icon = economy_positive
+
+	build_gold_cost = -0.25
+
+	holding_build_gold_cost = -0.25
+
+	build_speed = -0.25
+
+	holding_build_speed = -0.25
+
+	levy_reinforcement_rate = 0.35
+
+}
+
+
+
+pol_pot_tuol_sleng_purge_modifier = {
+
+	icon = dread_positive
+
+	owned_hostile_scheme_success_chance_max_add = 15
+
+	enemy_hostile_scheme_success_chance_max_add = -15
+
+	dread_decay_mult = -0.30
+
+	tyranny_gain_mult = -0.25
+
+}
+
+
+
+idi_amin_last_king_of_scotland_dynasty_modifier = {
+
+	icon = prowess_positive
+
+	martial = 2
+
+	prowess = 4
+
+	dread_baseline_add = 25
+
+	knight_effectiveness_mult = 0.20
+
+	levy_size = 0.20
+
+	monthly_prestige_gain_mult = 0.15
+
+}
+
+
+
+idi_amin_conqueror_of_all_beasts_dynasty_modifier = {
+
+	icon = prestige_positive
+
+	martial = 3
+
+	prowess = 6
+
+	domain_limit = 2
+
+	dread_decay_mult = -0.50
+
+	enemy_hostile_scheme_success_chance_max_add = -20
+
+	knight_limit = 4
+
+	knight_effectiveness_mult = 0.30
+
+}
+
+
+
+idi_amin_kampala_command_capital_modifier = {
+
+	icon = county_modifier_development_positive
+
+	tax_mult = 0.30
+
+	levy_size = 0.30
+
+	development_growth_factor = 0.30
+
+	fort_level = 3
+
+}
+
+
+
+idi_amin_economic_war_spoils_modifier = {
+
+	icon = economy_positive
+
+	direct_vassal_opinion = 15
+
+	knight_effectiveness_mult = 0.15
+
+	army_maintenance_mult = -0.15
+
+	levy_reinforcement_rate = 0.25
+
+}
+
+
+
+idi_amin_crocodile_execution_modifier = {
+
+	icon = dread_positive
+
+	prowess = 4
+
+	health = 0.5
+
+	enemy_hostile_scheme_success_chance_max_add = -25
+
+	vassal_tax_contribution_mult = 0.15
+
+	vassal_levy_contribution_mult = 0.15
+
+}
+
+
+
+rasputin_imperial_healer_modifier = {
+	icon = intrigue_positive
+	owned_personal_scheme_success_chance_max_add = 15
+	owned_hostile_scheme_success_chance_max_add = 15
+	monthly_piety_gain_mult = 0.20
+	provisions_use_mult = -0.20
+}
+
+rasputin_living_vessel_modifier = {
+	icon = piety_positive
+	learning = 3
+	intrigue = 2
+	monthly_piety = 1.0
+	same_faith_opinion = 20
+	attraction_opinion = 15
+}
+
+rasputin_herbal_contraception_modifier = {
+	icon = health_positive
+	health = 1.5
+	fertility = -0.5
+}
+
+# ==============================================================================
+# Religious & Ideological Decision Event Skill-Check Outcome Modifiers
+# ==============================================================================
+
+axis_mass_agitation_triumph_modifier = {
+	icon = prestige_positive
+	levy_size = 0.30
+	levy_reinforcement_rate = 0.45
+	same_faith_opinion = 25
+	vassal_levy_contribution_mult = 0.25
+	monthly_prestige_gain_mult = 0.15
+}
+
+axis_mass_agitation_fiasco_modifier = {
+	icon = prestige_negative
+	levy_size = -0.15
+	same_faith_opinion = -15
+	vassal_opinion = -10
+	monthly_prestige_gain_mult = -0.15
+}
+
+axis_street_riot_county_modifier = {
+	icon = county_modifier_opinion_negative
+	county_opinion_add = -25
+	development_growth_factor = -0.25
+}
+
+stalin_great_purge_triumph_modifier = {
+	icon = dread_positive
+	dread_decay_mult = -1.0
+	vassal_tax_contribution_mult = 0.25
+	enemy_hostile_scheme_success_chance_max_add = -35
+	tyranny_gain_mult = -0.35
+}
+
+stalin_purge_paranoia_backlash_modifier = {
+	icon = intrigue_negative
+	vassal_opinion = -20
+	courtier_and_guest_opinion = -20
+	vassal_tax_contribution_mult = -0.15
+	vassal_levy_contribution_mult = -0.15
+}
+
+trump_art_of_the_deal_boom_modifier = {
+	icon = economy_positive
+	domain_tax_mult = 0.20
+	vassal_tax_contribution_mult = 0.15
+	mercenary_hire_cost_mult = -0.25
+	monthly_prestige_gain_mult = 0.10
+}
+
+trump_fraud_scandal_modifier = {
+	icon = economy_negative
+	vassal_opinion = -15
+	same_faith_opinion = -15
+	domain_tax_mult = -0.10
+	legitimacy_gain_mult = -0.20
+}
+
+mutaguchi_banzai_delusion_inspired_modifier = {
+	icon = martial_positive
+	martial = 3
+	knight_effectiveness_mult = 0.25
+	movement_speed = 0.20
+	advantage = 5
+}
+
+mutaguchi_drunken_blunder_modifier = {
+	icon = drink_negative
+	vassal_opinion = -15
+	courtier_and_guest_opinion = -15
+	army_maintenance_mult = 0.15
+	supply_duration = -0.30
+}
+
+mutaguchi_hangover_disgrace_modifier = {
+	icon = drink_negative
+	diplomacy = -2
+	health = -0.25
+	courtier_and_guest_opinion = -10
+}
+
+kim_paektu_idolization_supreme_modifier = {
+	icon = legitimacy_positive
+	same_faith_opinion = 25
+	dread_baseline_add = 20
+	legitimacy_gain_mult = 0.25
+	vassal_tax_contribution_mult = 0.10
+}
+
+kim_idolization_backlash_modifier = {
+	icon = legitimacy_negative
+	vassal_opinion = -15
+	domain_tax_mult = -0.15
+	legitimacy_gain_mult = -0.20
+	stress_gain_mult = 0.20
+}
+
+pol_pot_year_zero_miracle_harvest_modifier = {
+	icon = economy_positive
+	domain_tax_mult = 0.25
+	build_gold_cost = -0.30
+	holding_build_gold_cost = -0.30
+	levy_reinforcement_rate = 0.50
+}
+
+pol_pot_commune_famine_modifier = {
+	icon = food_negative
+	domain_tax_mult = -0.25
+	levy_size = -0.20
+	levy_reinforcement_rate = -0.30
+	vassal_opinion = -15
+}
+
+idi_amin_economic_boom_modifier = {
+	icon = economy_positive
+	domain_tax_mult = 0.25
+	direct_vassal_opinion = 20
+	army_maintenance_mult = -0.20
+	knight_effectiveness_mult = 0.20
+}
+
+idi_amin_economic_collapse_modifier = {
+	icon = economy_negative
+	domain_tax_mult = -0.25
+	direct_vassal_opinion = -15
+	army_maintenance_mult = 0.15
+}
+
+rasputin_charlatan_exposed_modifier = {
+	icon = piety_negative
+	monthly_piety_gain_mult = -0.25
+	owned_personal_scheme_success_chance_max_add = -15
+	general_opinion = -15
+}
+
+rasputin_khlyst_ecstasy_fervor_modifier = {
+	icon = piety_positive
+	monthly_piety_gain_mult = 0.25
+	same_faith_opinion = 20
+	attraction_opinion = 20
+	seduce_scheme_phase_duration_add = -15
+}
+
+rasputin_khlyst_scandal_rumors_modifier = {
+	icon = piety_negative
+	different_faith_opinion = -20
+	general_opinion = -10
+	stress_gain_mult = 0.15
+}
+
+# ==============================================================================
+# Second Religious & Ideological Decision Modifiers (Trump, Hitler, Mussolini, Mutaguchi, Stalin)
+# ==============================================================================
+
+trump_tariff_deal_master_modifier = {
+	icon = economy_positive
+	vassal_tax_contribution_mult = 0.15
+	domain_tax_mult = 0.10
+	mercenary_hire_cost_mult = -0.15
+}
+
+trump_youre_fired_authority_modifier = {
+	icon = prestige_positive
+	dread_decay_mult = -0.30
+	monthly_prestige_gain_mult = 0.15
+	same_faith_opinion = 15
+	direct_vassal_opinion = 10
+}
+
+trump_bad_deal_humiliation_modifier = {
+	icon = economy_negative
+	vassal_tax_contribution_mult = -0.10
+	direct_vassal_opinion = -15
+	monthly_prestige_gain_mult = -0.15
+}
+
+hitler_germania_grand_model_modifier = {
+	icon = prestige_positive
+	build_gold_cost = -0.20
+	holding_build_gold_cost = -0.20
+	build_speed = -0.20
+	holding_build_speed = -0.20
+	monthly_prestige_gain_mult = 0.20
+	same_faith_opinion = 15
+}
+
+hitler_cultural_purification_modifier = {
+	icon = piety_positive
+	enemy_hostile_scheme_success_chance_max_add = -20
+	vassal_tax_contribution_mult = 0.10
+	monthly_piety_gain_mult = 0.15
+}
+
+hitler_rejected_artist_rage_modifier = {
+	icon = prestige_negative
+	diplomacy = -2
+	vassal_opinion = -15
+	stress_gain_mult = 0.25
+	build_speed = 0.15
+}
+
+mussolini_shirtless_harvester_modifier = {
+	icon = prowess_positive
+	prowess = 3
+	health = 0.30
+	county_opinion_add = 20
+	levy_reinforcement_rate = 0.25
+}
+
+mussolini_carriages_on_time_modifier = {
+	icon = economy_positive
+	movement_speed = 0.15
+	supply_duration = 0.25
+	domain_tax_mult = 0.15
+	development_growth_factor = 0.20
+}
+
+mussolini_sunstroke_fiasco_modifier = {
+	icon = prestige_negative
+	health = -0.20
+	prowess = -2
+	monthly_prestige_gain_mult = -0.15
+}
+
+mussolini_bogged_down_public_works_modifier = {
+	icon = economy_negative
+	domain_tax_mult = -0.15
+	build_gold_cost = 0.15
+	county_opinion_add = -15
+}
+
+mutaguchi_miracle_ox_convoy_modifier = {
+	icon = martial_positive
+	martial = 3
+	provisions_use_mult = -0.40
+	supply_duration = 0.50
+	army_maintenance_mult = -0.20
+}
+
+mutaguchi_herbivore_march_spirit_modifier = {
+	icon = martial_positive
+	provisions_use_mult = -0.25
+	movement_speed = 0.15
+	stress_gain_mult = -0.25
+	supply_duration = 0.20
+}
+
+mutaguchi_drowned_buffalo_disaster_modifier = {
+	icon = food_negative
+	supply_duration = -0.35
+	army_maintenance_mult = 0.15
+	vassal_opinion = -10
+}
+
+mutaguchi_toxic_weed_stomachache_modifier = {
+	icon = food_negative
+	health = -0.30
+	prowess = -2
+	courtier_and_guest_opinion = -10
+}
+
+stalin_five_year_plan_shock_work_modifier = {
+	icon = economy_positive
+	build_speed = -0.30
+	holding_build_speed = -0.30
+	build_gold_cost = -0.20
+	holding_build_gold_cost = -0.20
+	domain_tax_mult = 0.20
+}
+
+stalin_stakhanovite_fervor_modifier = {
+	icon = prestige_positive
+	levy_size = 0.20
+	army_maintenance_mult = -0.15
+	county_opinion_add = 15
+	monthly_piety_gain_mult = 0.15
+}
+
+stalin_falsified_quota_collapse_modifier = {
+	icon = economy_negative
+	domain_tax_mult = -0.20
+	build_speed = 0.25
+	vassal_opinion = -15
+}
+
+kim_asymmetric_deterrence_modifier = {
+	icon = martial_positive
+	siege_weapon_siege_value_mult = 0.20
+	siege_phase_time = -0.15
+	dread_decay_mult = -0.50
+	enemy_hostile_scheme_success_chance_max_add = -15
+	vassal_opinion = 10
+}
+
+kim_failed_foundry_explosion_modifier = {
+	icon = economy_negative
+	domain_tax_mult = -0.10
+	build_speed = 0.15
+	county_opinion_add = -10
+}
+
+kim_wooden_cannon_bluff_modifier = {
+	icon = dread_positive
+	dread_baseline_add = 20
+	enemy_hostile_scheme_success_chance_max_add = -20
+	monthly_prestige_gain_mult = 0.10
+}
