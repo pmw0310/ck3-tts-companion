@@ -50,17 +50,39 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 /**
  * 운영체제(OS) 시스템 언어를 감지하여 지원 로케일('ko' | 'en')로 반환합니다.
- * 한국어('ko*') 환경이면 'ko', 그 외 언어 환경이면 'en'을 반환합니다.
+ * 한국어('ko*') 환경일 때만 'ko'를 반환하고, 그 외 모든 OS 언어 및 예외 상황에서는 'en'을 반환합니다.
  * @returns 감지된 기본 앱 언어 ('ko' | 'en')
  */
 const resolveDefaultAppLanguage = (): 'ko' | 'en' => {
   try {
+    const safePreferred = (() => {
+      try {
+        return typeof app?.getPreferredSystemLanguages === 'function'
+          ? app.getPreferredSystemLanguages()
+          : [];
+      } catch {
+        return [];
+      }
+    })();
+    const safeSystemLocale = (() => {
+      try {
+        return typeof app?.getSystemLocale === 'function' ? app.getSystemLocale() : '';
+      } catch {
+        return '';
+      }
+    })();
+    const safeAppLocale = (() => {
+      try {
+        return typeof app?.getLocale === 'function' ? app.getLocale() : '';
+      } catch {
+        return '';
+      }
+    })();
+
     const candidates = [
-      ...(typeof app?.getPreferredSystemLanguages === 'function'
-        ? app.getPreferredSystemLanguages()
-        : []),
-      typeof app?.getSystemLocale === 'function' ? app.getSystemLocale() : '',
-      typeof app?.getLocale === 'function' ? app.getLocale() : '',
+      ...safePreferred,
+      safeSystemLocale,
+      safeAppLocale,
       Intl.DateTimeFormat().resolvedOptions().locale,
       process.env.LC_ALL ?? '',
       process.env.LANG ?? ''
@@ -68,12 +90,12 @@ const resolveDefaultAppLanguage = (): 'ko' | 'en' => {
     const primaryLocale = candidates.find(
       (loc) => typeof loc === 'string' && loc.trim().length > 0
     );
-    if (primaryLocale && primaryLocale.toLowerCase().startsWith('ko')) {
+    if (primaryLocale && primaryLocale.trim().toLowerCase().startsWith('ko')) {
       return 'ko';
     }
     return 'en';
   } catch {
-    return 'ko';
+    return 'en';
   }
 };
 
@@ -173,16 +195,38 @@ const getSettingsFilePath = (): string => {
  */
 const loadStoredSettings = (): AppSettings => {
   const filePath = getSettingsFilePath();
+  const detectedLang = resolveDefaultAppLanguage();
   try {
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(data) as Partial<AppSettings>;
-      return { ...DEFAULT_APP_SETTINGS, appLanguage: resolveDefaultAppLanguage(), ...parsed };
+      const resolvedLang: 'ko' | 'en' =
+        parsed.appLanguage === 'ko' || parsed.appLanguage === 'en'
+          ? parsed.appLanguage
+          : detectedLang;
+      const merged: AppSettings = {
+        ...DEFAULT_APP_SETTINGS,
+        ...parsed,
+        appLanguage: resolvedLang
+      };
+      if (parsed.appLanguage !== 'ko' && parsed.appLanguage !== 'en') {
+        if (app?.isReady?.()) {
+          persistSettings(merged);
+        }
+      }
+      return merged;
     }
   } catch (error: unknown) {
     console.warn('⚠️ [Settings] 설정 불러오기 실패, 기본값 사용:', error);
   }
-  return { ...DEFAULT_APP_SETTINGS, appLanguage: resolveDefaultAppLanguage() };
+  const initialSettings: AppSettings = {
+    ...DEFAULT_APP_SETTINGS,
+    appLanguage: detectedLang
+  };
+  if (app?.isReady?.()) {
+    persistSettings(initialSettings);
+  }
+  return initialSettings;
 };
 
 /**

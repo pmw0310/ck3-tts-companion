@@ -1,13 +1,14 @@
 {
   "name": "ck3-tts-companion",
   "productName": "CK3 TTS Companion",
-  "version": "1.11.6",
+  "version": "1.12.0",
   "description": "CK3 Event Voice Reader (TTS Companion)",
   "main": "./out/main/index.js",
   "author": "BlackOlf",
   "license": "CC-BY-NC-SA-4.0",
+  "packageManager": "pnpm@12.21.0",
   "scripts": {
-    "test": "npx tsx --test --test-concurrency=1 test/*.test.ts",
+    "test": "tsx --test --test-concurrency=1 test/*.test.ts",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",

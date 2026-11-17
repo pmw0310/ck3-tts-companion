@@ -343,9 +343,8 @@
 
 								onclick = "[RoyalCourtWindow.OnClickArtifactSlot( InventorySlot.Self )]"
 
-								enabled = "[Inventory.HasArtifactsOfSlotType( InventorySlot.GetType )]"
-
-								tooltip = ROYAT_COURT_SLOT_TOOLTIP
+								enabled = "[And(Inventory.HasArtifactsOfSlotType( InventorySlot.GetType ), RoyalCourtWindow.IsSlotAvailable(InventorySlot.Self))]"
+								tooltip = "[RoyalCourtWindow.GetSlotAvailabilityTooltip( InventorySlot.Self )]"
 
 								button_plus = {
 									visible = "[Inventory.HasUnequippedArtifactsInSlotType( InventorySlot.GetType )]"
@@ -1137,6 +1136,7 @@
 
 						hbox = {
 							margin = { 10 0 }
+							alwaystransparent = yes
 
 							text_single = {
 								layoutpolicy_horizontal = expanding
@@ -1144,6 +1144,7 @@
 								align = center|nobaseline
 								text = "ARTIFACT_STORAGE"
 								default_format = "#clickable"
+								alwaystransparent = yes
 							}
 
 							text_single = {
@@ -1152,6 +1153,7 @@
 								align = center|nobaseline
 								text = "[Inventory.GetNumOfArtifactInCategory( 'court' )]"
 								default_format = "#clickable"
+								alwaystransparent = yes
 							}
 						}
 
@@ -2043,7 +2045,7 @@ types RoyalCourtTypes
 
 			text_single = {
 				parentanchor = center
-				text = "[LocalPlayerNewArtifacts.GetNumNewArtifactsOfCategory( 'court' )|V]"
+				text = "[Add_int32( LocalPlayerNewArtifacts.GetNumNewArtifactsOfSlot( 'library' ), Add_int32( LocalPlayerNewArtifacts.GetNumNewArtifactsOfSlot( 'curio' ), LocalPlayerNewArtifacts.GetNumNewArtifactsOfSlot( 'creature' ) ) )|V]"
 				default_format = "#high"
 				align = nobaseline
 			}

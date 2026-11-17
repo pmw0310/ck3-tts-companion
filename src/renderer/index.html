@@ -26,8 +26,8 @@
           <div class="brand-text">
             <div class="brand-title-row">
               <h1 class="brand-title">CK3 TTS COMPANION</h1>
-              <span id="app-version-badge" class="version-badge" title="현재 애플리케이션 버전">v1.4.0</span>
-              <span id="mod-version-badge" class="version-badge mod-badge-loading" title="CK3 게임 모드 버전 동기화 상태">모드 확인 중...</span>
+              <span id="app-version-badge" class="version-badge" data-i18n-title="header.versionTitle" title="현재 애플리케이션 버전">v1.4.0</span>
+              <span id="mod-version-badge" class="version-badge mod-badge-loading" data-i18n="header.modChecking" data-i18n-title="header.modVersionTitle" title="CK3 게임 모드 버전 동기화 상태">모드 확인 중...</span>
             </div>
             <span class="brand-subtitle">
               <span id="app-subtitle-desc" data-i18n="header.subtitle">실시간 인게임 나레이션 보이스 엔진</span> • <span data-i18n="header.authorPrefix">제작:</span> <span id="app-author-tag" class="author-tag">BlackOlf</span>
@@ -55,21 +55,11 @@
           <div class="update-banner-text">
             <strong id="update-banner-title" data-i18n="banner.update.title">새로운 버전이 출시되었습니다!</strong>
             <span id="update-banner-desc" class="update-banner-desc" data-i18n="banner.update.desc">최신 업데이트를 확인해 보세요.</span>
-            <!-- 다운로드 진행률 바 -->
-            <div id="update-progress-container" class="update-progress-box option-hidden">
-              <div class="update-progress-track">
-                <div id="update-progress-bar" class="update-progress-fill" style="width: 0%;"></div>
-              </div>
-              <div class="update-progress-meta">
-                <span id="update-progress-text">다운로드 중... (0 MB)</span>
-                <span id="update-progress-percent" class="gold-text">0%</span>
-              </div>
-            </div>
           </div>
         </div>
         <div class="update-banner-actions">
           <button type="button" id="btn-update-download" class="btn btn-sm btn-gold" data-i18n="banner.update.downloadBtn">
-            ⬇️ 원클릭 자동 업데이트
+            ⬇️ 최신 버전 다운로드 ↗
           </button>
           <button type="button" id="btn-update-dismiss" class="btn-icon btn-sm" aria-label="알림 닫기" title="닫기">
             ✕

@@ -24,7 +24,7 @@ export const TRANSLATIONS = {
       // 신규 버전 알림 배너
       "banner.update.title": "새로운 버전이 출시되었습니다!",
       "banner.update.desc": "최신 업데이트를 확인해 보세요.",
-      "banner.update.downloadBtn": "⬇️ 원클릭 자동 업데이트",
+      "banner.update.downloadBtn": "⬇️ 최신 버전 다운로드 ↗",
       "banner.update.restartBtn": "🚀 재시작하여 업데이트 적용",
       "banner.update.openDmgBtn": "📦 DMG 열고 업데이트 적용",
       "banner.update.downloading": "다운로드 중...",
@@ -179,7 +179,7 @@ export const TRANSLATIONS = {
       // New Version Banner
       "banner.update.title": "A new version is available!",
       "banner.update.desc": "Check out the latest features and fixes.",
-      "banner.update.downloadBtn": "⬇️ One-Click Auto Update",
+      "banner.update.downloadBtn": "⬇️ Download Latest Version ↗",
       "banner.update.restartBtn": "🚀 Restart & Apply Update",
       "banner.update.openDmgBtn": "📦 Open DMG & Install",
       "banner.update.downloading": "Downloading...",
@@ -333,18 +333,70 @@ export const TRANSLATIONS = {
 
 
 /**
+ * 로케일 후보 문자열 배열에서 최우선 유효 로케일을 판별하여 지원 로케일('ko' | 'en')로 반환합니다.
+ * 최우선 로케일이 'ko'(예: 'ko', 'ko-KR', 'ko_KR')로 시작할 때만 'ko'를 반환하고,
+ * 그 외 모든 언어(영어, 일본어, 중국어, 독일어 등) 및 빈 값일 때는 'en'을 반환합니다.
+ * @param candidates - 우선순위 순으로 정렬된 로케일 후보 배열
+ * @returns 판별된 로케일 ('ko' | 'en')
+ */
+export const resolveLocaleFromCandidates = (
+   candidates: readonly (string | undefined | null)[],
+): SupportedLocale => {
+   const primary = candidates.find(
+      (loc): loc is string => typeof loc === "string" && loc.trim().length > 0,
+   );
+   if (primary && primary.trim().toLowerCase().startsWith("ko")) {
+      return "ko";
+   }
+   return "en";
+};
+
+/**
  * 브라우저/시스템 기본 언어를 감지하여 지원 로케일('ko' | 'en')로 반환합니다.
+ * 한글 OS 환경('ko*')일 때만 'ko'를 반환하고, 나머지 모든 OS 환경에서는 'en'을 반환합니다.
  * @returns 감지된 기본 로케일 ('ko' | 'en')
  */
 export const detectSystemLocale = (): SupportedLocale => {
-   if (typeof navigator !== "undefined" && typeof navigator.language === "string") {
-      return navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en";
+   try {
+      const candidates: (string | undefined)[] = [];
+      if (typeof navigator !== "undefined") {
+         if (Array.isArray(navigator.languages)) {
+            candidates.push(...navigator.languages);
+         }
+         if (typeof navigator.language === "string") {
+            candidates.push(navigator.language);
+         }
+      }
+      if (candidates.length === 0) {
+         candidates.push(Intl.DateTimeFormat().resolvedOptions().locale);
+      }
+      return resolveLocaleFromCandidates(candidates);
+   } catch {
+      return "en";
    }
-   return "ko";
 };
 
-/** 현재 적용된 활성 로케일 (기본: 시스템 언어) */
-let activeLocale: SupportedLocale = detectSystemLocale();
+/**
+ * 최초 시작 시 로컬 스토리지에 저장된 사용자 언어가 있으면 우선 사용하고,
+ * 처음 시작하는 경우 OS 시스템 로케일(한글 OS만 'ko', 나머지는 'en')을 반환합니다.
+ * @returns 초기 활성 로케일 ('ko' | 'en')
+ */
+export const resolveInitialLocale = (): SupportedLocale => {
+   try {
+      if (typeof localStorage !== "undefined") {
+         const stored = localStorage.getItem("ck3_tts_lang");
+         if (stored === "ko" || stored === "en") {
+            return stored;
+         }
+      }
+   } catch {
+      // LocalStorage 접근 불가 환경 무시
+   }
+   return detectSystemLocale();
+};
+
+/** 현재 적용된 활성 로케일 (기본: 저장된 언어 또는 시스템 언어) */
+let activeLocale: SupportedLocale = resolveInitialLocale();
 
 /**
  * 현재 활성화된 로케일을 반환합니다.
@@ -362,8 +414,8 @@ export const t = (
    key: TranslationKey,
    params?: Record<string, string | number>,
 ): string => {
-   const dict = TRANSLATIONS[activeLocale] || TRANSLATIONS.ko;
-   const rawText: string = dict[key] ?? TRANSLATIONS.ko[key] ?? key;
+   const dict = TRANSLATIONS[activeLocale] || TRANSLATIONS.en;
+   const rawText: string = dict[key] ?? TRANSLATIONS.en[key] ?? key;
 
    if (!params) {
       return rawText;

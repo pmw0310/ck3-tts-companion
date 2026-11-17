@@ -16,7 +16,6 @@ import type {
    SystemVoiceName,
    TtsProviderType,
    UpdateCheckResult,
-   UpdateDownloadProgress,
 } from "@/shared/types";
 import { splitIntoPlaybackChunks } from "@/shared/sentenceSplitter";
 import { splitNarrativeAndDialogue } from "@/shared/narrativeDialogueSplitter";
@@ -370,18 +369,6 @@ const btnUpdateDownload = document.getElementById(
 const btnUpdateDismiss = document.getElementById(
    "btn-update-dismiss",
 ) as HTMLButtonElement;
-const updateProgressContainer = document.getElementById(
-   "update-progress-container",
-) as HTMLDivElement;
-const updateProgressBar = document.getElementById(
-   "update-progress-bar",
-) as HTMLDivElement;
-const updateProgressText = document.getElementById(
-   "update-progress-text",
-) as HTMLSpanElement;
-const updateProgressPercent = document.getElementById(
-   "update-progress-percent",
-) as HTMLSpanElement;
 
 // CK3 모드 동기화 상태 및 배너 엘리먼트
 const modVersionBadge = document.getElementById(
@@ -760,6 +747,9 @@ const displayUpdateBanner = (result: UpdateCheckResult): void => {
          ? `Current version v${result.currentVersion} → Latest version v${result.latestVersion}`
          : `현재 버전 v${result.currentVersion} → 최신 버전 v${result.latestVersion}`;
    }
+   if (btnUpdateDownload) {
+      btnUpdateDownload.textContent = t("banner.update.downloadBtn");
+   }
    updateBanner.classList.remove("banner-hidden");
 };
 
@@ -791,19 +781,30 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
 
       if (result.hasUpdate) {
          displayUpdateBanner(result);
+         if (manualUpdateStatus) {
+            manualUpdateStatus.className = "update-status-msg status-new";
+            manualUpdateStatus.textContent = isEn
+               ? `🎉 New v${result.latestVersion} available`
+               : `🎉 최신 v${result.latestVersion} 출시됨`;
+         }
+         if (btnManualCheckUpdate) {
+            btnManualCheckUpdate.textContent = isEn
+               ? `⬇️ Download v${result.latestVersion} ↗`
+               : `⬇️ v${result.latestVersion} 다운로드 ↗`;
+            btnManualCheckUpdate.classList.remove("btn-secondary");
+            btnManualCheckUpdate.classList.add("btn-gold");
+         }
          if (isManual) {
-            if (manualUpdateStatus) {
-               manualUpdateStatus.className = "update-status-msg status-new";
-               manualUpdateStatus.textContent = isEn
-                  ? `🎉 New v${result.latestVersion} available`
-                  : `🎉 최신 v${result.latestVersion} 출시됨`;
-            }
             showToast(
                isEn
-                  ? `🎉 A new version v${result.latestVersion} is available!`
-                  : `🎉 새로운 버전 v${result.latestVersion}이 출시되었습니다!`,
+                  ? `🎉 A new version v${result.latestVersion} is available! Opening download page.`
+                  : `🎉 새로운 버전 v${result.latestVersion}이 출시되었습니다! 다운로드 페이지를 엽니다.`,
                "info",
             );
+            const targetUrl =
+               result.releaseUrl ||
+               `${currentAppInfo.repoUrl}/releases/latest`;
+            await window.electronAPI.openExternal(targetUrl);
          }
       } else if (result.errorMessage) {
          if (isManual) {
@@ -822,6 +823,11 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
          }
       } else {
          hideUpdateBanner();
+         if (btnManualCheckUpdate) {
+            btnManualCheckUpdate.textContent = t("system.btnCheckUpdate");
+            btnManualCheckUpdate.classList.remove("btn-gold");
+            btnManualCheckUpdate.classList.add("btn-secondary");
+         }
          if (isManual) {
             if (manualUpdateStatus) {
                manualUpdateStatus.className =
@@ -847,7 +853,7 @@ const checkAppUpdates = async (isManual = false): Promise<void> => {
             : "네트워크 오류 발생";
       }
    } finally {
-      if (isManual) {
+      if (isManual && btnManualCheckUpdate) {
          btnManualCheckUpdate.disabled = false;
       }
    }
@@ -1255,8 +1261,8 @@ const speakText = async (
             const { voiceOverride, promptOverride } =
                resolveVoiceAndPromptForSegment(seg.type, seg.speakerGender);
 
-            // 지문이 여러 문장으로 길 경우 초기 1초 재생 레이턴시를 위해 서브 청킹 적용
-            if (seg.type === "narration" && seg.text.length > 80) {
+            // 지문이나 대사가 매우 긴 다중 문장 단락(130자 초과)인 경우에만 문장 흐름을 해치지 않는 선에서 서브 청킹 적용
+            if (seg.text.length > 130) {
                const subChunks = splitIntoPlaybackChunks(
                   seg.text,
                   state.settings.provider,
@@ -1584,6 +1590,7 @@ const handleNewEvent = (rawEvent: Ck3EventMessage): void => {
    }
 
    lastEventDetectedTime = now;
+   void lastEventDetectedTime;
    state.currentEvent = event;
 
    // 최신 히스토리와 동일한 내용이 연달아 중복 적재되지 않도록 방어하고,
@@ -2145,123 +2152,11 @@ const bindEventListeners = (): void => {
       }
    });
 
-   let downloadedUpdateFilePath: string | null = null;
-   let isDownloadingUpdate = false;
-
-   // 실시간 다운로드 진행률 이벤트 수신 구독
-   window.electronAPI.onUpdateDownloadProgress(
-      (progress: UpdateDownloadProgress) => {
-         if (updateProgressBar) {
-            updateProgressBar.style.width = `${progress.percent}%`;
-         }
-         if (updateProgressPercent) {
-            updateProgressPercent.textContent = `${progress.percent}%`;
-         }
-         if (updateProgressText) {
-            const mbCurrent = (
-               progress.downloadedBytes /
-               (1024 * 1024)
-            ).toFixed(1);
-            const mbTotal = (progress.totalBytes / (1024 * 1024)).toFixed(1);
-            const speedMb = (progress.speedBytesPerSec / (1024 * 1024)).toFixed(
-               1,
-            );
-            updateProgressText.textContent = `다운로드 중... ${mbCurrent}MB / ${mbTotal}MB (${speedMb}MB/s)`;
-         }
-      },
-   );
-
-   // 상단 업데이트 배너 스마트 인앱 다운로드 및 설치 액션 버튼 클릭
+   // 상단 업데이트 배너 다운로드 버튼 클릭 -> 최신 릴리스 다운로드 페이지(외부 브라우저) 열기
    btnUpdateDownload?.addEventListener("click", async () => {
-      const isEn = getCurrentLocale() === "en";
-
-      // 1. 이미 다운로드가 완료된 상태라면 -> 즉시 설치/재실행
-      if (downloadedUpdateFilePath) {
-         btnUpdateDownload.disabled = true;
-         btnUpdateDownload.textContent = isEn
-            ? "🚀 Applying Update..."
-            : "🚀 업데이트 적용 중...";
-         const isSuccess = await window.electronAPI.installAndRestartUpdate(
-            downloadedUpdateFilePath,
-         );
-         if (!isSuccess) {
-            showToast(t("toast.installFailed"), "warning");
-            btnUpdateDownload.disabled = false;
-            btnUpdateDownload.textContent = isEn
-               ? "📦 Open Installer Again"
-               : "📦 설치 파일 다시 열기";
-         }
-         return;
-      }
-
-      // 2. 다운로드할 에셋이 존재하는 경우 -> 인앱 다운로드 시작
-      const asset = latestUpdateResult?.matchedAsset;
-      if (asset && asset.downloadUrl) {
-         if (isDownloadingUpdate) {
-            return;
-         }
-         isDownloadingUpdate = true;
-         btnUpdateDownload.disabled = true;
-         btnUpdateDownload.textContent = isEn
-            ? "⏳ Downloading..."
-            : "⏳ 다운로드 중...";
-         if (updateProgressContainer) {
-            updateProgressContainer.classList.remove("option-hidden");
-         }
-
-         showToast(t("toast.downloadStart", { name: asset.name }), "info");
-         const result = await window.electronAPI.startDownloadUpdate(
-            asset.downloadUrl,
-         );
-
-         isDownloadingUpdate = false;
-         if (result.isSuccess && result.filePath) {
-            downloadedUpdateFilePath = result.filePath;
-            btnUpdateDownload.disabled = false;
-            if (updateProgressText) {
-               updateProgressText.textContent = isEn
-                  ? "✅ Download Complete!"
-                  : "✅ 다운로드 완료!";
-            }
-
-            const isWindows = navigator.userAgent.includes("Windows");
-            if (isWindows) {
-               btnUpdateDownload.textContent = isEn
-                  ? "🚀 Restart & Apply"
-                  : "🚀 지금 적용 및 재시작";
-               btnUpdateDownload.title = isEn
-                  ? "Launches new version and exits."
-                  : "새 버전 프로세스를 실행하고 현재 앱을 종료합니다.";
-               showToast(t("toast.downloadSuccessWin"), "success");
-            } else {
-               btnUpdateDownload.textContent = isEn
-                  ? "📦 Open DMG Installer"
-                  : "📦 최신 설치 파일 열기";
-               btnUpdateDownload.title = isEn
-                  ? "Opens latest DMG to drag to Applications."
-                  : "최신 DMG 설치 파일을 열어 Applications로 교체합니다.";
-               showToast(t("toast.downloadSuccessMac"), "success");
-            }
-         } else {
-            btnUpdateDownload.disabled = false;
-            btnUpdateDownload.textContent = isEn
-               ? "⬇️ One-Click Auto Update"
-               : "⬇️ 원클릭 자동 업데이트";
-            showToast(
-               t("toast.downloadFailed", {
-                  error:
-                     result.errorMessage ??
-                     (isEn ? "Unknown error" : "알 수 없는 오류"),
-               }),
-               "warning",
-            );
-         }
-         return;
-      }
-
-      // 3. 에셋이 매칭되지 않은 경우 (Linux 등) -> 브라우저 릴리스 페이지 열기
       const targetUrl =
-         latestUpdateResult?.releaseUrl ?? currentAppInfo.repoUrl;
+         latestUpdateResult?.releaseUrl ||
+         `${currentAppInfo.repoUrl}/releases/latest`;
       await window.electronAPI.openExternal(targetUrl);
    });
 
@@ -2270,8 +2165,15 @@ const bindEventListeners = (): void => {
       hideUpdateBanner();
    });
 
-   // 설정 모달 내 수동 최신 버전 확인 버튼 클릭
+   // 설정 모달 내 수동 최신 버전 확인 / 다운로드 링크 이동 버튼 클릭
    btnManualCheckUpdate?.addEventListener("click", async () => {
+      if (latestUpdateResult?.hasUpdate) {
+         const targetUrl =
+            latestUpdateResult.releaseUrl ||
+            `${currentAppInfo.repoUrl}/releases/latest`;
+         await window.electronAPI.openExternal(targetUrl);
+         return;
+      }
       await checkAppUpdates(true);
    });
 
@@ -2379,6 +2281,21 @@ const bindEventListeners = (): void => {
       if (currentAppInfo) {
          applyAppInfoToUi(currentAppInfo);
       }
+      if (latestUpdateResult?.hasUpdate) {
+         displayUpdateBanner(latestUpdateResult);
+         const isEn = targetLang === "en";
+         if (manualUpdateStatus) {
+            manualUpdateStatus.className = "update-status-msg status-new";
+            manualUpdateStatus.textContent = isEn
+               ? `🎉 New v${latestUpdateResult.latestVersion} available`
+               : `🎉 최신 v${latestUpdateResult.latestVersion} 출시됨`;
+         }
+         if (btnManualCheckUpdate) {
+            btnManualCheckUpdate.textContent = isEn
+               ? `⬇️ Download v${latestUpdateResult.latestVersion} ↗`
+               : `⬇️ v${latestUpdateResult.latestVersion} 다운로드 ↗`;
+         }
+      }
    };
 
    btnLangKo?.addEventListener("click", () => {
@@ -2400,6 +2317,9 @@ const initializeApp = async (): Promise<void> => {
    ) {
       document.body.classList.add("platform-darwin");
    }
+
+   // 비동기 IPC 대기 전에 초기 로케일(한글 OS만 'ko', 그 외 OS는 'en' 또는 이전 저장값)을 즉시 DOM에 반영하여 한글 깜빡임 방지
+   setLanguage(getCurrentLocale());
 
    bindEventListeners();
 

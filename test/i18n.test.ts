@@ -5,8 +5,9 @@ import {
   t,
   setLanguage,
   getCurrentLocale,
+  resolveLocaleFromCandidates,
   type TranslationKey
-} from '../src/renderer/i18n';
+} from '@/renderer/i18n';
 
 describe('i18n 다국어 지원 엔진 무결성 검증', () => {
   it('1. ko와 en 사전 간 모든 번역 키가 누락 없이 100% 상호 일치해야 한다', () => {
@@ -60,6 +61,23 @@ describe('i18n 다국어 지원 엔진 무결성 검증', () => {
     setLanguage('ko');
     assert.strictEqual(getCurrentLocale(), 'ko');
     assert.strictEqual(t('card.statusIdle'), '대기 중');
+  });
+
+  it('6. 한글 OS(ko*)로 처음 시작했을 때만 ko가 선택되고 나머지 모든 OS에서는 en이 먼저 선택되어야 한다', () => {
+    assert.strictEqual(resolveLocaleFromCandidates(['ko-KR', 'en-US']), 'ko');
+    assert.strictEqual(resolveLocaleFromCandidates(['ko']), 'ko');
+    assert.strictEqual(resolveLocaleFromCandidates(['KO_KR']), 'ko');
+    assert.strictEqual(resolveLocaleFromCandidates(['', '  ', 'ko-KR']), 'ko');
+
+    // 비한글 OS (영어, 일본어, 중국어, 독일어, 프랑스어, 스페인어 등) 및 기본 폴백은 모두 'en'
+    assert.strictEqual(resolveLocaleFromCandidates(['en-US', 'ko-KR']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates(['en-GB']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates(['ja-JP']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates(['zh-CN']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates(['de-DE']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates(['fr-FR']), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates([]), 'en');
+    assert.strictEqual(resolveLocaleFromCandidates([undefined, null, '']), 'en');
   });
 });
 

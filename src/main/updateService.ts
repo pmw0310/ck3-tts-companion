@@ -30,6 +30,31 @@ export const getAppMetadata = (): AppInfo => {
 };
 
 /**
+ * 공식 GitHub 릴리스 에셋 바이너리 다운로드에 허용된 안전한 호스트인지 검증합니다.
+ * @param url - 검증할 다운로드 URL 문자열
+ * @returns 안전한 릴리스 에셋 URL 여부
+ */
+export const isSafeReleaseAssetUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return false;
+    }
+    const releaseHosts = [
+      'github.com',
+      'api.github.com',
+      'objects.githubusercontent.com',
+      'github-releases.githubusercontent.com'
+    ];
+    return releaseHosts.some(
+      (host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
  * 외부 링크가 열리기에 안전한 허용 도메인인지 검증합니다.
  * @param url - 검증할 URL 문자열
  * @returns 안전한 URL 여부
@@ -40,13 +65,14 @@ export const isSafeExternalUrl = (url: string): boolean => {
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
       return false;
     }
-    // GitHub 또는 허용된 도메인만 통과
+    // GitHub, AI Studio, Steam 창작마당 등 허용된 도메인만 통과
     const allowedHosts = [
       'github.com',
       'api.github.com',
       'objects.githubusercontent.com',
       'github-releases.githubusercontent.com',
-      'aistudio.google.com'
+      'aistudio.google.com',
+      'steamcommunity.com'
     ];
     return allowedHosts.some(
       (host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)
@@ -264,7 +290,7 @@ export const downloadUpdateBinary = async (
   downloadUrl: string,
   onProgress?: (progress: UpdateDownloadProgress) => void
 ): Promise<{ isSuccess: boolean; filePath?: string; errorMessage?: string }> => {
-  if (!isSafeExternalUrl(downloadUrl)) {
+  if (!isSafeReleaseAssetUrl(downloadUrl)) {
     return {
       isSuccess: false,
       errorMessage: '허용되지 않은 다운로드 URL입니다.'

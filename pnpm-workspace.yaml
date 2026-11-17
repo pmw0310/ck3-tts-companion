@@ -1,0 +1,7 @@
+allowBuilds:
+  '@google/genai': true
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  msedge-tts: true
+  protobufjs: true
