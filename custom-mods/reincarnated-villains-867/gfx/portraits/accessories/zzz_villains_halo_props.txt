@@ -1,3 +1,0 @@
-﻿pam_juche_sun_halo = {
-	entity = { required_tags = "" node = "bn_h_head_mid" entity = "pam_juche_sun_halo_entity" }
-}
